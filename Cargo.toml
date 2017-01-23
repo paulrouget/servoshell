@@ -1,0 +1,12 @@
+[package]
+name = "servoshell"
+version = "0.1.0"
+authors = ["Paul Rouget <me@paulrouget.com>"]
+
+[dependencies]
+glutin = "*"
+libc = "*"
+gleam = "0.2.8"
+libservo = {path = "../servo/components/servo"}
+style_traits = {path = "../servo/components/style_traits"}
+servo_geometry = {path = "../servo/components/geometry"}
