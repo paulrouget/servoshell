@@ -15,14 +15,14 @@ use servo::config::servo_version;
 use servo::compositing::windowing::{WindowEvent, WindowMethods};
 use servo::compositing::compositor_thread::{self, CompositorProxy, CompositorReceiver};
 use servo::msg::constellation_msg::{self, Key};
-use servo::euclid::{Point2D, Size2D, TypedPoint2D};
+use servo::euclid::{Point2D, Size2D};
 use servo::euclid::scale_factor::ScaleFactor;
 use servo::euclid::size::TypedSize2D;
 use servo::script_traits::DevicePixel;
 use servo::servo_url::ServoUrl;
 use servo::net_traits::net_error_list::NetError;
 use servo::servo_config::opts;
-use servo::servo_config::prefs::{self, PrefValue, PREFS};
+use servo::servo_config::prefs::{PrefValue, PREFS};
 use servo_geometry::ScreenPx;
 use style_traits::cursor::Cursor;
 
@@ -86,7 +86,7 @@ impl WindowMethods for MyWindow {
     }
 
     fn present(&self) {
-        self.glutin_window.swap_buffers();
+        self.glutin_window.swap_buffers().expect("swap_buffers failed");
     }
 
     fn create_compositor_channel(&self) -> (Box<CompositorProxy + Send>, Box<CompositorReceiver>) {
@@ -102,10 +102,10 @@ impl WindowMethods for MyWindow {
         ScaleFactor::new(self.glutin_window.hidpi_factor())
     }
 
-    fn set_page_title(&self, title: Option<String>) {
+    fn set_page_title(&self, _title: Option<String>) {
     }
 
-    fn set_page_url(&self, url: ServoUrl) {
+    fn set_page_url(&self, _url: ServoUrl) {
     }
 
     fn status(&self, _: Option<String>) {
@@ -114,7 +114,7 @@ impl WindowMethods for MyWindow {
     fn load_start(&self, _: bool, _: bool) {
     }
 
-    fn load_end(&self, _: bool, _: bool, root: bool) {
+    fn load_end(&self, _: bool, _: bool, _root: bool) {
     }
 
     fn load_error(&self, _: NetError, _: String) {
@@ -123,7 +123,7 @@ impl WindowMethods for MyWindow {
     fn head_parsed(&self) {
     }
 
-    fn set_cursor(&self, c: Cursor) {
+    fn set_cursor(&self, _: Cursor) {
     }
 
     fn set_favicon(&self, _: ServoUrl) {
@@ -133,7 +133,7 @@ impl WindowMethods for MyWindow {
         true
     }
 
-    fn handle_key(&self, ch: Option<char>, key: Key, mods: constellation_msg::KeyModifiers) {
+    fn handle_key(&self, _ch: Option<char>, _key: Key, _mods: constellation_msg::KeyModifiers) {
     }
 
     fn supports_clipboard(&self) -> bool {
@@ -155,15 +155,15 @@ fn main() {
 
     let w = {
         let builder = glutin::WindowBuilder::new().with_gl(glutin::GlRequest::Specific(glutin::Api::OpenGl, (3, 2))).with_vsync();
-        let mut glutin_window = builder.build().expect("Failed to create window.");
+        let glutin_window = builder.build().expect("Failed to create window.");
         unsafe {
-            glutin_window.make_current();
+            glutin_window.make_current().expect("Couldn't make window current");
             gl::load_with(|s| glutin_window.get_proc_address(s) as *const c_void);
             gl::clear_color(1.0, 0.0, 0.0, 1.0);
             gl::clear(gl::COLOR_BUFFER_BIT);
             gl::finish();
         }
-        glutin_window.swap_buffers();
+        glutin_window.swap_buffers().expect("swap_buffers() failed");
 
         Rc::new(MyWindow {
             glutin_window: glutin_window
@@ -173,9 +173,10 @@ fn main() {
     let mut browser = servo::Browser::new(w.clone());
     browser.handle_events(vec![WindowEvent::InitializeCompositing]);
     loop {
-        let glutin_event = w.glutin_window.wait_events().next();
+        w.glutin_window.wait_events();
+        // FIXME: translate glutin event to Servo event
+        // let glutin_event = w.glutin_window.wait_events().next();
         // match glutin_event {
-        //     // FIXME: translate glutin event to Servo event
         // }
         browser.handle_events(vec![WindowEvent::Refresh]);
     }
