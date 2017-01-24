@@ -147,7 +147,7 @@ fn main() {
 
     let mut opts = opts::default_opts();
     opts.headless = false;
-    opts.url = Some(ServoUrl::parse("http://google.com").unwrap());
+    opts.url = Some(ServoUrl::parse("https://servo.org").unwrap());
     opts::set_defaults(opts);
 
     // Pipeline creation fails is layout_threads pref not set
@@ -173,7 +173,7 @@ fn main() {
     let mut browser = servo::Browser::new(w.clone());
     browser.handle_events(vec![WindowEvent::InitializeCompositing]);
     loop {
-        w.glutin_window.wait_events();
+        w.glutin_window.wait_events().next();
         // FIXME: translate glutin event to Servo event
         // let glutin_event = w.glutin_window.wait_events().next();
         // match glutin_event {
