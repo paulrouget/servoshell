@@ -22,6 +22,7 @@ use servo::script_traits::DevicePixel;
 use servo::servo_url::ServoUrl;
 use servo::net_traits::net_error_list::NetError;
 use servo::servo_config::opts;
+use servo::servo_config::prefs::{self, PrefValue, PREFS};
 use servo_geometry::ScreenPx;
 use style_traits::cursor::Cursor;
 
@@ -144,9 +145,13 @@ impl WindowMethods for MyWindow {
 fn main() {
     println!("{}", servo_version());
 
-    let args: Vec<String> = std::env::args().collect();
-    // FIXME: libservo should not use opts!!!
-    let opts_result = opts::from_cmdline_args(&*args);
+    let mut opts = opts::default_opts();
+    opts.headless = false;
+    opts.url = Some(ServoUrl::parse("http://google.com").unwrap());
+    opts::set_defaults(opts);
+
+    // Pipeline creation fails is layout_threads pref not set
+    PREFS.set("layout.threads", PrefValue::Number(1.0));
 
     let w = {
         let builder = glutin::WindowBuilder::new().with_gl(glutin::GlRequest::Specific(glutin::Api::OpenGl, (3, 2))).with_vsync();
