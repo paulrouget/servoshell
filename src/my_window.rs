@@ -1,4 +1,6 @@
 extern crate glutin;
+extern crate winit;
+extern crate cocoa;
 
 use gleam::gl;
 use servo::compositing::windowing::WindowMethods;
@@ -14,6 +16,12 @@ use servo_geometry::ScreenPx;
 use style_traits::cursor::Cursor;
 use std::os::raw::c_void;
 use std::sync::mpsc::{Sender, channel};
+
+// FIXME: why self???
+use self::winit::os::macos::WindowExt;
+use self::cocoa::base::{id, nil};
+use self::cocoa::appkit::{NSView, NSTabView, NSTabViewItem};
+use self::cocoa::foundation::{NSString, NSPoint, NSSize, NSRect};
 
 struct GlutinCompositorProxy {
     sender: Sender<compositor_thread::Msg>,
@@ -47,14 +55,46 @@ impl MyWindow {
     pub fn new() -> MyWindow {
         let builder = glutin::WindowBuilder::new().with_gl(glutin::GlRequest::Specific(glutin::Api::OpenGl, (3, 2))).with_vsync();
         let glutin_window = builder.build().expect("Failed to create window.");
-        unsafe {
-            glutin_window.make_current().expect("Couldn't make window current");
-            gl::load_with(|s| glutin_window.get_proc_address(s) as *const c_void);
-            gl::clear_color(1.0, 0.0, 0.0, 1.0);
-            gl::clear(gl::COLOR_BUFFER_BIT);
-            gl::finish();
-        }
+
+        // FIXME: Using the same view for opengl and cocoa won't work.
+        // We should have 2 views. One for OpenGL and one for cocoa.
+
+
+        // unsafe {
+        //     glutin_window.make_current().expect("Couldn't make window current");
+        //     gl::load_with(|s| glutin_window.get_proc_address(s) as *const c_void);
+        //     gl::clear_color(1.0, 0.0, 0.0, 1.0);
+        //     gl::clear(gl::COLOR_BUFFER_BIT);
+        //     gl::finish();
+        // }
+
         glutin_window.swap_buffers().expect("swap_buffers() failed");
+
+        let nsview = glutin_window.as_winit_window().get_nsview() as id;
+
+        unsafe {
+            println!("frame: {}x{}", nsview.frame().size.width, nsview.frame().size.height);
+
+            let tab_view = NSTabView::initWithFrame_(NSTabView::new(nil), NSRect::new(NSPoint::new(0., 0.), NSSize::new(200., 200.)));
+
+            // create a tab view item
+            let tab_view_item = NSTabViewItem::new(nil)
+                .initWithIdentifier_(NSString::alloc(nil).init_str("TabView1"));
+
+            tab_view_item.setLabel_(NSString::alloc(nil).init_str("Tab view item 1"));
+            tab_view.addTabViewItem_(tab_view_item);
+
+            // create a second tab view item
+            let tab_view_item2 = NSTabViewItem::new(nil)
+                .initWithIdentifier_(NSString::alloc(nil).init_str("TabView2"));
+
+            tab_view_item2.setLabel_(NSString::alloc(nil).init_str("Tab view item 2"));
+            tab_view.addTabViewItem_(tab_view_item2);
+
+            nsview.addSubview_(tab_view);
+        }
+        
+
         MyWindow {
             glutin_window: glutin_window
         }

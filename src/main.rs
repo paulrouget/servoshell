@@ -30,14 +30,14 @@ fn main() {
 
     let w = Rc::new(MyWindow::new());
 
-    let mut browser = servo::Browser::new(w.clone());
-    browser.handle_events(vec![WindowEvent::InitializeCompositing]);
+    // let mut browser = servo::Browser::new(w.clone());
+    // browser.handle_events(vec![WindowEvent::InitializeCompositing]);
     loop {
         w.glutin_window().wait_events().next();
         // FIXME: translate glutin event to Servo event
         // let glutin_event = w.glutin_window.wait_events().next();
         // match glutin_event {
         // }
-        browser.handle_events(vec![WindowEvent::Refresh]);
+        // browser.handle_events(vec![WindowEvent::Refresh]);
     }
 }
