@@ -2,12 +2,14 @@
 name = "servoshell"
 version = "0.1.0"
 dependencies = [
+ "cocoa 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "gleam 0.2.30 (registry+https://github.com/rust-lang/crates.io-index)",
  "glutin 0.7.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.19 (registry+https://github.com/rust-lang/crates.io-index)",
  "libservo 0.0.1",
  "servo_geometry 0.0.1",
  "style_traits 0.0.1",
+ "winit 0.5.8 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
