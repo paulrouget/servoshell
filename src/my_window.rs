@@ -54,7 +54,10 @@ pub struct MyWindow {
 
 impl MyWindow {
     pub fn new() -> MyWindow {
-        let builder = glutin::WindowBuilder::new().with_gl(glutin::GlRequest::Specific(glutin::Api::OpenGl, (3, 2))).with_vsync();
+        let builder = glutin::WindowBuilder::new().
+            with_gl(glutin::GlRequest::Specific(glutin::Api::OpenGl, (3, 2))).
+            with_dimensions(800, 600).
+            with_vsync();
         let glutin_window = builder.build().expect("Failed to create window.");
 
         // FIXME: Using the same view for opengl and cocoa won't work.
@@ -118,20 +121,17 @@ impl MyWindow {
 
 impl WindowMethods for MyWindow {
     fn framebuffer_size(&self) -> TypedSize2D<u32, DevicePixel> {
-        println!("PAUL: framebuffer_size");
         let scale_factor = self.glutin_window.hidpi_factor() as u32;
         let (width, height) = self.glutin_window.get_inner_size().expect("Failed to get window inner size.");
-        TypedSize2D::new(scale_factor * width, scale_factor * (height - 18))
+        TypedSize2D::new(scale_factor * width, scale_factor * (height - TOOLBAR_HEIGHT as u32))
     }
 
     fn size(&self) -> TypedSize2D<f32, ScreenPx> {
-        println!("PAUL: size");
         let (width, height) = self.glutin_window.get_inner_size().expect("Failed to get window inner size.");
-        TypedSize2D::new(width as f32, (height - 18) as f32)
+        TypedSize2D::new(width as f32, height as f32 - TOOLBAR_HEIGHT as f32)
     }
 
     fn client_window(&self) -> (Size2D<u32>, Point2D<i32>) {
-        println!("PAUL: client_window");
         let (width, height) = self.glutin_window.get_inner_size().expect("Failed to get window inner size.");
         let size = Size2D::new(width, height);
         let (x, y) = self.glutin_window.get_position().expect("Failed to get window position.");
