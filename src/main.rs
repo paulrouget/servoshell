@@ -4,6 +4,7 @@ extern crate glutin;
 extern crate winit;
 extern crate cocoa;
 extern crate gleam;
+extern crate objc;
 extern crate servo;
 extern crate servo_geometry;
 extern crate style_traits;

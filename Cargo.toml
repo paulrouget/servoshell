@@ -5,8 +5,9 @@ authors = ["Paul Rouget <me@paulrouget.com>"]
 
 [dependencies]
 libc = "*"
-gleam = "0.2.8"
 winit = "*"
+objc = "0.2"
+gleam = "0.2.8"
 glutin = {path = "../glutin"}
 cocoa = {path = "../cocoa-rs"}
 libservo = {path = "../servo/components/servo"}

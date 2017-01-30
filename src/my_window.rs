@@ -17,8 +17,10 @@ use std::sync::mpsc::{Sender, channel};
 
 use winit::os::macos::WindowExt;
 use cocoa::base::{id, nil};
-use cocoa::appkit::{NSView, NSTextField};
+use cocoa::appkit::{NSView, NSTextField, NSButton, NSBezelStyle};
 use cocoa::foundation::{NSString, NSPoint, NSSize, NSRect};
+use objc::runtime::YES;
+
 
 const TOOLBAR_HEIGHT: f64 = 40.;
 
@@ -73,13 +75,34 @@ impl MyWindow {
 
         unsafe {
             let (width, height) = glutin_window.get_inner_size().expect("Failed to get window inner size.");
-            let margin = 9.;
-            let origin = NSPoint::new(margin, height as f64 - TOOLBAR_HEIGHT + margin);
-            let size = NSSize::new(width as f64 - 2. * margin, TOOLBAR_HEIGHT - 2. * margin);
-            let frame = NSRect::new(origin, size);
-            let field = NSTextField::alloc(nil);
-            NSTextField::initWithFrame_(field, frame);
-            nsview.addSubview_(field);
+            let padding = 9.;
+
+            let button_height = TOOLBAR_HEIGHT - 2. * padding;
+            let button_width = 3. * button_height;
+
+            {
+                // Urlbar
+                let origin = NSPoint::new(padding + button_width + padding, height as f64 - TOOLBAR_HEIGHT + padding);
+                let size = NSSize::new(width as f64 - 3. * padding - button_width, TOOLBAR_HEIGHT - 2. * padding);
+                let frame = NSRect::new(origin, size);
+                let field = NSTextField::alloc(nil);
+                NSTextField::initWithFrame_(field, frame);
+                NSTextField::setStringValue_(field, NSString::alloc(nil).init_str("https://servo.org"));
+                field.setEditable_(YES);
+                nsview.addSubview_(field);
+            }
+
+            {
+                // Reload button
+                let origin = NSPoint::new(padding, height as f64 - TOOLBAR_HEIGHT + padding);
+                let size = NSSize::new(button_width, button_height);
+                let frame = NSRect::new(origin, size);
+                let button = NSButton::alloc(nil);
+                NSButton::initWithFrame_(button, frame);
+                NSButton::setBezelStyle_(button, NSBezelStyle::NSRoundedBezelStyle);
+                NSButton::setTitle_(button, NSString::alloc(nil).init_str("reload"));
+                nsview.addSubview_(button);
+            }
         }
         
 
