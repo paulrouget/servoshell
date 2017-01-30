@@ -1,6 +1,8 @@
 #![feature(box_syntax)]
 
-// FIXME: Why add gleam here and not in my_window (which would require to use self::gleam)?
+extern crate glutin;
+extern crate winit;
+extern crate cocoa;
 extern crate gleam;
 extern crate servo;
 extern crate servo_geometry;
@@ -22,7 +24,7 @@ fn main() {
 
     let mut opts = opts::default_opts();
     opts.headless = false;
-    opts.url = Some(ServoUrl::parse("https://servo.org").unwrap());
+    opts.url = Some(ServoUrl::parse("http://paulrouget.com").unwrap());
     opts::set_defaults(opts);
 
     // Pipeline creation fails is layout_threads pref not set
@@ -30,14 +32,14 @@ fn main() {
 
     let w = Rc::new(MyWindow::new());
 
-    // let mut browser = servo::Browser::new(w.clone());
-    // browser.handle_events(vec![WindowEvent::InitializeCompositing]);
+    let mut browser = servo::Browser::new(w.clone());
+    browser.handle_events(vec![WindowEvent::InitializeCompositing]);
     loop {
         w.glutin_window().wait_events().next();
         // FIXME: translate glutin event to Servo event
         // let glutin_event = w.glutin_window.wait_events().next();
         // match glutin_event {
         // }
-        // browser.handle_events(vec![WindowEvent::Refresh]);
+        browser.handle_events(vec![WindowEvent::Refresh]);
     }
 }

@@ -1,7 +1,5 @@
-extern crate glutin;
-extern crate winit;
-extern crate cocoa;
 
+use glutin;
 use gleam::gl;
 use servo::compositing::windowing::WindowMethods;
 use servo::compositing::compositor_thread::{self, CompositorProxy, CompositorReceiver};
@@ -17,11 +15,10 @@ use style_traits::cursor::Cursor;
 use std::os::raw::c_void;
 use std::sync::mpsc::{Sender, channel};
 
-// FIXME: why self???
-use self::winit::os::macos::WindowExt;
-use self::cocoa::base::{id, nil};
-use self::cocoa::appkit::{NSView, NSTabView, NSTabViewItem};
-use self::cocoa::foundation::{NSString, NSPoint, NSSize, NSRect};
+use winit::os::macos::WindowExt;
+use cocoa::base::{id, nil};
+use cocoa::appkit::{NSView, NSTabView, NSTabViewItem};
+use cocoa::foundation::{NSString, NSPoint, NSSize, NSRect};
 
 struct GlutinCompositorProxy {
     sender: Sender<compositor_thread::Msg>,
@@ -60,13 +57,13 @@ impl MyWindow {
         // We should have 2 views. One for OpenGL and one for cocoa.
 
 
-        // unsafe {
-        //     glutin_window.make_current().expect("Couldn't make window current");
-        //     gl::load_with(|s| glutin_window.get_proc_address(s) as *const c_void);
-        //     gl::clear_color(1.0, 0.0, 0.0, 1.0);
-        //     gl::clear(gl::COLOR_BUFFER_BIT);
-        //     gl::finish();
-        // }
+        unsafe {
+            glutin_window.make_current().expect("Couldn't make window current");
+            gl::load_with(|s| glutin_window.get_proc_address(s) as *const c_void);
+            gl::clear_color(1.0, 0.0, 0.0, 1.0);
+            gl::clear(gl::COLOR_BUFFER_BIT);
+            gl::finish();
+        }
 
         glutin_window.swap_buffers().expect("swap_buffers() failed");
 
@@ -75,7 +72,7 @@ impl MyWindow {
         unsafe {
             println!("frame: {}x{}", nsview.frame().size.width, nsview.frame().size.height);
 
-            let tab_view = NSTabView::initWithFrame_(NSTabView::new(nil), NSRect::new(NSPoint::new(0., 0.), NSSize::new(200., 200.)));
+            let tab_view = NSTabView::initWithFrame_(NSTabView::new(nil), NSRect::new(NSPoint::new(0., 1024.), NSSize::new(1024., 18.)));
 
             // create a tab view item
             let tab_view_item = NSTabViewItem::new(nil)
@@ -107,17 +104,20 @@ impl MyWindow {
 
 impl WindowMethods for MyWindow {
     fn framebuffer_size(&self) -> TypedSize2D<u32, DevicePixel> {
+        println!("PAUL: framebuffer_size");
         let scale_factor = self.glutin_window.hidpi_factor() as u32;
         let (width, height) = self.glutin_window.get_inner_size().expect("Failed to get window inner size.");
-        TypedSize2D::new(width * scale_factor, height * scale_factor)
+        TypedSize2D::new(scale_factor * width, scale_factor * (height - 18))
     }
 
     fn size(&self) -> TypedSize2D<f32, ScreenPx> {
+        println!("PAUL: size");
         let (width, height) = self.glutin_window.get_inner_size().expect("Failed to get window inner size.");
-        TypedSize2D::new(width as f32, height as f32)
+        TypedSize2D::new(width as f32, (height - 18) as f32)
     }
 
     fn client_window(&self) -> (Size2D<u32>, Point2D<i32>) {
+        println!("PAUL: client_window");
         let (width, height) = self.glutin_window.get_inner_size().expect("Failed to get window inner size.");
         let size = Size2D::new(width, height);
         let (x, y) = self.glutin_window.get_position().expect("Failed to get window position.");
