@@ -20,6 +20,8 @@ use cocoa::base::{id, nil};
 use cocoa::appkit::{NSView, NSTabView, NSTabViewItem};
 use cocoa::foundation::{NSString, NSPoint, NSSize, NSRect};
 
+const TOOLBAR_HEIGHT: f64 = 40.;
+
 struct GlutinCompositorProxy {
     sender: Sender<compositor_thread::Msg>,
     window_proxy: Option<glutin::WindowProxy>,
@@ -72,7 +74,10 @@ impl MyWindow {
         unsafe {
             println!("frame: {}x{}", nsview.frame().size.width, nsview.frame().size.height);
 
-            let tab_view = NSTabView::initWithFrame_(NSTabView::new(nil), NSRect::new(NSPoint::new(0., 1024.), NSSize::new(1024., 18.)));
+            let (width, height) = glutin_window.get_inner_size().expect("Failed to get window inner size.");
+
+            let frame = NSRect::new(NSPoint::new(0., height as f64 - TOOLBAR_HEIGHT), NSSize::new(width as f64, TOOLBAR_HEIGHT));
+            let tab_view = NSTabView::initWithFrame_(NSTabView::new(nil), frame);
 
             // create a tab view item
             let tab_view_item = NSTabViewItem::new(nil)

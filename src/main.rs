@@ -24,7 +24,7 @@ fn main() {
 
     let mut opts = opts::default_opts();
     opts.headless = false;
-    opts.url = Some(ServoUrl::parse("http://paulrouget.com").unwrap());
+    opts.url = Some(ServoUrl::parse("https://servo.org").unwrap());
     opts::set_defaults(opts);
 
     // Pipeline creation fails is layout_threads pref not set
