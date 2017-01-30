@@ -7,8 +7,8 @@ authors = ["Paul Rouget <me@paulrouget.com>"]
 libc = "*"
 gleam = "0.2.8"
 winit = "*"
-cocoa = "0.5.2"
 glutin = {path = "../glutin"}
+cocoa = {path = "../cocoa-rs"}
 libservo = {path = "../servo/components/servo"}
 style_traits = {path = "../servo/components/style_traits"}
 servo_geometry = {path = "../servo/components/geometry"}
