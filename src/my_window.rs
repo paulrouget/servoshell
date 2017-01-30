@@ -17,7 +17,7 @@ use std::sync::mpsc::{Sender, channel};
 
 use winit::os::macos::WindowExt;
 use cocoa::base::{id, nil};
-use cocoa::appkit::{NSView, NSTabView, NSTabViewItem};
+use cocoa::appkit::{NSView, NSTextField};
 use cocoa::foundation::{NSString, NSPoint, NSSize, NSRect};
 
 const TOOLBAR_HEIGHT: f64 = 40.;
@@ -72,28 +72,14 @@ impl MyWindow {
         let nsview = glutin_window.as_winit_window().get_nsview() as id;
 
         unsafe {
-            println!("frame: {}x{}", nsview.frame().size.width, nsview.frame().size.height);
-
             let (width, height) = glutin_window.get_inner_size().expect("Failed to get window inner size.");
-
-            let frame = NSRect::new(NSPoint::new(0., height as f64 - TOOLBAR_HEIGHT), NSSize::new(width as f64, TOOLBAR_HEIGHT));
-            let tab_view = NSTabView::initWithFrame_(NSTabView::new(nil), frame);
-
-            // create a tab view item
-            let tab_view_item = NSTabViewItem::new(nil)
-                .initWithIdentifier_(NSString::alloc(nil).init_str("TabView1"));
-
-            tab_view_item.setLabel_(NSString::alloc(nil).init_str("Tab view item 1"));
-            tab_view.addTabViewItem_(tab_view_item);
-
-            // create a second tab view item
-            let tab_view_item2 = NSTabViewItem::new(nil)
-                .initWithIdentifier_(NSString::alloc(nil).init_str("TabView2"));
-
-            tab_view_item2.setLabel_(NSString::alloc(nil).init_str("Tab view item 2"));
-            tab_view.addTabViewItem_(tab_view_item2);
-
-            nsview.addSubview_(tab_view);
+            let margin = 9.;
+            let origin = NSPoint::new(margin, height as f64 - TOOLBAR_HEIGHT + margin);
+            let size = NSSize::new(width as f64 - 2. * margin, TOOLBAR_HEIGHT - 2. * margin);
+            let frame = NSRect::new(origin, size);
+            let field = NSTextField::alloc(nil);
+            NSTextField::initWithFrame_(field, frame);
+            nsview.addSubview_(field);
         }
         
 
