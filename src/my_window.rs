@@ -60,10 +60,6 @@ impl MyWindow {
             with_vsync();
         let glutin_window = builder.build().expect("Failed to create window.");
 
-        // FIXME: Using the same view for opengl and cocoa won't work.
-        // We should have 2 views. One for OpenGL and one for cocoa.
-
-
         unsafe {
             glutin_window.make_current().expect("Couldn't make window current");
             gl::load_with(|s| glutin_window.get_proc_address(s) as *const c_void);
@@ -71,8 +67,6 @@ impl MyWindow {
             gl::clear(gl::COLOR_BUFFER_BIT);
             gl::finish();
         }
-
-        glutin_window.swap_buffers().expect("swap_buffers() failed");
 
         let nsview = glutin_window.as_winit_window().get_nsview() as id;
 
