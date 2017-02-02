@@ -1,0 +1,5 @@
+- libservo still depend on glutin, via skia. Skia could do without glutin. https://github.com/servo/skia/issues/127
+- /resources/ is necessary
+- rely on prefs
+- how to avoid copying Cargo.lock
+- style_traits and servo_geometry necessary
