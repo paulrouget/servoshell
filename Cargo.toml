@@ -16,6 +16,5 @@ servo_geometry = {path = "../servo/components/geometry"}
 
 [replace]
 "winit:0.5.10" = { path = "../winit/" }
-"glutin:0.7.4" = { path = "../glutin/" }
 "cocoa:0.6.0" = { path = "../cocoa-rs/" }
 "servo-skia:0.20130412.25" = { path = "../skia/" }

@@ -1,4 +1,3 @@
-
 use glutin;
 use gleam::gl;
 use servo::compositing::windowing::WindowMethods;
@@ -16,13 +15,12 @@ use std::os::raw::c_void;
 use std::sync::mpsc::{Sender, channel};
 
 use winit::os::macos::WindowExt;
-use cocoa::base::{id, nil};
-use cocoa::appkit::{NSView, NSTextField, NSButton, NSBezelStyle};
-use cocoa::foundation::{NSString, NSPoint, NSSize, NSRect};
+use cocoa::base::*;
+use cocoa::foundation::*;
+use cocoa::appkit::*;
 use objc::runtime::YES;
 
-
-const TOOLBAR_HEIGHT: f64 = 40.;
+use ui::build_ui;
 
 struct GlutinCompositorProxy {
     sender: Sender<compositor_thread::Msg>,
@@ -48,14 +46,15 @@ impl CompositorProxy for GlutinCompositorProxy {
     }
 }
 
-pub struct MyWindow {
+pub struct ShellWindow {
     glutin_window: glutin::Window,
 }
 
-impl MyWindow {
-    pub fn new() -> MyWindow {
+impl ShellWindow {
+    pub fn new() -> ShellWindow {
         let builder = glutin::WindowBuilder::new().
             with_gl(glutin::GlRequest::Specific(glutin::Api::OpenGl, (3, 2))).
+            // with_decorations(false).
             with_dimensions(800, 600).
             with_vsync();
         let glutin_window = builder.build().expect("Failed to create window.");
@@ -69,41 +68,13 @@ impl MyWindow {
         }
 
         let nsview = glutin_window.as_winit_window().get_nsview() as id;
+        let nswindow = glutin_window.as_winit_window().get_nswindow() as id;
 
         unsafe {
-            let (width, height) = glutin_window.get_inner_size().expect("Failed to get window inner size.");
-            let padding = 9.;
-
-            let button_height = TOOLBAR_HEIGHT - 2. * padding;
-            let button_width = 3. * button_height;
-
-            {
-                // Urlbar
-                let origin = NSPoint::new(padding + button_width + padding, height as f64 - TOOLBAR_HEIGHT + padding);
-                let size = NSSize::new(width as f64 - 3. * padding - button_width, TOOLBAR_HEIGHT - 2. * padding);
-                let frame = NSRect::new(origin, size);
-                let field = NSTextField::alloc(nil);
-                NSTextField::initWithFrame_(field, frame);
-                NSTextField::setStringValue_(field, NSString::alloc(nil).init_str("https://servo.org"));
-                field.setEditable_(YES);
-                nsview.addSubview_(field);
-            }
-
-            {
-                // Reload button
-                let origin = NSPoint::new(padding, height as f64 - TOOLBAR_HEIGHT + padding);
-                let size = NSSize::new(button_width, button_height);
-                let frame = NSRect::new(origin, size);
-                let button = NSButton::alloc(nil);
-                NSButton::initWithFrame_(button, frame);
-                NSButton::setBezelStyle_(button, NSBezelStyle::NSRoundedBezelStyle);
-                NSButton::setTitle_(button, NSString::alloc(nil).init_str("reload"));
-                nsview.addSubview_(button);
-            }
+            build_ui(nswindow);
         }
-        
 
-        MyWindow {
+        ShellWindow {
             glutin_window: glutin_window
         }
     }
@@ -113,16 +84,16 @@ impl MyWindow {
     }
 }
 
-impl WindowMethods for MyWindow {
+impl WindowMethods for ShellWindow {
     fn framebuffer_size(&self) -> TypedSize2D<u32, DevicePixel> {
         let scale_factor = self.glutin_window.hidpi_factor() as u32;
         let (width, height) = self.glutin_window.get_inner_size().expect("Failed to get window inner size.");
-        TypedSize2D::new(scale_factor * width, scale_factor * (height - TOOLBAR_HEIGHT as u32))
+        TypedSize2D::new(scale_factor * width, scale_factor * height)
     }
 
     fn size(&self) -> TypedSize2D<f32, ScreenPx> {
         let (width, height) = self.glutin_window.get_inner_size().expect("Failed to get window inner size.");
-        TypedSize2D::new(width as f32, height as f32 - TOOLBAR_HEIGHT as f32)
+        TypedSize2D::new(width as f32, height as f32)
     }
 
     fn client_window(&self) -> (Size2D<u32>, Point2D<i32>) {
