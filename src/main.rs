@@ -9,8 +9,8 @@ extern crate objc;
 extern crate servo;
 extern crate servo_geometry;
 extern crate style_traits;
-extern crate webrender_traits;
 extern crate euclid;
+extern crate webrender_traits;
 
 mod ui;
 mod shell_window;
@@ -25,7 +25,6 @@ use servo::servo_config::prefs::{PrefValue, PREFS};
 use servo::servo_url::ServoUrl;
 use shell_window::ShellWindow;
 
-// FIXME: resources dir is necessary
 fn main() {
     println!("{}", servo_version());
 
