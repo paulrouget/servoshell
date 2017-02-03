@@ -6,55 +6,14 @@ use objc::declare::ClassDecl;
 use std::ops::Deref;
 
 pub unsafe fn build_ui(window: id) {
-
-
-    // unsafe {
-    //     let (width, height) = glutin_window.get_inner_size().expect("Failed to get window inner size.");
-    //     let padding = 9.;
-
-    //     let button_height = TOOLBAR_HEIGHT - 2. * padding;
-    //     let button_width = 3. * button_height;
-
-    //     {
-    //         // Urlbar
-    //         let origin = NSPoint::new(2. * padding + button_width + 50., height as f64 - TOOLBAR_HEIGHT + padding);
-    //         let size = NSSize::new(width as f64 - 3. * padding - button_width - 50., TOOLBAR_HEIGHT - 2. * padding);
-    //         let frame = NSRect::new(origin, size);
-    //         let field = NSTextField::alloc(nil);
-    //         NSTextField::initWithFrame_(field, frame);
-    //         NSTextField::setStringValue_(field, NSString::alloc(nil).init_str("https://servo.org"));
-    //         field.setEditable_(YES);
-    //         nsview.addSubview_(field);
-    //     }
-
-    //     {
-    //         // Reload button
-    //         let origin = NSPoint::new(padding + 50., height as f64 - TOOLBAR_HEIGHT + padding);
-    //         let size = NSSize::new(button_width, button_height);
-    //         let frame = NSRect::new(origin, size);
-    //         let button = NSButton::alloc(nil);
-    //         NSButton::initWithFrame_(button, frame);
-    //         NSButton::setBezelStyle_(button, NSBezelStyle::NSRoundedBezelStyle);
-    //         NSButton::setTitle_(button, NSString::alloc(nil).init_str("reload"));
-    //         nsview.addSubview_(button);
-    //     }
-    // }
-
-
-
     window.setTitleVisibility_(NSWindowTitleVisibility::NSWindowTitleHidden);
-
     let toolbar = NSToolbar::alloc(nil).initWithIdentifier_(NSString::alloc(nil).init_str("tb1"));
     toolbar.setDisplayMode_(NSToolbarDisplayMode::NSToolbarDisplayModeIconAndLabel);
     let toolbar_p = IdRef::new(toolbar);
-
     let td = ToolbarDelegate::new(DelegateState {
         toolbar: toolbar_p.clone(),
     });
-
     window.setToolbar_(toolbar);
-
-
 }
 
 struct DelegateState {
@@ -83,40 +42,58 @@ impl ToolbarDelegate {
                     NSString::alloc(nil).init_str("back"),
                     NSString::alloc(nil).init_str("forward"),
                     NSString::alloc(nil).init_str("reload"),
+                    NSToolbarFlexibleSpaceItemIdentifier,
                     NSString::alloc(nil).init_str("urlbar"),
+                    NSToolbarFlexibleSpaceItemIdentifier,
+                    NSToolbarToggleSidebarItemIdentifier,
                 ])
             }
         }
 
-        extern fn toolbar(this: &Object, _: Sel, _: id, identifier: id, _: id) -> id {
+        extern fn toolbar(this: &Object, _: Sel, _toolbar: id, identifier: id, _: id) -> id {
             unsafe {
+                let mut item = nil;
                 if NSString::isEqualToString(identifier, "reload") {
-                    let origin = NSPoint::new(0., 0.);
-                    let size = NSSize::new(80., 40.);
-                    let frame = NSRect::new(origin, size);
-                    let button = NSButton::alloc(nil);
-                    NSButton::initWithFrame_(button, frame);
+                    let button = NSView::init(NSButton::alloc(nil));
+                    let label = NSString::alloc(nil).init_str("r");
                     NSButton::setBezelStyle_(button, NSBezelStyle::NSRoundedBezelStyle);
-                    NSButton::setTitle_(button, NSString::alloc(nil).init_str("reload"));
-                    let item = NSToolbarItem::alloc(nil).initWithItemIdentifier_(identifier).autorelease();
+                    NSButton::setTitle_(button, label);
+                    item = NSToolbarItem::alloc(nil).initWithItemIdentifier_(identifier).autorelease();
+                    NSToolbarItem::setMinSize_(item, NSSize::new(35., 35.));
+                    NSToolbarItem::setMaxSize_(item, NSSize::new(35., 35.));
                     NSToolbarItem::setView_(item, button);
-                    item
-                } else {
-                    if NSString::isEqualToString(identifier, "urlbar") {
-                        let origin = NSPoint::new(45., 0.);
-                        let size = NSSize::new(200., 30.);
-                        let frame = NSRect::new(origin, size);
-                        let field = NSTextField::alloc(nil);
-                        NSTextField::initWithFrame_(field, frame);
-                        NSTextField::setStringValue_(field, NSString::alloc(nil).init_str("https://servo.org"));
-                        field.setEditable_(YES);
-                        let item = NSToolbarItem::alloc(nil).initWithItemIdentifier_(identifier).autorelease();
-                        NSToolbarItem::setView_(item, field);
-                        item
-                    } else {
-                        nil
-                    }
                 }
+                if NSString::isEqualToString(identifier, "back") {
+                    let button = NSView::init(NSButton::alloc(nil));
+                    let label = NSString::alloc(nil).init_str("<");
+                    NSButton::setBezelStyle_(button, NSBezelStyle::NSRoundedBezelStyle);
+                    NSButton::setTitle_(button, label);
+                    item = NSToolbarItem::alloc(nil).initWithItemIdentifier_(identifier).autorelease();
+                    NSToolbarItem::setMinSize_(item, NSSize::new(35., 35.));
+                    NSToolbarItem::setMaxSize_(item, NSSize::new(35., 35.));
+                    NSToolbarItem::setView_(item, button);
+                }
+                if NSString::isEqualToString(identifier, "forward") {
+                    let button = NSView::init(NSButton::alloc(nil));
+                    let label = NSString::alloc(nil).init_str(">");
+                    NSButton::setBezelStyle_(button, NSBezelStyle::NSRoundedBezelStyle);
+                    NSButton::setTitle_(button, label);
+                    item = NSToolbarItem::alloc(nil).initWithItemIdentifier_(identifier).autorelease();
+                    NSToolbarItem::setMinSize_(item, NSSize::new(35., 35.));
+                    NSToolbarItem::setMaxSize_(item, NSSize::new(35., 35.));
+                    NSToolbarItem::setView_(item, button);
+                }
+                if NSString::isEqualToString(identifier, "urlbar") {
+                    let field = NSView::init(NSTextField::alloc(nil));
+                    let string = NSString::alloc(nil).init_str("foobar");
+                    NSTextField::setStringValue_(field, string);
+                    item = NSToolbarItem::alloc(nil).initWithItemIdentifier_(identifier).autorelease();
+                    NSButton::setBezelStyle_(field, NSBezelStyle::NSRoundedBezelStyle);
+                    NSToolbarItem::setMinSize_(item, NSSize::new(100., 0.));
+                    NSToolbarItem::setMaxSize_(item, NSSize::new(400., 100.));
+                    NSToolbarItem::setView_(item, field);
+                }
+                item
             }
         }
 
