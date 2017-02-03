@@ -10,11 +10,10 @@ gleam = "0.2"
 winit = "0.5"
 glutin = "0.7"
 cocoa = "0.6"
-libservo = {path = "../servo/components/servo"}
+libservo = {path = "../servo/components/servo"} # needs ./mach cargo-update -p azure (azure needs to be 0.11.0)
 style_traits = {path = "../servo/components/style_traits"}
 servo_geometry = {path = "../servo/components/geometry"}
 
 [replace]
-"winit:0.5.10" = { path = "../winit/" }
-"cocoa:0.6.0" = { path = "../cocoa-rs/" }
-"servo-skia:0.20130412.25" = { path = "../skia/" }
+"winit:0.5.10" = { path = "../winit/" } # paulrouget/servoshell
+"cocoa:0.6.0" = { path = "../cocoa-rs/" } # paulrouget/toolbar
