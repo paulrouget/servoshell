@@ -14,7 +14,11 @@ euclid = "0.10.3"
 libservo = {path = "../servo/components/servo"} # needs ./mach cargo-update -p azure (azure needs to be 0.11.0)
 style_traits = {path = "../servo/components/style_traits"}
 servo_geometry = {path = "../servo/components/geometry"}
-webrender_traits = {path = "../webrender/webrender_traits/"}
+
+[dependencies.webrender_traits]
+git = "https://github.com/servo/webrender"
+default_features = false
+version = "0.11.0"
 
 [replace]
 "winit:0.5.10" = { path = "../winit/" } # paulrouget/servoshell
