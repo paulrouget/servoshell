@@ -3,6 +3,7 @@ name = "servoshell"
 version = "0.1.0"
 dependencies = [
  "cocoa 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "euclid 0.10.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "gleam 0.2.30 (registry+https://github.com/rust-lang/crates.io-index)",
  "glutin 0.7.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.20 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -10,6 +11,7 @@ dependencies = [
  "objc 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "servo_geometry 0.0.1",
  "style_traits 0.0.1",
+ "webrender_traits 0.13.0",
  "winit 0.5.10 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -2969,6 +2971,22 @@ dependencies = [
  "offscreen_gl_context 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 0.8.20 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 0.8.23 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "webrender_traits"
+version = "0.13.0"
+dependencies = [
+ "app_units 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "byteorder 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "core-graphics 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "dwrote 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "euclid 0.10.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gleam 0.2.30 (registry+https://github.com/rust-lang/crates.io-index)",
+ "heapsize 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "offscreen_gl_context 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 0.8.20 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_codegen 0.8.23 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
