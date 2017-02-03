@@ -10,9 +10,11 @@ gleam = "0.2"
 winit = "0.5"
 glutin = "0.7"
 cocoa = "0.6"
+euclid = "0.10.3"
 libservo = {path = "../servo/components/servo"} # needs ./mach cargo-update -p azure (azure needs to be 0.11.0)
 style_traits = {path = "../servo/components/style_traits"}
 servo_geometry = {path = "../servo/components/geometry"}
+webrender_traits = {path = "../webrender/webrender_traits/"}
 
 [replace]
 "winit:0.5.10" = { path = "../winit/" } # paulrouget/servoshell
