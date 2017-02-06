@@ -23,6 +23,6 @@ version = "0.11.0"
 [replace]
 "winit:0.5.10" = { path = "../winit/" } # paulrouget/servoshell
 "cocoa:0.6.0" = { path = "../cocoa-rs/" } # paulrouget/toolbar
-"https://github.com/servo/webrender#0.12.0" = { path = "../webrender/webrender/" }
+"https://github.com/servo/webrender#0.12.0" = { path = "../webrender/webrender/" } # paulrouget/outOfWindowRendering
 "https://github.com/servo/webrender#webrender_traits:0.11.0" = { path = "../webrender/webrender_traits/" }
 
