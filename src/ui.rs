@@ -7,6 +7,8 @@ use std::ops::Deref;
 
 pub unsafe fn build_ui(window: id) {
     window.setTitleVisibility_(NSWindowTitleVisibility::NSWindowTitleHidden);
+    let mask = window.styleMask() as NSUInteger | NSWindowMask::NSFullSizeContentViewWindowMask as NSUInteger;
+    window.setStyleMask_(mask);
     let toolbar = NSToolbar::alloc(nil).initWithIdentifier_(NSString::alloc(nil).init_str("tb1"));
     toolbar.setDisplayMode_(NSToolbarDisplayMode::NSToolbarDisplayModeIconAndLabel);
     let toolbar_p = IdRef::new(toolbar);
@@ -39,8 +41,7 @@ impl ToolbarDelegate {
         extern fn toolbar_default_item_identifiers(this: &Object, _: Sel, _: id) -> id {
             unsafe {
                 NSArray::arrayWithObjects(nil, &[
-                    NSString::alloc(nil).init_str("back"),
-                    NSString::alloc(nil).init_str("forward"),
+                    NSString::alloc(nil).init_str("history"),
                     NSString::alloc(nil).init_str("reload"),
                     NSToolbarFlexibleSpaceItemIdentifier,
                     NSString::alloc(nil).init_str("urlbar"),
@@ -55,34 +56,26 @@ impl ToolbarDelegate {
                 let mut item = nil;
                 if NSString::isEqualToString(identifier, "reload") {
                     let button = NSView::init(NSButton::alloc(nil));
-                    let label = NSString::alloc(nil).init_str("r");
                     NSButton::setBezelStyle_(button, NSBezelStyle::NSRoundedBezelStyle);
-                    NSButton::setTitle_(button, label);
+                    NSButton::setImage_(button, NSImage::imageNamed_(nil, NSImageNameRefreshTemplate));
                     item = NSToolbarItem::alloc(nil).initWithItemIdentifier_(identifier).autorelease();
                     NSToolbarItem::setMinSize_(item, NSSize::new(35., 35.));
                     NSToolbarItem::setMaxSize_(item, NSSize::new(35., 35.));
                     NSToolbarItem::setView_(item, button);
                 }
-                if NSString::isEqualToString(identifier, "back") {
-                    let button = NSView::init(NSButton::alloc(nil));
-                    let label = NSString::alloc(nil).init_str("<");
-                    NSButton::setBezelStyle_(button, NSBezelStyle::NSRoundedBezelStyle);
-                    NSButton::setTitle_(button, label);
+                if NSString::isEqualToString(identifier, "history") {
+                    let db = NSView::init(NSSegmentedControl::alloc(nil));
+                    db.setSegmentStyle_(NSSegmentStyle::NSSegmentStyleRounded);
+                    db.setTrackingMode_(NSSegmentSwitchTrackingMode::NSSegmentSwitchTrackingMomentary);
+                    db.setSegmentCount_(2);
+                    db.setImage_forSegment_(NSImage::imageNamed_(nil, NSImageNameGoLeftTemplate), 0);
+                    db.setImage_forSegment_(NSImage::imageNamed_(nil, NSImageNameGoRightTemplate), 1);
                     item = NSToolbarItem::alloc(nil).initWithItemIdentifier_(identifier).autorelease();
-                    NSToolbarItem::setMinSize_(item, NSSize::new(35., 35.));
-                    NSToolbarItem::setMaxSize_(item, NSSize::new(35., 35.));
-                    NSToolbarItem::setView_(item, button);
+                    NSToolbarItem::setMinSize_(item, NSSize::new(65., 25.));
+                    NSToolbarItem::setMaxSize_(item, NSSize::new(65., 40.));
+                    NSToolbarItem::setView_(item, db);
                 }
-                if NSString::isEqualToString(identifier, "forward") {
-                    let button = NSView::init(NSButton::alloc(nil));
-                    let label = NSString::alloc(nil).init_str(">");
-                    NSButton::setBezelStyle_(button, NSBezelStyle::NSRoundedBezelStyle);
-                    NSButton::setTitle_(button, label);
-                    item = NSToolbarItem::alloc(nil).initWithItemIdentifier_(identifier).autorelease();
-                    NSToolbarItem::setMinSize_(item, NSSize::new(35., 35.));
-                    NSToolbarItem::setMaxSize_(item, NSSize::new(35., 35.));
-                    NSToolbarItem::setView_(item, button);
-                }
+
                 if NSString::isEqualToString(identifier, "urlbar") {
                     let field = NSView::init(NSTextField::alloc(nil));
                     let string = NSString::alloc(nil).init_str("foobar");

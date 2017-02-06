@@ -30,7 +30,7 @@ fn main() {
 
     let mut opts = opts::default_opts();
     opts.headless = false;
-    opts.url = Some(ServoUrl::parse("https://servo.org").unwrap());
+    opts.url = ServoUrl::parse(std::env::args().nth(1).unwrap().as_str()).ok();
     opts::set_defaults(opts);
 
     // Pipeline creation fails is layout_threads pref not set
