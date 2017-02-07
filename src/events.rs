@@ -7,7 +7,6 @@ use euclid::{Point2D, TypedPoint2D};
 use servo::script_traits::TouchEventType;
 use glutin::TouchPhase;
 
-
 const LINE_HEIGHT: f32 = 38.0;
 
 pub struct GlutinEventHandler {

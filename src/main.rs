@@ -19,18 +19,30 @@ mod events;
 use events::GlutinEventHandler;
 use std::rc::Rc;
 use servo::config::servo_version;
-use servo::compositing::windowing::WindowEvent;
 use servo::servo_config::opts;
 use servo::servo_config::prefs::{PrefValue, PREFS};
 use servo::servo_url::ServoUrl;
 use shell_window::ShellWindow;
+
+fn get_url() -> Option<ServoUrl> {
+    let default_url = ServoUrl::parse("http://servo.org").ok();
+    match std::env::args().nth(1) {
+        None => default_url,
+        Some(arg1) => {
+            match ServoUrl::parse(arg1.as_str()) {
+                Err(_) => default_url,
+                Ok(url) => Some(url)
+            }
+        }
+    }
+}
 
 fn main() {
     println!("{}", servo_version());
 
     let mut opts = opts::default_opts();
     opts.headless = false;
-    opts.url = ServoUrl::parse(std::env::args().nth(1).unwrap().as_str()).ok();
+    opts.url = get_url();
     opts::set_defaults(opts);
 
     // Pipeline creation fails is layout_threads pref not set
@@ -41,7 +53,6 @@ fn main() {
     let glutin_event_handler = GlutinEventHandler::new();
 
     let mut browser = servo::Browser::new(shell_window.clone());
-    browser.handle_events(vec![WindowEvent::InitializeCompositing]);
 
     loop {
         let glutin_event = shell_window.glutin_window().wait_events().next();
