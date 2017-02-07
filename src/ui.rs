@@ -5,12 +5,15 @@ use objc::runtime::{Class, Object, Sel};
 use objc::declare::ClassDecl;
 use std::ops::Deref;
 
+const DARK: bool = false;
+
 pub unsafe fn build_ui(window: id) {
     window.setTitleVisibility_(NSWindowTitleVisibility::NSWindowTitleHidden);
     let mask = window.styleMask() as NSUInteger | NSWindowMask::NSFullSizeContentViewWindowMask as NSUInteger;
     window.setStyleMask_(mask);
-    // window.setTitlebarAppearsTransparent_(YES);
-    // window.setAppearance_(NSAppearance::named_(nil, NSAppearanceNameVibrantDark));
+    if DARK {
+        window.setAppearance_(NSAppearance::named_(nil, NSAppearanceNameVibrantDark));
+    }
     let toolbar = NSToolbar::alloc(nil).initWithIdentifier_(NSString::alloc(nil).init_str("tb1"));
     toolbar.setDisplayMode_(NSToolbarDisplayMode::NSToolbarDisplayModeIconAndLabel);
     let toolbar_p = IdRef::new(toolbar);

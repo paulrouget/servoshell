@@ -4,3 +4,11 @@
 - how to avoid copying Cargo.lock and resources
 - style_traits and servo_geometry necessary
 - rustc nightly
+
+- status bar
+- sidebar
+- dark UI
+- tab (the key) through controls
+- reload/stop button
+- progressbar (nsprogressindicator)
+- figure out button layout magic values
