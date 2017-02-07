@@ -1,7 +1,7 @@
 use cocoa::base::*;
 use cocoa::foundation::*;
 use cocoa::appkit::*;
-use objc::runtime::{Class, Object, Sel, NO};
+use objc::runtime::{Class, Object, Sel};
 use objc::declare::ClassDecl;
 use std::ops::Deref;
 
@@ -14,9 +14,12 @@ pub unsafe fn build_ui(window: id) {
     let toolbar = NSToolbar::alloc(nil).initWithIdentifier_(NSString::alloc(nil).init_str("tb1"));
     toolbar.setDisplayMode_(NSToolbarDisplayMode::NSToolbarDisplayModeIconAndLabel);
     let toolbar_p = IdRef::new(toolbar);
+
+    // FIXME: if s/td/_/ , no toolbar button show up
     let td = ToolbarDelegate::new(DelegateState {
         toolbar: toolbar_p.clone(),
     });
+
     window.setToolbar_(toolbar);
 }
 
@@ -34,13 +37,13 @@ impl ToolbarDelegate {
         use std::os::raw::c_void;
         use std::sync::{Once, ONCE_INIT};
 
-        extern fn toolbar_allowed_item_identifiers(this: &Object, _: Sel, _: id) -> id {
+        extern fn toolbar_allowed_item_identifiers(_this: &Object, _: Sel, _: id) -> id {
             unsafe {
                 NSArray::array(nil)
             }
         }
 
-        extern fn toolbar_default_item_identifiers(this: &Object, _: Sel, _: id) -> id {
+        extern fn toolbar_default_item_identifiers(_this: &Object, _: Sel, _: id) -> id {
             unsafe {
                 NSArray::arrayWithObjects(nil, &[
                     NSString::alloc(nil).init_str("history"),
@@ -53,7 +56,7 @@ impl ToolbarDelegate {
             }
         }
 
-        extern fn toolbar(this: &Object, _: Sel, _toolbar: id, identifier: id, _: id) -> id {
+        extern fn toolbar(_this: &Object, _: Sel, _toolbar: id, identifier: id, _: id) -> id {
             unsafe {
                 let mut item = nil;
                 if NSString::isEqualToString(identifier, "reload") {

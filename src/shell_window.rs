@@ -16,9 +16,6 @@ use std::sync::mpsc::{Sender, channel};
 
 use winit::os::macos::WindowExt;
 use cocoa::base::*;
-use cocoa::foundation::*;
-use cocoa::appkit::*;
-use objc::runtime::YES;
 
 use ui::build_ui;
 
@@ -52,11 +49,12 @@ pub struct ShellWindow {
 
 impl ShellWindow {
     pub fn new() -> ShellWindow {
+
         let builder = glutin::WindowBuilder::new().
             with_gl(glutin::GlRequest::Specific(glutin::Api::OpenGl, (3, 2))).
-            // with_decorations(false).
             with_dimensions(800, 600).
             with_vsync();
+
         let glutin_window = builder.build().expect("Failed to create window.");
 
         unsafe {
@@ -67,7 +65,6 @@ impl ShellWindow {
             gl::finish();
         }
 
-        let nsview = glutin_window.as_winit_window().get_nsview() as id;
         let nswindow = glutin_window.as_winit_window().get_nswindow() as id;
 
         unsafe {
