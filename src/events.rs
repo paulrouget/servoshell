@@ -35,10 +35,17 @@ impl GlutinEventHandler {
                 self.events_for_servo.borrow_mut().push(event);
             }
             glutin::Event::MouseWheel(delta, phase) => {
-                let (dx, dy) = match delta {
+                let (mut dx, mut dy) = match delta {
                     glutin::MouseScrollDelta::LineDelta(dx, dy) => (dx, dy * LINE_HEIGHT),
                     glutin::MouseScrollDelta::PixelDelta(dx, dy) => (dx, dy),
                 };
+
+                if dy.abs() >= dx.abs() {
+                    dx = 0.0;
+                } else {
+                    dy = 0.0;
+                }
+
                 let scroll_location = webrender_traits::ScrollLocation::Delta(TypedPoint2D::new(dx, dy));
                 let phase = match phase {
                     TouchPhase::Started => TouchEventType::Down,
@@ -46,14 +53,6 @@ impl GlutinEventHandler {
                     TouchPhase::Ended => TouchEventType::Up,
                     TouchPhase::Cancelled => TouchEventType::Cancel,
                 };
-
-                if let webrender_traits::ScrollLocation::Delta(mut delta) = scroll_location {
-                    if delta.y.abs() >= delta.x.abs() {
-                        delta.x = 0.0;
-                    } else {
-                        delta.y = 0.0;
-                    }
-                }
 
                 let mouse_pos = self.mouse_pos.get();
                 let event = WindowEvent::Scroll(scroll_location, TypedPoint2D::new(mouse_pos.x as i32, mouse_pos.y as i32), phase);
