@@ -11,18 +11,18 @@ winit = "0.5"
 glutin = "0.7"
 cocoa = "0.6"
 euclid = "0.10.3"
-libservo = {path = "../servo/components/servo"} # needs ./mach cargo-update -p azure (azure needs to be 0.11.0)
+libservo = {path = "../servo/components/servo"} # needs azure update and wr 0.15
 style_traits = {path = "../servo/components/style_traits"}
 servo_geometry = {path = "../servo/components/geometry"}
 
 [dependencies.webrender_traits]
 git = "https://github.com/servo/webrender"
 default_features = false
-version = "0.11.0"
+version = "0.14.0"
 
 [replace]
-"winit:0.5.10" = { path = "../winit/" } # paulrouget/servoshell
+"winit:0.5.10" = { path = "../winit/" } # paulrouget/servoshell (fix segfault and keyboard)
 "cocoa:0.6.0" = { path = "../cocoa-rs/" } # paulrouget/toolbar
-"https://github.com/servo/webrender#0.12.0" = { path = "../webrender/webrender/" } # paulrouget/outOfWindowRendering
-"https://github.com/servo/webrender#webrender_traits:0.11.0" = { path = "../webrender/webrender_traits/" }
+"https://github.com/servo/webrender#0.15.0" = { path = "../webrender/webrender/" } # paulrouget/outOfWindowRendering
+"https://github.com/servo/webrender#webrender_traits:0.14.0" = { path = "../webrender/webrender_traits/" }
 
