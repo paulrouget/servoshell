@@ -17,7 +17,7 @@ use std::sync::mpsc::{Sender, channel};
 use winit::os::macos::WindowExt;
 use cocoa::base::*;
 
-use ui::build_ui;
+use ui::UI;
 
 struct GlutinCompositorProxy {
     sender: Sender<compositor_thread::Msg>,
@@ -45,6 +45,7 @@ impl CompositorProxy for GlutinCompositorProxy {
 
 pub struct ShellWindow {
     glutin_window: glutin::Window,
+    ui: UI,
 }
 
 impl ShellWindow {
@@ -67,12 +68,11 @@ impl ShellWindow {
 
         let nswindow = glutin_window.as_winit_window().get_nswindow() as id;
 
-        unsafe {
-            build_ui(nswindow);
-        }
+        let ui = UI::new(nswindow);
 
         ShellWindow {
-            glutin_window: glutin_window
+            glutin_window: glutin_window,
+            ui: ui,
         }
     }
 
@@ -129,13 +129,21 @@ impl WindowMethods for ShellWindow {
         ScaleFactor::new(self.glutin_window.hidpi_factor())
     }
 
-    fn set_page_title(&self, _title: Option<String>) {
+    fn set_page_title(&self, title: Option<String>) {
+        match title {
+            None => self.ui.set_textfield_text(""),
+            Some(text) => self.ui.set_textfield_text(text.as_str()),
+        }
     }
 
     fn set_page_url(&self, _url: ServoUrl) {
     }
 
-    fn status(&self, _: Option<String>) {
+    fn status(&self, status: Option<String>) {
+        match status {
+            None => self.ui.set_textfield_text(""),
+            Some(text) => self.ui.set_textfield_text(text.as_str()),
+        }
     }
 
     fn load_start(&self, _: bool, _: bool) {
