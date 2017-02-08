@@ -12,3 +12,4 @@
 - reload/stop button
 - progressbar (nsprogressindicator)
 - figure out button layout magic values
+- searchbar

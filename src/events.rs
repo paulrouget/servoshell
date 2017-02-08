@@ -29,6 +29,7 @@ impl GlutinEventHandler {
     pub fn handle_glutin_event(&self, event: glutin::Event) -> bool {
         match event {
             glutin::Event::MouseMoved(x, y) => {
+                let y = y - 76; /* FIXME: magic value */
                 self.mouse_pos.set(Point2D::new(x, y));
                 let event = WindowEvent::MouseWindowMoveEventClass(TypedPoint2D::new(x as f32, y as f32));
                 self.events_for_servo.borrow_mut().push(event);

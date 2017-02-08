@@ -6,6 +6,7 @@ extern crate cocoa;
 extern crate gleam;
 #[macro_use]
 extern crate objc;
+extern crate objc_foundation;
 extern crate servo;
 extern crate servo_geometry;
 extern crate style_traits;

@@ -6,6 +6,7 @@ authors = ["Paul Rouget <me@paulrouget.com>"]
 [dependencies]
 libc = "*"
 objc = "0.2"
+objc-foundation = "*"
 gleam = "0.2"
 winit = "0.5"
 glutin = "0.7"
