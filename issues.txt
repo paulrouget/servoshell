@@ -13,3 +13,14 @@
 - progressbar (nsprogressindicator)
 - figure out button layout magic values
 - searchbar
+- try multiple window instances
+- https://github.com/servo/servo/issues/15439
+- https://github.com/servo/cocoa-rs/issues/147
+- https://github.com/servo/webrender/issues/833
+- https://github.com/servo/cocoa-rs/issues/155
+- https://github.com/tomaka/winit/issues/131
+- load_error never called by servo
+- use http://stackoverflow.com/questions/5184409/uiactivityindicatorview-for-mac-os-x
+- move generic widget code lower
+- implement click, back, fwd and reload
+- figure out how to call ChromeWindow
