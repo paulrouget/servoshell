@@ -20,7 +20,9 @@
 - https://github.com/servo/cocoa-rs/issues/155
 - https://github.com/tomaka/winit/issues/131
 - load_error never called by servo
+
 - use http://stackoverflow.com/questions/5184409/uiactivityindicatorview-for-mac-os-x
 - move generic widget code lower
 - implement click, back, fwd and reload
 - figure out how to call ChromeWindow
+- pass everything through rustfmt
