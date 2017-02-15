@@ -21,7 +21,7 @@ const LINE_HEIGHT: f32 = 38.0; // FIXME
 use servo::servo_url::ServoUrl;
 
 mod window;
-mod platform;
+mod widgets;
 mod browser;
 
 fn get_url() -> ServoUrl {
@@ -42,7 +42,7 @@ fn main() {
 
     let window = window::ChromeWindow::new();
 
-    let widgets = platform::implementation::Widgets::new(&window);
+    let widgets = widgets::platform::Widgets::new(&window);
 
     let browser = browser::Browser::new(
         window.get_geometry(),
@@ -62,9 +62,16 @@ fn main() {
 
         for event in widget_events.drain(..) {
             match event {
-                e => {
-                    // FIXME: next
+                widgets::WidgetEvent::BackClicked => {
+                    browser.go_back();
+                }
+                widgets::WidgetEvent::FwdClicked => {
+                    browser.go_fwd();
+                }
+                widgets::WidgetEvent::ReloadClicked => {
                     browser.reload();
+                }
+                e => {
                     println!("widget event: {:?}", e);
                 }
             }
@@ -75,6 +82,12 @@ fn main() {
                 // FIXME: rename ServoEvent to BrowserEvent
                 browser::ServoEvent::Present => {
                     window.swap_buffers();
+                }
+                browser::ServoEvent::LoadStart(_, _) => {
+                    widgets.set_indicator_active(true);
+                }
+                browser::ServoEvent::LoadEnd(_, _, _) => {
+                    widgets.set_indicator_active(false);
                 }
                 browser::ServoEvent::TitleChanged(title) => {
                     match title {
@@ -106,6 +119,17 @@ fn main() {
                     }
                     let (x, y) = mouse_pos;
                     browser.scroll(x, y, dx, dy, phase);
+                }
+                winit::Event::MouseInput(element_state, mouse_button) => {
+                    if mouse_button == winit::MouseButton::Left || mouse_button == winit::MouseButton::Right {
+                        if element_state == winit::ElementState::Pressed {
+                            mouse_down_point = mouse_pos;
+                            mouse_down_button = Some(mouse_button);
+                        }
+                        let (x, y) = mouse_pos;
+                        let (org_x, org_y) = mouse_down_point;
+                        browser.click(x, y, org_x, org_y, element_state, mouse_button, mouse_down_button);
+                    }
                 }
                 _ => { }
             }
