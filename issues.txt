@@ -4,13 +4,11 @@
 - how to avoid copying Cargo.lock and resources
 - style_traits and servo_geometry necessary
 - rustc nightly
-
 - status bar
 - sidebar
 - dark UI
 - tab (the key) through controls
 - reload/stop button
-- progressbar (nsprogressindicator)
 - figure out button layout magic values
 - searchbar
 - try multiple window instances
@@ -21,10 +19,12 @@
 - https://github.com/tomaka/winit/issues/131
 - load_error never called by servo
 
+- update servo+resources/ and winit (see https://github.com/tomaka/winit/pull/132)
+- maybe only use msg_send
+
 - remove warnings
 - use http://stackoverflow.com/questions/5184409/uiactivityindicatorview-for-mac-os-x
-- implement click, back, fwd and reload
-- figure out how to call ChromeWindow
+- figure out how to name hromeWindow
 - pass everything through rustfmt
 - clean up to giant ::…::…::
 - resize

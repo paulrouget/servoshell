@@ -104,11 +104,6 @@ impl Browser {
         }
     }
 
-    pub fn update_geometry(&self, geometry: DrawableGeometry) {
-        // FIXME
-        self.callbacks.geometry.set(geometry);
-    }
-
     pub fn get_events(&self) -> Vec<ServoEvent> {
         self.callbacks.get_events()
     }
