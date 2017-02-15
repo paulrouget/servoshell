@@ -71,9 +71,6 @@ fn main() {
                 widgets::WidgetEvent::ReloadClicked => {
                     browser.reload();
                 }
-                e => {
-                    println!("widget event: {:?}", e);
-                }
             }
         }
 
