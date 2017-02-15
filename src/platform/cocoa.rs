@@ -14,7 +14,9 @@ use objc::runtime::{Class, Object, Sel};
 use objc::declare::ClassDecl;
 use std::os::raw::c_void;
 use std::vec::Vec;
-use std;
+
+use widgets::WidgetEvent;
+
 
 // Necessary for get_nswindow() traits
 use self::winit::os::macos::WindowExt;
@@ -27,25 +29,7 @@ struct ToolbarItems {
     reload_button: id,
     back_fwd_segment: id,
     urlbar: id,
-}
-
-
-// FIXME: not platform specific
-#[derive(Clone)]
-enum WidgetEvent {
-    ReloadClicked,
-    BackClicked,
-    FwdClicked,
-}
-
-impl std::fmt::Debug for WidgetEvent {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match *self {
-            WidgetEvent::ReloadClicked => write!(f, "ReloadClicked"),
-            WidgetEvent::BackClicked => write!(f, "BackClicked"),
-            WidgetEvent::FwdClicked => write!(f, "FwdClicked"),
-        }
-    }
+    indicator: id,
 }
 
 pub struct Widgets {
@@ -110,6 +94,17 @@ impl Widgets {
         }
     }
 
+    pub fn set_indicator_active(&self, active: bool) {
+        unsafe {
+            let ref toolbar_items = *self.toolbar_items_ptr;
+            if active {
+                toolbar_items.indicator.startAnimation_(nil);
+            } else {
+                toolbar_items.indicator.stopAnimation_(nil);
+            }
+        }
+    }
+
     pub fn set_urlbar_text(&self, text: &str) {
         unsafe {
             let ref toolbar_items = *self.toolbar_items_ptr;
@@ -135,8 +130,7 @@ impl Widgets {
         unsafe {
             let reload_button = NSView::init(NSButton::alloc(nil));
             NSButton::setBezelStyle_(reload_button, NSBezelStyle::NSRoundedBezelStyle);
-            NSButton::setImage_(reload_button,
-                                NSImage::imageNamed_(nil, NSImageNameRefreshTemplate));
+            NSButton::setImage_(reload_button, NSImage::imageNamed_(nil, NSImageNameRefreshTemplate));
 
             let back_fwd_segment = NSView::init(NSSegmentedControl::alloc(nil));
             back_fwd_segment.setSegmentStyle_(NSSegmentStyle::NSSegmentStyleRounded);
@@ -149,10 +143,18 @@ impl Widgets {
             // FIXME: Not a NSButton
             NSButton::setBezelStyle_(urlbar, NSBezelStyle::NSRoundedBezelStyle);
 
+            // FIXME: magic value
+            let rect = NSRect::new(NSPoint::new(0., 0.), NSSize::new(20., 20.));
+            let indicator = NSProgressIndicator::initWithFrame_(NSProgressIndicator::alloc(nil), rect);
+            indicator.setStyle_(NSProgressIndicatorStyle::NSProgressIndicatorSpinningStyle);
+            msg_send![indicator, setDisplayedWhenStopped:NO];
+
+
             ToolbarItems {
                 reload_button: reload_button,
                 back_fwd_segment: back_fwd_segment,
                 urlbar: urlbar,
+                indicator: indicator
             }
         }
     }
@@ -177,6 +179,7 @@ extern fn toolbar_default_item_identifiers(_this: &Object,
                                   NSToolbarFlexibleSpaceItemIdentifier,
                                   NSString::alloc(nil).init_str("urlbar"),
                                   NSToolbarFlexibleSpaceItemIdentifier,
+                                  NSString::alloc(nil).init_str("indicator"),
                                   NSToolbarToggleSidebarItemIdentifier,
         ])
     }
@@ -195,6 +198,12 @@ extern fn build_toolbar_item(this: &Object,
             &*(ivar as *mut ToolbarItems)
         }; 
         // FIXME: magic values
+        if NSString::isEqualToString(identifier, "indicator") {
+            item = NSToolbarItem::alloc(nil).initWithItemIdentifier_(identifier).autorelease();
+            NSToolbarItem::setMinSize_(item, NSSize::new(20., 20.));
+            NSToolbarItem::setMaxSize_(item, NSSize::new(20., 20.));
+            NSToolbarItem::setView_(item, toolbar_items.indicator);
+        }
         if NSString::isEqualToString(identifier, "reload") {
             item = NSToolbarItem::alloc(nil).initWithItemIdentifier_(identifier).autorelease();
             NSToolbarItem::setMinSize_(item, NSSize::new(35., 35.));

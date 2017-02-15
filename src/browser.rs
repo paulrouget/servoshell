@@ -5,7 +5,7 @@ extern crate euclid;
 
 extern crate webrender_traits;
 
-// FIXME: sad
+// FIXME: let's try to kill any ref to winit here
 extern crate winit;
 
 use DrawableGeometry;
@@ -13,7 +13,7 @@ use std;
 use self::servo::config::servo_version;
 use self::servo::servo_config::opts;
 use self::servo::servo_config::prefs::{PrefValue, PREFS};
-use self::servo::compositing::windowing::{WindowMethods, WindowEvent};
+use self::servo::compositing::windowing::{WindowMethods, MouseWindowEvent, WindowEvent, WindowNavigateMsg};
 use self::servo::compositing::compositor_thread::{self, CompositorProxy, CompositorReceiver};
 use self::servo::msg::constellation_msg::{self, Key};
 use self::servo::euclid::{TypedPoint2D, Point2D, Size2D};
@@ -28,8 +28,7 @@ use std::rc::Rc;
 use std::cell::{Cell, RefCell};
 use servo::script_traits::TouchEventType;
 
-pub type CompositorChannel = (Box<compositor_thread::CompositorProxy + Send>,
-                              Box<compositor_thread::CompositorReceiver>);
+pub type CompositorChannel = (Box<CompositorProxy + Send>, Box<CompositorReceiver>);
 
 #[derive(Clone)]
 pub enum ServoEvent {
@@ -77,7 +76,10 @@ pub struct Browser {
 }
 
 impl Browser {
-    pub fn new(geometry: DrawableGeometry, window_proxy: winit::WindowProxy, url: ServoUrl) -> Browser {
+    pub fn new(geometry: DrawableGeometry,
+               window_proxy: winit::WindowProxy,
+               url: ServoUrl)
+               -> Browser {
 
         let mut opts = opts::default_opts();
         opts.headless = false;
@@ -93,7 +95,7 @@ impl Browser {
 
         println!("{}", servo_version());
 
-        let mut servo = servo::Browser::new(callbacks.clone());
+        let servo = servo::Browser::new(callbacks.clone());
 
         Browser {
             events_for_servo: RefCell::new(Vec::new()),
@@ -104,7 +106,7 @@ impl Browser {
 
     pub fn update_geometry(&self, geometry: DrawableGeometry) {
         // FIXME
-        self.callbacks.set_geometry(geometry);
+        self.callbacks.geometry.set(geometry);
     }
 
     pub fn get_events(&self) -> Vec<ServoEvent> {
@@ -125,6 +127,16 @@ impl Browser {
         self.events_for_servo.borrow_mut().push(event);
     }
 
+    pub fn go_back(&self) {
+        let event = WindowEvent::Navigation(WindowNavigateMsg::Back);
+        self.events_for_servo.borrow_mut().push(event);
+    }
+
+    pub fn go_fwd(&self) {
+        let event = WindowEvent::Navigation(WindowNavigateMsg::Forward);
+        self.events_for_servo.borrow_mut().push(event);
+    }
+
     pub fn scroll(&self, x: i32, y: i32, dx: f32, dy: f32, phase: winit::TouchPhase) {
         let scroll_location = webrender_traits::ScrollLocation::Delta(TypedPoint2D::new(dx, dy));
         let phase = match phase {
@@ -135,6 +147,34 @@ impl Browser {
         };
         let event = WindowEvent::Scroll(scroll_location, TypedPoint2D::new(x, y), phase);
         self.events_for_servo.borrow_mut().push(event);
+    }
+
+    pub fn click(&self, x: i32, y: i32, org_x: i32, org_y: i32, element_state: winit::ElementState, mouse_button: winit::MouseButton, mouse_down_button: Option<winit::MouseButton>) {
+        use servo::script_traits::MouseButton;
+        let max_pixel_dist = 10f64;
+        let event = match element_state {
+            winit::ElementState::Pressed => {
+                MouseWindowEvent::MouseDown(MouseButton::Left, TypedPoint2D::new(x as f32, y as f32))
+            }
+            winit::ElementState::Released => {
+                let mouse_up_event = MouseWindowEvent::MouseUp(MouseButton::Left, TypedPoint2D::new(x as f32, y as f32));
+                match mouse_down_button {
+                    None => mouse_up_event,
+                    Some(but) if mouse_button == but => { // Same button
+                        let pixel_dist = Point2D::new(org_x, org_y) - Point2D::new(x, y);
+                        let pixel_dist = ((pixel_dist.x * pixel_dist.x + pixel_dist.y * pixel_dist.y) as f64).sqrt();
+                        if pixel_dist < max_pixel_dist {
+                            self.events_for_servo.borrow_mut().push(WindowEvent::MouseWindowEventClass(mouse_up_event));
+                            MouseWindowEvent::Click(MouseButton::Left, TypedPoint2D::new(x as f32, y as f32))
+                        } else {
+                            mouse_up_event
+                        }
+                    },
+                    Some(_) => mouse_up_event,
+                }
+            }
+        };
+        self.events_for_servo.borrow_mut().push(WindowEvent::MouseWindowEventClass(event));
     }
 
     pub fn sync(&self) {
@@ -157,13 +197,9 @@ impl ServoCallbacks {
         self.event_queue.borrow_mut().clear();
         clone
     }
-    fn set_geometry(&self, geometry: DrawableGeometry) {
-        self.geometry.set(geometry);
-    }
 }
 
 impl WindowMethods for ServoCallbacks {
-
     fn prepare_for_composite(&self, _width: usize, _height: usize) -> bool {
         true
     }
@@ -178,8 +214,8 @@ impl WindowMethods for ServoCallbacks {
         (box WinitCompositorProxy {
              sender: sender,
              window_proxy: Some(self.window_proxy.clone()),
-         } as Box<compositor_thread::CompositorProxy + Send>,
-         box receiver as Box<compositor_thread::CompositorReceiver>)
+         } as Box<CompositorProxy + Send>,
+         box receiver as Box<CompositorReceiver>)
     }
 
     fn scale_factor(&self) -> ScaleFactor<f32, ScreenPx, DevicePixel> {
@@ -206,7 +242,9 @@ impl WindowMethods for ServoCallbacks {
     // Events
 
     fn set_inner_size(&self, size: Size2D<u32>) {
-        self.event_queue.borrow_mut().push(ServoEvent::SetWindowInnerSize(size.width as u32, size.height as u32));
+        self.event_queue
+            .borrow_mut()
+            .push(ServoEvent::SetWindowInnerSize(size.width as u32, size.height as u32));
     }
 
     fn set_position(&self, point: Point2D<i32>) {
@@ -268,7 +306,7 @@ struct WinitCompositorProxy {
     window_proxy: Option<winit::WindowProxy>,
 }
 
-impl compositor_thread::CompositorProxy for WinitCompositorProxy {
+impl CompositorProxy for WinitCompositorProxy {
     fn send(&self, msg: compositor_thread::Msg) {
         if let Err(err) = self.sender.send(msg) {
             println!("Failed to send response ({}).", err);
@@ -278,12 +316,10 @@ impl compositor_thread::CompositorProxy for WinitCompositorProxy {
         }
     }
 
-    fn clone_compositor_proxy
-        (&self)
-         -> Box<compositor_thread::CompositorProxy + Send> {
+    fn clone_compositor_proxy(&self) -> Box<CompositorProxy + Send> {
         box WinitCompositorProxy {
             sender: self.sender.clone(),
             window_proxy: self.window_proxy.clone(),
-        } as Box<compositor_thread::CompositorProxy + Send>
+        } as Box<CompositorProxy + Send>
     }
 }
