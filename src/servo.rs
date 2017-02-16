@@ -73,6 +73,7 @@ impl fmt::Debug for ServoEvent {
 }
 
 pub struct Servo {
+    // FIXME: it's annoying that event for servo are named "WindowEvent"
     events_for_servo: RefCell<Vec<WindowEvent>>,
     servo_browser: RefCell<servo::Browser<ServoCallbacks>>,
     callbacks: Rc<ServoCallbacks>,

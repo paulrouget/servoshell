@@ -62,8 +62,8 @@ impl GlutinWindow {
     }
 
     // FIXME: can we have a separate function to wait until wake up?
-    pub fn get_events(&self) -> Vec<winit::Event> {
-        let mut events: Vec<winit::Event> = Vec::new();
+    pub fn get_events(&self) -> Vec<WindowEvent> {
+        let mut events: Vec<WindowEvent> = Vec::new();
         let event = self.glutin_window.wait_events().next();
         events.push(event.unwrap());
         while let Some(event) = self.glutin_window.poll_events().next() {
