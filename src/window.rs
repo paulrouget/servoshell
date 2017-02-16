@@ -15,6 +15,8 @@ pub use self::winit::MouseCursor as WindowMouseCursor;
 pub use self::winit::MouseScrollDelta as WindowMouseScrollDelta;
 pub use self::winit::ElementState as WindowElementState;
 pub use self::winit::TouchPhase as WindowTouchPhase;
+// FIXME: Can we avoid that?
+pub use self::winit::os::macos::WindowExt;
 
 impl GlutinWindow {
     pub fn new() -> GlutinWindow {
@@ -39,9 +41,7 @@ impl GlutinWindow {
     }
 
     pub fn create_event_loop_riser(&self) -> EventLoopRiser {
-        EventLoopRiser {
-            window_proxy: self.glutin_window.create_window_proxy()
-        }
+        EventLoopRiser { window_proxy: self.glutin_window.create_window_proxy() }
     }
 
     pub fn get_geometry(&self) -> DrawableGeometry {
@@ -79,7 +79,7 @@ impl GlutinWindow {
 
 // Used by Servo to wake up the event loop
 pub struct EventLoopRiser {
-    window_proxy: winit::WindowProxy
+    window_proxy: winit::WindowProxy,
 }
 
 impl EventLoopRiser {
@@ -87,8 +87,6 @@ impl EventLoopRiser {
         self.window_proxy.wakeup_event_loop()
     }
     pub fn clone(&self) -> EventLoopRiser {
-        EventLoopRiser {
-            window_proxy: self.window_proxy.clone()
-        }
+        EventLoopRiser { window_proxy: self.window_proxy.clone() }
     }
 }

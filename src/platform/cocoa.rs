@@ -1,8 +1,6 @@
 extern crate cocoa;
-extern crate winit;
 extern crate objc_foundation;
 
-use window;
 
 use self::cocoa::base::*;
 use self::cocoa::foundation::*;
@@ -16,8 +14,10 @@ use std::vec::Vec;
 
 use widgets::WidgetEvent;
 
+// FIXME: can we pass directly WindowExt?
+use window::GlutinWindow;
 // Necessary for get_nswindow() traits
-use self::winit::os::macos::WindowExt;
+use window::WindowExt;
 
 // FIXME: memory management is non existent.
 // FIXME: use autorelease, retain and release (see Drop & IdRef)
@@ -38,7 +38,7 @@ pub struct Widgets {
 }
 
 impl Widgets {
-    pub fn new(window: &window::GlutinWindow) -> Widgets {
+    pub fn new(window: &GlutinWindow) -> Widgets {
         unsafe {
             // FIXME: make sure this is only called once
             declare_toolbar_delegate();
@@ -61,7 +61,7 @@ impl Widgets {
             // Handle toolbar construction
             let toolbar_delegate: id = msg_send![Class::get("ToolbarDelegate").unwrap(), new];
             // FIXME: When is setDelegate:nil called???
-            let _: () = msg_send![toolbar, setDelegate: toolbar_delegate]; 
+            let _: () = msg_send![toolbar, setDelegate: toolbar_delegate];
 
             // Handle clicks on items
             let target: id = msg_send![Class::get("UITarget").unwrap(), new];
@@ -71,7 +71,8 @@ impl Widgets {
             msg_send![toolbar_items.back_fwd_segment, setAction:sel![on_segment_click]];
 
             // FIXME: it's our job to destroy toolbar_items and event_queue
-            // FIXME: I don't underdtand why we need to use box::into_raw here and not a simple *mut.
+            // FIXME: I don't underdtand why we need to use box::into_raw here
+            // and not a simple *mut.
             let toolbar_items_ptr = Box::into_raw(toolbar_items);
             let event_queue_ptr = Box::into_raw(event_queue);
             (*target).set_ivar("toolbar_items", toolbar_items_ptr as *mut c_void);
@@ -135,14 +136,16 @@ impl Widgets {
 
             let back_fwd_segment = NSView::init(NSSegmentedControl::alloc(nil));
             back_fwd_segment.setSegmentStyle_(NSSegmentStyle::NSSegmentStyleRounded);
-            back_fwd_segment.setTrackingMode_(NSSegmentSwitchTrackingMode::NSSegmentSwitchTrackingMomentary);
+            let mode = NSSegmentSwitchTrackingMode::NSSegmentSwitchTrackingMomentary;
+            back_fwd_segment.setTrackingMode_(mode);
             back_fwd_segment.setSegmentCount_(2);
-            back_fwd_segment.setImage_forSegment_(NSImage::imageNamed_(nil, NSImageNameGoLeftTemplate), 0);
-            back_fwd_segment.setImage_forSegment_(NSImage::imageNamed_(nil, NSImageNameGoRightTemplate), 1);
+            let img_back = NSImage::imageNamed_(nil, NSImageNameGoLeftTemplate);
+            let img_fwd = NSImage::imageNamed_(nil, NSImageNameGoRightTemplate);
+            back_fwd_segment.setImage_forSegment_(img_back, 0);
+            back_fwd_segment.setImage_forSegment_(img_fwd, 1);
 
             let urlbar = NSView::init(NSTextField::alloc(nil));
-            // FIXME: Not a NSButton
-            NSButton::setBezelStyle_(urlbar, NSBezelStyle::NSRoundedBezelStyle);
+            msg_send![urlbar, setBezelStyle: NSBezelStyle::NSRoundedBezelStyle];
 
             // FIXME: magic value
             let rect = NSRect::new(NSPoint::new(0., 0.), NSSize::new(20., 20.));

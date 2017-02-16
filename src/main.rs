@@ -26,7 +26,9 @@ fn main() {
     let url = args().nth(1).unwrap_or("http://servo.org".to_owned());
     let window = GlutinWindow::new();
     let widgets = widgets::platform::Widgets::new(&window);
-    let servo = Servo::new(window.get_geometry(), window.create_event_loop_riser(), &url);
+    let servo = Servo::new(window.get_geometry(),
+                           window.create_event_loop_riser(),
+                           &url);
 
     let mut mouse_pos = (0, 0);
     let mut mouse_down_button: Option<WindowMouseButton> = None;
