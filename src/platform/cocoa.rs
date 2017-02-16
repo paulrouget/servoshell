@@ -120,6 +120,22 @@ impl Widgets {
         }
     }
 
+    pub fn set_back_button_enabled(&self, enabled: bool) {
+        let enabled = if enabled {YES} else {NO};
+        unsafe {
+            let ref toolbar_items = *self.toolbar_items_ptr;
+            toolbar_items.back_fwd_segment.setEnabled_forSegment_(enabled, 0);
+        }
+    }
+
+    pub fn set_fwd_button_enabled(&self, enabled: bool) {
+        let enabled = if enabled {YES} else {NO};
+        unsafe {
+            let ref toolbar_items = *self.toolbar_items_ptr;
+            toolbar_items.back_fwd_segment.setEnabled_forSegment_(enabled, 1);
+        }
+    }
+
     pub fn set_urlbar_text(&self, text: &str) {
         unsafe {
             let ref toolbar_items = *self.toolbar_items_ptr;
@@ -162,6 +178,8 @@ impl Widgets {
             let img_fwd = NSImage::imageNamed_(nil, NSImageNameGoRightTemplate);
             back_fwd_segment.setImage_forSegment_(img_back, 0);
             back_fwd_segment.setImage_forSegment_(img_fwd, 1);
+            back_fwd_segment.setEnabled_forSegment_(NO, 0);
+            back_fwd_segment.setEnabled_forSegment_(NO, 1);
 
             let urlbar = NSView::init(NSTextField::alloc(nil));
             msg_send![urlbar, setBezelStyle: NSBezelStyle::NSRoundedBezelStyle];

@@ -33,6 +33,7 @@ fn main() {
     let mut mouse_pos = (0, 0);
     let mut mouse_down_button: Option<WindowMouseButton> = None;
     let mut mouse_down_point = (0, 0);
+    let mut first_load = true;
 
     loop {
         let mut winit_events = window.get_events();
@@ -98,10 +99,25 @@ fn main() {
                 ServoEvent::Present => {
                     window.swap_buffers();
                 }
-                ServoEvent::LoadStart(_, _) => {
+                ServoEvent::HeadParsed => {
+                    if !first_load {
+                        // FIXME: this is hacky, but until we get better history state
+                        // events, that'll do it.
+                        widgets.set_back_button_enabled(true);
+                    }
+                    first_load = false;
+                }
+                ServoEvent::LoadStart(can_go_back, can_go_forward) => {
+                    widgets.set_back_button_enabled(can_go_back);
+                    widgets.set_fwd_button_enabled(can_go_forward);
                     widgets.set_indicator_active(true);
                 }
-                ServoEvent::LoadEnd(_, _, _) => {
+                ServoEvent::LoadEnd(can_go_back, can_go_forward, root) => {
+                    // FIXME: why root?
+                    if root {
+                        widgets.set_back_button_enabled(can_go_back);
+                        widgets.set_fwd_button_enabled(can_go_forward);
+                    }
                     widgets.set_indicator_active(false);
                 }
                 ServoEvent::StatusChanged(status) => {
