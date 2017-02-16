@@ -22,11 +22,8 @@
 - update servo+resources/ and winit (see https://github.com/tomaka/winit/pull/132)
 - maybe only use msg_send
 
-- pass everything through rustfmt
-- clean up to giant ::…::…::
-- resize
+- HeadParsed should come with back/fwd info. Or maybe we should have a dedicated event for history state change.
 
+- resize
 - black screen
 - logs
-
-- crash on zoom
