@@ -4,7 +4,7 @@
 - how to avoid copying Cargo.lock and resources
 - style_traits and servo_geometry necessary
 - rustc nightly
-- status bar
+- opaque status bar
 - sidebar
 - dark UI
 - tab (the key) through controls
@@ -18,12 +18,9 @@
 - https://github.com/servo/cocoa-rs/issues/155
 - https://github.com/tomaka/winit/issues/131
 - load_error never called by servo
-
 - update servo+resources/ and winit (see https://github.com/tomaka/winit/pull/132)
 - maybe only use msg_send
-
 - HeadParsed should come with back/fwd info. Or maybe we should have a dedicated event for history state change.
-
 - resize
 - black screen
 - logs
