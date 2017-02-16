@@ -104,6 +104,12 @@ fn main() {
                 ServoEvent::LoadEnd(_, _, _) => {
                     widgets.set_indicator_active(false);
                 }
+                ServoEvent::StatusChanged(status) => {
+                    match status {
+                        None => widgets.set_statusbar_text(""),
+                        Some(text) => widgets.set_statusbar_text(text.as_str()),
+                    }
+                }
                 ServoEvent::TitleChanged(title) => {
                     match title {
                         None => widgets.set_urlbar_text(""),

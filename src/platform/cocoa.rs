@@ -33,6 +33,7 @@ struct ToolbarItems {
 }
 
 pub struct Widgets {
+    statusbar: id,
     event_queue_ptr: *mut Vec<WidgetEvent>,
     toolbar_items_ptr: *mut ToolbarItems,
 }
@@ -81,7 +82,18 @@ impl Widgets {
 
             nswindow.setToolbar_(toolbar);
 
+            let rect = NSRect::new(NSPoint::new(2., -2.), NSSize::new(400., 20.));
+            let statusbar = NSView::initWithFrame_(NSTextField::alloc(nil), rect);
+            msg_send![statusbar, setEditable:NO];
+            msg_send![statusbar, setSelectable:NO];
+            msg_send![statusbar, setBordered:NO];
+            msg_send![statusbar, setBackgroundColor:NSColor::clearColor(nil)];
+
+            let nsview = winit_window.get_nsview() as id;
+            msg_send![nsview, addSubview:statusbar];
+
             Widgets {
+                statusbar: statusbar,
                 event_queue_ptr: event_queue_ptr,
                 toolbar_items_ptr: toolbar_items_ptr,
             }
@@ -113,6 +125,13 @@ impl Widgets {
             let ref toolbar_items = *self.toolbar_items_ptr;
             let string = NSString::alloc(nil).init_str(text);
             NSTextField::setStringValue_(toolbar_items.urlbar, string);
+        }
+    }
+
+    pub fn set_statusbar_text(&self, text: &str) {
+        unsafe {
+            let string = NSString::alloc(nil).init_str(text);
+            NSTextField::setStringValue_(self.statusbar, string);
         }
     }
 
