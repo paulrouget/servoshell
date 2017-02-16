@@ -22,7 +22,6 @@
 - update servo+resources/ and winit (see https://github.com/tomaka/winit/pull/132)
 - maybe only use msg_send
 
-- figure out how to name chromeWindow
 - pass everything through rustfmt
 - clean up to giant ::…::…::
 - resize

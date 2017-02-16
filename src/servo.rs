@@ -11,7 +11,8 @@ use window::{EventLoopRiser, WindowTouchPhase, WindowMouseButton, WindowElementS
 use self::servo::config::servo_version;
 use self::servo::servo_config::opts;
 use self::servo::servo_config::prefs::{PrefValue, PREFS};
-use self::servo::compositing::windowing::{WindowMethods, MouseWindowEvent, WindowEvent, WindowNavigateMsg};
+use self::servo::compositing::windowing::{WindowMethods, MouseWindowEvent, WindowEvent,
+                                          WindowNavigateMsg};
 use self::servo::compositing::compositor_thread::{self, CompositorProxy, CompositorReceiver};
 use self::servo::msg::constellation_msg::{self, Key};
 use self::servo::euclid::{TypedPoint2D, Point2D, Size2D};
@@ -84,7 +85,8 @@ impl Servo {
         opts.headless = false;
         opts.url = ServoUrl::parse(url).ok();
         opts::set_defaults(opts);
-        PREFS.set("layout.threads", PrefValue::Number(1.0)); // FIXME: Pipeline creation fails is layout_threads pref not set
+        // FIXME: Pipeline creation fails is layout_threads pref not set
+        PREFS.set("layout.threads", PrefValue::Number(1.0));
 
         let callbacks = Rc::new(ServoCallbacks {
             event_queue: RefCell::new(Vec::new()),
