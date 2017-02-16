@@ -5,11 +5,9 @@ extern crate euclid;
 
 extern crate webrender_traits;
 
-// FIXME: let's try to kill any ref to winit here
-extern crate winit;
-
 use DrawableGeometry;
-use std;
+use window::{EventLoopRiser, WindowTouchPhase, WindowMouseButton, WindowElementState};
+
 use self::servo::config::servo_version;
 use self::servo::servo_config::opts;
 use self::servo::servo_config::prefs::{PrefValue, PREFS};
@@ -22,13 +20,17 @@ use self::servo::euclid::size::TypedSize2D;
 use self::servo::script_traits::DevicePixel;
 use self::servo::servo_url::ServoUrl;
 use self::servo::net_traits::net_error_list::NetError;
+use self::servo::script_traits::TouchEventType;
 use self::servo_geometry::ScreenPx;
-use self::style_traits::cursor::Cursor;
+
+use std::fmt;
+use std::sync::mpsc;
 use std::rc::Rc;
 use std::cell::{Cell, RefCell};
-use servo::script_traits::TouchEventType;
 
+pub use self::style_traits::cursor::Cursor as ServoCursor;
 pub type CompositorChannel = (Box<CompositorProxy + Send>, Box<CompositorReceiver>);
+
 
 #[derive(Clone)]
 pub enum ServoEvent {
@@ -43,13 +45,13 @@ pub enum ServoEvent {
     LoadEnd(bool, bool, bool),
     LoadError(String),
     HeadParsed,
-    CursorChanged(Cursor),
+    CursorChanged(ServoCursor),
     FaviconChanged(ServoUrl),
     Key(Option<char>, Key, constellation_msg::KeyModifiers),
 }
 
-impl std::fmt::Debug for ServoEvent {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl fmt::Debug for ServoEvent {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             ServoEvent::SetWindowInnerSize(_, _) => write!(f, "SetWindowInnerSize"),
             ServoEvent::SetWindowPosition(_, _) => write!(f, "SetWindowPosition"),
@@ -69,35 +71,34 @@ impl std::fmt::Debug for ServoEvent {
     }
 }
 
-pub struct Browser {
+pub struct Servo {
     events_for_servo: RefCell<Vec<WindowEvent>>,
     servo_browser: RefCell<servo::Browser<ServoCallbacks>>,
     callbacks: Rc<ServoCallbacks>,
 }
 
-impl Browser {
-    pub fn new(geometry: DrawableGeometry,
-               window_proxy: winit::WindowProxy,
-               url: ServoUrl)
-               -> Browser {
+impl Servo {
+    pub fn new(geometry: DrawableGeometry, riser: EventLoopRiser, url: &str) -> Servo {
 
         let mut opts = opts::default_opts();
         opts.headless = false;
-        opts.url = Some(url);
+        opts.url = ServoUrl::parse(url).ok();
         opts::set_defaults(opts);
         PREFS.set("layout.threads", PrefValue::Number(1.0)); // FIXME: Pipeline creation fails is layout_threads pref not set
 
         let callbacks = Rc::new(ServoCallbacks {
             event_queue: RefCell::new(Vec::new()),
             geometry: Cell::new(geometry),
-            window_proxy: window_proxy,
+            riser: riser,
         });
 
         println!("{}", servo_version());
 
-        let servo = servo::Browser::new(callbacks.clone());
+        let mut servo = servo::Browser::new(callbacks.clone());
 
-        Browser {
+        servo.handle_events(vec![WindowEvent::InitializeCompositing]);
+
+        Servo {
             events_for_servo: RefCell::new(Vec::new()),
             servo_browser: RefCell::new(servo),
             callbacks: callbacks,
@@ -106,10 +107,6 @@ impl Browser {
 
     pub fn get_events(&self) -> Vec<ServoEvent> {
         self.callbacks.get_events()
-    }
-
-    pub fn initialize_compositing(&self) {
-        self.servo_browser.borrow_mut().handle_events(vec![WindowEvent::InitializeCompositing]);
     }
 
     pub fn update_mouse_coordinates(&self, x: i32, y: i32) {
@@ -132,39 +129,55 @@ impl Browser {
         self.events_for_servo.borrow_mut().push(event);
     }
 
-    pub fn scroll(&self, x: i32, y: i32, dx: f32, dy: f32, phase: winit::TouchPhase) {
+    pub fn scroll(&self, x: i32, y: i32, dx: f32, dy: f32, phase: WindowTouchPhase) {
         let scroll_location = webrender_traits::ScrollLocation::Delta(TypedPoint2D::new(dx, dy));
         let phase = match phase {
-            winit::TouchPhase::Started => TouchEventType::Down,
-            winit::TouchPhase::Moved => TouchEventType::Move,
-            winit::TouchPhase::Ended => TouchEventType::Up,
-            winit::TouchPhase::Cancelled => TouchEventType::Cancel,
+            WindowTouchPhase::Started => TouchEventType::Down,
+            WindowTouchPhase::Moved => TouchEventType::Move,
+            WindowTouchPhase::Ended => TouchEventType::Up,
+            WindowTouchPhase::Cancelled => TouchEventType::Cancel,
         };
         let event = WindowEvent::Scroll(scroll_location, TypedPoint2D::new(x, y), phase);
         self.events_for_servo.borrow_mut().push(event);
     }
 
-    pub fn click(&self, x: i32, y: i32, org_x: i32, org_y: i32, element_state: winit::ElementState, mouse_button: winit::MouseButton, mouse_down_button: Option<winit::MouseButton>) {
-        use servo::script_traits::MouseButton;
+    pub fn click(&self,
+                 x: i32,
+                 y: i32,
+                 org_x: i32,
+                 org_y: i32,
+                 element_state: WindowElementState,
+                 mouse_button: WindowMouseButton,
+                 mouse_down_button: Option<WindowMouseButton>) {
+        use self::servo::script_traits::MouseButton;
         let max_pixel_dist = 10f64;
         let event = match element_state {
-            winit::ElementState::Pressed => {
-                MouseWindowEvent::MouseDown(MouseButton::Left, TypedPoint2D::new(x as f32, y as f32))
+            WindowElementState::Pressed => {
+                MouseWindowEvent::MouseDown(MouseButton::Left,
+                                            TypedPoint2D::new(x as f32, y as f32))
             }
-            winit::ElementState::Released => {
-                let mouse_up_event = MouseWindowEvent::MouseUp(MouseButton::Left, TypedPoint2D::new(x as f32, y as f32));
+            WindowElementState::Released => {
+                let mouse_up_event = MouseWindowEvent::MouseUp(MouseButton::Left,
+                                                               TypedPoint2D::new(x as f32,
+                                                                                 y as f32));
                 match mouse_down_button {
                     None => mouse_up_event,
-                    Some(but) if mouse_button == but => { // Same button
+                    Some(but) if mouse_button == but => {
+                        // Same button
                         let pixel_dist = Point2D::new(org_x, org_y) - Point2D::new(x, y);
-                        let pixel_dist = ((pixel_dist.x * pixel_dist.x + pixel_dist.y * pixel_dist.y) as f64).sqrt();
+                        let pixel_dist =
+                            ((pixel_dist.x * pixel_dist.x + pixel_dist.y * pixel_dist.y) as f64)
+                                .sqrt();
                         if pixel_dist < max_pixel_dist {
-                            self.events_for_servo.borrow_mut().push(WindowEvent::MouseWindowEventClass(mouse_up_event));
-                            MouseWindowEvent::Click(MouseButton::Left, TypedPoint2D::new(x as f32, y as f32))
+                            self.events_for_servo
+                                .borrow_mut()
+                                .push(WindowEvent::MouseWindowEventClass(mouse_up_event));
+                            MouseWindowEvent::Click(MouseButton::Left,
+                                                    TypedPoint2D::new(x as f32, y as f32))
                         } else {
                             mouse_up_event
                         }
-                    },
+                    }
                     Some(_) => mouse_up_event,
                 }
             }
@@ -180,10 +193,9 @@ impl Browser {
 }
 
 struct ServoCallbacks {
-    // FIXME: interior mutability - is using RefCell the right thing to do?
     event_queue: RefCell<Vec<ServoEvent>>,
     geometry: Cell<DrawableGeometry>,
-    window_proxy: winit::WindowProxy,
+    riser: EventLoopRiser,
 }
 
 impl ServoCallbacks {
@@ -205,10 +217,10 @@ impl WindowMethods for ServoCallbacks {
     }
 
     fn create_compositor_channel(&self) -> CompositorChannel {
-        let (sender, receiver) = std::sync::mpsc::channel();
-        (box WinitCompositorProxy {
+        let (sender, receiver) = mpsc::channel();
+        (box ShellCompositorProxy {
              sender: sender,
-             window_proxy: Some(self.window_proxy.clone()),
+             riser: self.riser.clone(),
          } as Box<CompositorProxy + Send>,
          box receiver as Box<CompositorReceiver>)
     }
@@ -283,7 +295,7 @@ impl WindowMethods for ServoCallbacks {
         self.event_queue.borrow_mut().push(ServoEvent::HeadParsed);
     }
 
-    fn set_cursor(&self, cursor: Cursor) {
+    fn set_cursor(&self, cursor: ServoCursor) {
         self.event_queue.borrow_mut().push(ServoEvent::CursorChanged(cursor));
     }
 
@@ -296,25 +308,23 @@ impl WindowMethods for ServoCallbacks {
     }
 }
 
-struct WinitCompositorProxy {
-    sender: std::sync::mpsc::Sender<compositor_thread::Msg>,
-    window_proxy: Option<winit::WindowProxy>,
+struct ShellCompositorProxy {
+    sender: mpsc::Sender<compositor_thread::Msg>,
+    riser: EventLoopRiser,
 }
 
-impl CompositorProxy for WinitCompositorProxy {
+impl CompositorProxy for ShellCompositorProxy {
     fn send(&self, msg: compositor_thread::Msg) {
         if let Err(err) = self.sender.send(msg) {
             println!("Failed to send response ({}).", err);
         }
-        if let Some(ref window_proxy) = self.window_proxy {
-            window_proxy.wakeup_event_loop()
-        }
+        self.riser.rise()
     }
 
     fn clone_compositor_proxy(&self) -> Box<CompositorProxy + Send> {
-        box WinitCompositorProxy {
+        box ShellCompositorProxy {
             sender: self.sender.clone(),
-            window_proxy: self.window_proxy.clone(),
+            riser: self.riser.clone(),
         } as Box<CompositorProxy + Send>
     }
 }

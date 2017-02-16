@@ -2,9 +2,8 @@ extern crate cocoa;
 extern crate winit;
 extern crate objc_foundation;
 
-// FIXME: move none native code to ../../widget.rs
-
 use window;
+
 use self::cocoa::base::*;
 use self::cocoa::foundation::*;
 use self::cocoa::appkit::*;
@@ -17,11 +16,12 @@ use std::vec::Vec;
 
 use widgets::WidgetEvent;
 
-
 // Necessary for get_nswindow() traits
 use self::winit::os::macos::WindowExt;
 
-// FIXME: when to call "retain" and "release"? See Drop & IdRef
+// FIXME: memory management is non existent.
+// FIXME: use autorelease, retain and release (see Drop & IdRef)
+// FIXME: move none native code to ../../widget.rs
 
 /// WINDOW
 
@@ -38,8 +38,7 @@ pub struct Widgets {
 }
 
 impl Widgets {
-
-    pub fn new(window: &window::ChromeWindow) -> Widgets {
+    pub fn new(window: &window::GlutinWindow) -> Widgets {
         unsafe {
             // FIXME: make sure this is only called once
             declare_toolbar_delegate();
@@ -52,20 +51,23 @@ impl Widgets {
 
             let event_queue = Box::new(Vec::new());
 
-            let toolbar = NSToolbar::alloc(nil).initWithIdentifier_(NSString::alloc(nil).init_str("tb1")); // FIXME: initWithIdentifier_ <- can't we ust do a regular `init()`?
+            // FIXME: initWithIdentifier_ <- can't we ust do a regular `init()`?
+            let toolbar = NSToolbar::alloc(nil)
+                .initWithIdentifier_(NSString::alloc(nil).init_str("tb1"));
 
             let toolbar_items = Self::build_toolbar_items();
             let toolbar_items = Box::new(toolbar_items);
 
             // Handle toolbar construction
             let toolbar_delegate: id = msg_send![Class::get("ToolbarDelegate").unwrap(), new];
-            let _: () = msg_send![toolbar, setDelegate:toolbar_delegate]; // FIXME: When is setDelegate:nil called???
+            // FIXME: When is setDelegate:nil called???
+            let _: () = msg_send![toolbar, setDelegate: toolbar_delegate]; 
 
             // Handle clicks on items
             let target: id = msg_send![Class::get("UITarget").unwrap(), new];
-            msg_send![toolbar_items.reload_button, setTarget:target];
+            msg_send![toolbar_items.reload_button, setTarget: target];
             msg_send![toolbar_items.reload_button, setAction:sel![on_reload_click]];
-            msg_send![toolbar_items.back_fwd_segment, setTarget:target];
+            msg_send![toolbar_items.back_fwd_segment, setTarget: target];
             msg_send![toolbar_items.back_fwd_segment, setAction:sel![on_segment_click]];
 
             // FIXME: it's our job to destroy toolbar_items and event_queue
@@ -117,12 +119,10 @@ impl Widgets {
         unsafe {
             nswindow.setTitleVisibility_(NSWindowTitleVisibility::NSWindowTitleHidden);
             let mask = nswindow.styleMask() as NSUInteger |
-                NSWindowMask::NSFullSizeContentViewWindowMask as NSUInteger;
+                       NSWindowMask::NSFullSizeContentViewWindowMask as NSUInteger;
             nswindow.setStyleMask_(mask);
-            if false {
-                // FIXME: dark ui
-                nswindow.setAppearance_(NSAppearance::named_(nil, NSAppearanceNameVibrantDark));
-            }
+            // FIXME: dark ui
+            // nswindow.setAppearance_(NSAppearance::named_(nil, NSAppearanceNameVibrantDark));
         }
     }
 
@@ -130,7 +130,8 @@ impl Widgets {
         unsafe {
             let reload_button = NSView::init(NSButton::alloc(nil));
             NSButton::setBezelStyle_(reload_button, NSBezelStyle::NSRoundedBezelStyle);
-            NSButton::setImage_(reload_button, NSImage::imageNamed_(nil, NSImageNameRefreshTemplate));
+            NSButton::setImage_(reload_button,
+                                NSImage::imageNamed_(nil, NSImageNameRefreshTemplate));
 
             let back_fwd_segment = NSView::init(NSSegmentedControl::alloc(nil));
             back_fwd_segment.setSegmentStyle_(NSSegmentStyle::NSSegmentStyleRounded);
@@ -145,58 +146,53 @@ impl Widgets {
 
             // FIXME: magic value
             let rect = NSRect::new(NSPoint::new(0., 0.), NSSize::new(20., 20.));
-            let indicator = NSProgressIndicator::initWithFrame_(NSProgressIndicator::alloc(nil), rect);
+            let indicator = NSProgressIndicator::initWithFrame_(NSProgressIndicator::alloc(nil),
+                                                                rect);
             indicator.setStyle_(NSProgressIndicatorStyle::NSProgressIndicatorSpinningStyle);
-            msg_send![indicator, setDisplayedWhenStopped:NO];
+            msg_send![indicator, setDisplayedWhenStopped: NO];
 
 
             ToolbarItems {
                 reload_button: reload_button,
                 back_fwd_segment: back_fwd_segment,
                 urlbar: urlbar,
-                indicator: indicator
+                indicator: indicator,
             }
         }
     }
 }
 
-extern fn toolbar_allowed_item_identifiers(_this: &Object,
-                                           _cmd: Sel,
-                                           _toolbar: id) -> id {
-    unsafe {
-        NSArray::array(nil)
-    }
+extern "C" fn toolbar_allowed_item_identifiers(_this: &Object, _cmd: Sel, _toolbar: id) -> id {
+    unsafe { NSArray::array(nil) }
 }
 
-extern fn toolbar_default_item_identifiers(_this: &Object,
-                                           _cmd: Sel,
-                                           _toolbar: id) -> id {
+extern "C" fn toolbar_default_item_identifiers(_this: &Object, _cmd: Sel, _toolbar: id) -> id {
     unsafe {
         // FIXME: could be static
-        NSArray::arrayWithObjects(nil, &[
-                                  NSString::alloc(nil).init_str("history"),
-                                  NSString::alloc(nil).init_str("reload"),
-                                  NSToolbarFlexibleSpaceItemIdentifier,
-                                  NSString::alloc(nil).init_str("urlbar"),
-                                  NSToolbarFlexibleSpaceItemIdentifier,
-                                  NSString::alloc(nil).init_str("indicator"),
-                                  NSToolbarToggleSidebarItemIdentifier,
-        ])
+        NSArray::arrayWithObjects(nil,
+                                  &[NSString::alloc(nil).init_str("history"),
+                                    NSString::alloc(nil).init_str("reload"),
+                                    NSToolbarFlexibleSpaceItemIdentifier,
+                                    NSString::alloc(nil).init_str("urlbar"),
+                                    NSToolbarFlexibleSpaceItemIdentifier,
+                                    NSString::alloc(nil).init_str("indicator"),
+                                    NSToolbarToggleSidebarItemIdentifier])
     }
 }
 
-extern fn build_toolbar_item(this: &Object,
-                             _cmd: Sel,
-                             _toolbar: id,
-                             identifier: id,
-                             _will_be_inserted: BOOL) -> id {
+extern "C" fn build_toolbar_item(this: &Object,
+                                 _cmd: Sel,
+                                 _toolbar: id,
+                                 identifier: id,
+                                 _will_be_inserted: BOOL)
+                                 -> id {
     let mut item = nil;
 
     unsafe {
         let toolbar_items: &ToolbarItems = {
             let ivar: *mut c_void = *this.get_ivar("toolbar_items");
             &*(ivar as *mut ToolbarItems)
-        }; 
+        };
         // FIXME: magic values
         if NSString::isEqualToString(identifier, "indicator") {
             item = NSToolbarItem::alloc(nil).initWithItemIdentifier_(identifier).autorelease();
@@ -226,26 +222,26 @@ extern fn build_toolbar_item(this: &Object,
     item
 }
 
-extern fn on_reload_click(this: &Object, _cmd: Sel) {
+extern "C" fn on_reload_click(this: &Object, _cmd: Sel) {
     unsafe {
         let event_queue: &mut Vec<WidgetEvent> = {
             let ivar: *mut c_void = *this.get_ivar("event_queue");
             &mut *(ivar as *mut Vec<WidgetEvent>)
-        }; 
+        };
         event_queue.push(WidgetEvent::ReloadClicked);
     }
 }
 
-extern fn on_segment_click(this: &Object, _cmd: Sel) {
+extern "C" fn on_segment_click(this: &Object, _cmd: Sel) {
     unsafe {
         let toolbar_items: &ToolbarItems = {
             let ivar: *mut c_void = *this.get_ivar("toolbar_items");
             &*(ivar as *mut ToolbarItems)
-        }; 
+        };
         let event_queue: &mut Vec<WidgetEvent> = {
             let ivar: *mut c_void = *this.get_ivar("event_queue");
             &mut *(ivar as *mut Vec<WidgetEvent>)
-        }; 
+        };
         let idx: NSInteger = msg_send![toolbar_items.back_fwd_segment, selectedSegment];
         match idx {
             0 => event_queue.push(WidgetEvent::BackClicked),
@@ -259,9 +255,12 @@ fn declare_toolbar_delegate() {
     let superclass = NSObject::class();
     let mut decl = ClassDecl::new("ToolbarDelegate", superclass).unwrap();
     unsafe {
-        decl.add_method(sel!(toolbarAllowedItemIdentifiers:), toolbar_allowed_item_identifiers as extern fn(&Object, Sel, id) -> id);
-        decl.add_method(sel!(toolbarDefaultItemIdentifiers:), toolbar_default_item_identifiers as extern fn(&Object, Sel, id) -> id);
-        decl.add_method(sel!(toolbar:itemForItemIdentifier:willBeInsertedIntoToolbar:), build_toolbar_item as extern fn(&Object, Sel, id, id, BOOL) -> id);
+        decl.add_method(sel!(toolbarAllowedItemIdentifiers:),
+                        toolbar_allowed_item_identifiers as extern "C" fn(&Object, Sel, id) -> id);
+        decl.add_method(sel!(toolbarDefaultItemIdentifiers:),
+                        toolbar_default_item_identifiers as extern "C" fn(&Object, Sel, id) -> id);
+        decl.add_method(sel!(toolbar:itemForItemIdentifier:willBeInsertedIntoToolbar:),
+                        build_toolbar_item as extern "C" fn(&Object, Sel, id, id, BOOL) -> id);
         decl.add_ivar::<*mut c_void>("toolbar_items");
     }
     decl.register();
@@ -271,8 +270,10 @@ fn declare_uitarget() {
     let superclass = NSObject::class();
     let mut decl = ClassDecl::new("UITarget", superclass).unwrap();
     unsafe {
-        decl.add_method(sel!(on_reload_click), on_reload_click as extern fn(&Object, Sel));
-        decl.add_method(sel!(on_segment_click), on_segment_click as extern fn(&Object, Sel));
+        decl.add_method(sel!(on_reload_click),
+                        on_reload_click as extern "C" fn(&Object, Sel));
+        decl.add_method(sel!(on_segment_click),
+                        on_segment_click as extern "C" fn(&Object, Sel));
         decl.add_ivar::<*mut c_void>("toolbar_items");
         decl.add_ivar::<*mut c_void>("event_queue");
     }

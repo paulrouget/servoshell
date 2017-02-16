@@ -22,9 +22,10 @@
 - update servo+resources/ and winit (see https://github.com/tomaka/winit/pull/132)
 - maybe only use msg_send
 
-- remove warnings
-- use http://stackoverflow.com/questions/5184409/uiactivityindicatorview-for-mac-os-x
-- figure out how to name hromeWindow
+- figure out how to name chromeWindow
 - pass everything through rustfmt
 - clean up to giant ::…::…::
 - resize
+
+- black screen
+- logs
