@@ -1,7 +1,19 @@
 #![feature(box_syntax)]
 
-// Copy necessary for Cell<DrawableGeometry>. Clone is necessary for Copy.
-// FIXME: I'm not sure why.
+// It's necessary to declare this here:
+// rustc: "an `extern crate` loading macros must be at the crate root"
+#[macro_use]
+extern crate objc;
+
+mod window;
+mod widgets;
+mod servo;
+
+use std::env::args;
+use servo::{Servo, ServoEvent, ServoCursor};
+use window::{GlutinWindow, WindowEvent, WindowMouseButton, WindowMouseCursor};
+use window::{WindowMouseScrollDelta, WindowElementState};
+
 #[derive(Copy, Clone)]
 pub struct DrawableGeometry {
     inner_size: (u32, u32),
@@ -9,105 +21,111 @@ pub struct DrawableGeometry {
     hidpi_factor: f32,
 }
 
-// FIXME: can I move that to chrome.rs???
-#[macro_use]
-extern crate objc;
-
-extern crate servo;
-extern crate winit;
-
-const LINE_HEIGHT: f32 = 38.0; // FIXME
-
-use servo::servo_url::ServoUrl;
-
-mod window;
-mod widgets;
-mod browser;
-
-fn get_url() -> ServoUrl {
-    let default_url = ServoUrl::parse("http://servo.org").ok();
-    match std::env::args().nth(1) {
-        None => default_url,
-        Some(arg1) => {
-            match ServoUrl::parse(arg1.as_str()) {
-                Err(_) => default_url,
-                Ok(url) => Some(url)
-            }
-        }
-    }.unwrap()
-}
-
-
 fn main() {
 
-    let window = window::ChromeWindow::new();
-
+    let url = args().nth(1).unwrap_or("http://servo.org".to_owned());
+    let window = GlutinWindow::new();
     let widgets = widgets::platform::Widgets::new(&window);
-
-    let browser = browser::Browser::new(
-        window.get_geometry(),
-        window.create_window_proxy(),
-        get_url());
-
-    browser.initialize_compositing();
+    let servo = Servo::new(window.get_geometry(), window.create_event_loop_riser(), &url);
 
     let mut mouse_pos = (0, 0);
-    let mut mouse_down_button: Option<winit::MouseButton> = None;
+    let mut mouse_down_button: Option<WindowMouseButton> = None;
     let mut mouse_down_point = (0, 0);
 
     loop {
         let mut winit_events = window.get_events();
         let mut widget_events = widgets.get_events();
-        let mut browser_events = browser.get_events();
+        let mut browser_events = servo.get_events();
 
         for event in widget_events.drain(..) {
             match event {
                 widgets::WidgetEvent::BackClicked => {
-                    browser.go_back();
+                    servo.go_back();
                 }
                 widgets::WidgetEvent::FwdClicked => {
-                    browser.go_fwd();
+                    servo.go_fwd();
                 }
                 widgets::WidgetEvent::ReloadClicked => {
-                    browser.reload();
+                    servo.reload();
                 }
             }
         }
 
         for event in browser_events.drain(..) {
             match event {
-                // FIXME: rename ServoEvent to BrowserEvent
-                browser::ServoEvent::Present => {
+                ServoEvent::CursorChanged(servo_cursor) => {
+                    let winit_cursor = match servo_cursor {
+                        ServoCursor::None => WindowMouseCursor::NoneCursor,
+                        ServoCursor::Default => WindowMouseCursor::Default,
+                        ServoCursor::Pointer => WindowMouseCursor::Hand,
+                        ServoCursor::ContextMenu => WindowMouseCursor::ContextMenu,
+                        ServoCursor::Help => WindowMouseCursor::Help,
+                        ServoCursor::Progress => WindowMouseCursor::Progress,
+                        ServoCursor::Wait => WindowMouseCursor::Wait,
+                        ServoCursor::Cell => WindowMouseCursor::Cell,
+                        ServoCursor::Crosshair => WindowMouseCursor::Crosshair,
+                        ServoCursor::Text => WindowMouseCursor::Text,
+                        ServoCursor::VerticalText => WindowMouseCursor::VerticalText,
+                        ServoCursor::Alias => WindowMouseCursor::Alias,
+                        ServoCursor::Copy => WindowMouseCursor::Copy,
+                        ServoCursor::Move => WindowMouseCursor::Move,
+                        ServoCursor::NoDrop => WindowMouseCursor::NoDrop,
+                        ServoCursor::NotAllowed => WindowMouseCursor::NotAllowed,
+                        ServoCursor::Grab => WindowMouseCursor::Grab,
+                        ServoCursor::Grabbing => WindowMouseCursor::Grabbing,
+                        ServoCursor::EResize => WindowMouseCursor::EResize,
+                        ServoCursor::NResize => WindowMouseCursor::NResize,
+                        ServoCursor::NeResize => WindowMouseCursor::NeResize,
+                        ServoCursor::NwResize => WindowMouseCursor::NwResize,
+                        ServoCursor::SResize => WindowMouseCursor::SResize,
+                        ServoCursor::SeResize => WindowMouseCursor::SeResize,
+                        ServoCursor::SwResize => WindowMouseCursor::SwResize,
+                        ServoCursor::WResize => WindowMouseCursor::WResize,
+                        ServoCursor::EwResize => WindowMouseCursor::EwResize,
+                        ServoCursor::NsResize => WindowMouseCursor::NsResize,
+                        ServoCursor::NeswResize => WindowMouseCursor::NeswResize,
+                        ServoCursor::NwseResize => WindowMouseCursor::NwseResize,
+                        ServoCursor::ColResize => WindowMouseCursor::ColResize,
+                        ServoCursor::RowResize => WindowMouseCursor::RowResize,
+                        ServoCursor::AllScroll => WindowMouseCursor::AllScroll,
+                        ServoCursor::ZoomIn => WindowMouseCursor::ZoomIn,
+                        ServoCursor::ZoomOut => WindowMouseCursor::ZoomOut,
+                    };
+                    window.get_winit_window().set_cursor(winit_cursor);
+                }
+                ServoEvent::Present => {
                     window.swap_buffers();
                 }
-                browser::ServoEvent::LoadStart(_, _) => {
+                ServoEvent::LoadStart(_, _) => {
                     widgets.set_indicator_active(true);
                 }
-                browser::ServoEvent::LoadEnd(_, _, _) => {
+                ServoEvent::LoadEnd(_, _, _) => {
                     widgets.set_indicator_active(false);
                 }
-                browser::ServoEvent::TitleChanged(title) => {
+                ServoEvent::TitleChanged(title) => {
                     match title {
                         None => widgets.set_urlbar_text(""),
                         Some(text) => widgets.set_urlbar_text(text.as_str()),
                     }
                 }
-                _ => {
+                e => {
+                    println!("Unhandled Servo event: {:?}", e);
                 }
             }
         }
 
         for event in winit_events.drain(..) {
             match event {
-                winit::Event::MouseMoved(x, y) => {
+                WindowEvent::MouseMoved(x, y) => {
                     let y = y - 76; /* FIXME: magic value */
                     mouse_pos = (x, y);
-                    browser.update_mouse_coordinates(x, y);
+                    servo.update_mouse_coordinates(x, y);
                 }
-                winit::Event::MouseWheel(delta, phase) => {
+                WindowEvent::MouseWheel(delta, phase) => {
                     let (mut dx, mut dy) = match delta {
-                        winit::MouseScrollDelta::LineDelta(dx, dy) => (dx, dy * LINE_HEIGHT),
-                        winit::MouseScrollDelta::PixelDelta(dx, dy) => (dx, dy),
+                        // FIXME: magic value
+                        WindowMouseScrollDelta::LineDelta(dx, dy) => (dx, dy * 38.),
+                        WindowMouseScrollDelta::PixelDelta(dx, dy) => (dx, dy),
                     };
                     if dy.abs() >= dx.abs() {
                         dx = 0.0;
@@ -115,27 +133,33 @@ fn main() {
                         dy = 0.0;
                     }
                     let (x, y) = mouse_pos;
-                    browser.scroll(x, y, dx, dy, phase);
+                    servo.scroll(x, y, dx, dy, phase);
                 }
-                winit::Event::MouseInput(element_state, mouse_button) => {
-                    if mouse_button == winit::MouseButton::Left || mouse_button == winit::MouseButton::Right {
-                        if element_state == winit::ElementState::Pressed {
+                WindowEvent::MouseInput(element_state, mouse_button) => {
+                    if mouse_button == WindowMouseButton::Left ||
+                       mouse_button == WindowMouseButton::Right {
+                        if element_state == WindowElementState::Pressed {
                             mouse_down_point = mouse_pos;
                             mouse_down_button = Some(mouse_button);
                         }
                         let (x, y) = mouse_pos;
                         let (org_x, org_y) = mouse_down_point;
-                        browser.click(x, y, org_x, org_y, element_state, mouse_button, mouse_down_button);
+                        servo.click(x,
+                                    y,
+                                    org_x,
+                                    org_y,
+                                    element_state,
+                                    mouse_button,
+                                    mouse_down_button);
                     }
                 }
-                _ => { }
+                _ => {}
             }
         }
 
-        // FIXME: Is there a cleaner way to achieve this?
-        // sync is necessary event if there's no event
-        // The main thread is awaken by Servo (see CompositorProxy trick)
-        // servo.handle_event() is expected to be called.
-        browser.sync();
+        // sync is necessary even if there's no event.
+        // The main thread is awaken by Servo (see CompositorProxy trick).
+        // servo.handle_event() is then expected to be called.
+        servo.sync();
     }
 }
