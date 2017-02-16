@@ -28,3 +28,5 @@
 
 - black screen
 - logs
+
+- crash on zoom
