@@ -24,3 +24,14 @@
 - resize
 - black screen
 - logs
+- multiprocess
+- experiment with vertical scroll for history
+- experiment with scrollout toolbar
+- add menuitems and bind then to same actions as toolbaritems
+- no notification when navigating through history (can't update back/fwd buttons)
+- support View > View Tab Bar
+- support Cmd-[ and Cmd-] and make it default cocoa menu, and only use Cmd-left/right from glutin events
+- support Cmd-N (new window)
+- submenu don't show up util window is unfocus and refocused
+- share a target for both toolbar items and menus
+- implement urlbar
