@@ -45,7 +45,7 @@ pub enum ServoEvent {
     LoadStart(bool, bool),
     LoadEnd(bool, bool, bool),
     LoadError(String),
-    HeadParsed,
+    HeadParsed(ServoUrl),
     CursorChanged(ServoCursor),
     FaviconChanged(ServoUrl),
     Key(Option<char>, Key, constellation_msg::KeyModifiers),
@@ -294,8 +294,8 @@ impl WindowMethods for ServoCallbacks {
         self.event_queue.borrow_mut().push(ServoEvent::LoadError(url));
     }
 
-    fn head_parsed(&self) {
-        self.event_queue.borrow_mut().push(ServoEvent::HeadParsed);
+    fn head_parsed(&self, url: ServoUrl) {
+        self.event_queue.borrow_mut().push(ServoEvent::HeadParsed(url));
     }
 
     fn set_cursor(&self, cursor: ServoCursor) {

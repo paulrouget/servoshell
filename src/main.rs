@@ -101,7 +101,8 @@ fn main() {
                 ServoEvent::Present => {
                     window.swap_buffers();
                 }
-                ServoEvent::HeadParsed => {
+                ServoEvent::HeadParsed(url) => {
+                    widgets.set_urlbar_text(url.as_str());
                     if !first_load {
                         // FIXME: this is hacky, but until we get better history state
                         // events, that'll do it.
