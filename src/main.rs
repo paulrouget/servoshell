@@ -177,7 +177,11 @@ fn main() {
                                     mouse_down_button);
                     }
                 }
-                _ => {}
+                WindowEvent::Awakened => {
+                }
+                e => {
+                    println!("Unhandled Window event: {:?}", e);
+                }
             }
         }
 

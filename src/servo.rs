@@ -54,20 +54,20 @@ pub enum ServoEvent {
 impl fmt::Debug for ServoEvent {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            ServoEvent::SetWindowInnerSize(_, _) => write!(f, "SetWindowInnerSize"),
-            ServoEvent::SetWindowPosition(_, _) => write!(f, "SetWindowPosition"),
-            ServoEvent::SetFullScreenState(_) => write!(f, "SetFullScreenState"),
+            ServoEvent::SetWindowInnerSize(..) => write!(f, "SetWindowInnerSize"),
+            ServoEvent::SetWindowPosition(..) => write!(f, "SetWindowPosition"),
+            ServoEvent::SetFullScreenState(..) => write!(f, "SetFullScreenState"),
             ServoEvent::Present => write!(f, "Present"),
-            ServoEvent::TitleChanged(_) => write!(f, "TitleChanged"),
-            ServoEvent::URLChanged(_) => write!(f, "URLChanged"),
-            ServoEvent::StatusChanged(_) => write!(f, "StatusChanged"),
-            ServoEvent::LoadStart(_, _) => write!(f, "LoadStart"),
-            ServoEvent::LoadEnd(_, _, _) => write!(f, "LoadEnd"),
-            ServoEvent::LoadError(_) => write!(f, "LoadError"),
-            ServoEvent::HeadParsed => write!(f, "HeadParsed"),
-            ServoEvent::CursorChanged(_) => write!(f, "CursorChanged"),
-            ServoEvent::FaviconChanged(_) => write!(f, "FaviconChanged"),
-            ServoEvent::Key(_, _, _) => write!(f, "Key"),
+            ServoEvent::TitleChanged(..) => write!(f, "TitleChanged"),
+            ServoEvent::URLChanged(..) => write!(f, "URLChanged"),
+            ServoEvent::StatusChanged(..) => write!(f, "StatusChanged"),
+            ServoEvent::LoadStart(..) => write!(f, "LoadStart"),
+            ServoEvent::LoadEnd(..) => write!(f, "LoadEnd"),
+            ServoEvent::LoadError(..) => write!(f, "LoadError"),
+            ServoEvent::HeadParsed(..) => write!(f, "HeadParsed"),
+            ServoEvent::CursorChanged(..) => write!(f, "CursorChanged"),
+            ServoEvent::FaviconChanged(..) => write!(f, "FaviconChanged"),
+            ServoEvent::Key(..) => write!(f, "Key"),
         }
     }
 }

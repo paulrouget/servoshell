@@ -118,7 +118,7 @@ impl Widgets {
     }
 
     pub fn set_back_button_enabled(&self, enabled: bool) {
-        let enabled = if enabled {YES} else {NO};
+        let enabled = if enabled { YES } else { NO };
         unsafe {
             let ref toolbar_items = *self.toolbar_items_ptr;
             toolbar_items.back_fwd_segment.setEnabled_forSegment_(enabled, 0);
@@ -126,7 +126,7 @@ impl Widgets {
     }
 
     pub fn set_fwd_button_enabled(&self, enabled: bool) {
-        let enabled = if enabled {YES} else {NO};
+        let enabled = if enabled { YES } else { NO };
         unsafe {
             let ref toolbar_items = *self.toolbar_items_ptr;
             toolbar_items.back_fwd_segment.setEnabled_forSegment_(enabled, 1);
