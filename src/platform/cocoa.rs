@@ -1,6 +1,6 @@
 extern crate cocoa;
 extern crate objc_foundation;
-
+extern crate libc;
 
 use self::cocoa::base::*;
 use self::cocoa::foundation::*;
@@ -89,10 +89,33 @@ impl Widgets {
             let nsview = winit_window.get_nsview() as id;
             msg_send![nsview, addSubview: bottombar];
 
+            // Self::print_nsview_tree(nsview.superview(), "");
+
             Widgets {
                 bottombar: bottombar,
                 event_queue_ptr: event_queue_ptr,
                 toolbar_items_ptr: toolbar_items_ptr,
+            }
+        }
+    }
+
+    fn print_nsview_tree(nsview: id, prefix: &str) {
+        unsafe {
+            let classname = {
+                use std::ffi::CStr;
+                use self::libc;
+                let name: id = msg_send![nsview, className];
+                let name: *const libc::c_char = msg_send![name, UTF8String];
+                CStr::from_ptr(name).to_string_lossy().into_owned()
+            };
+            println!("{}{}", prefix, classname);
+
+            let views: id = msg_send![nsview, subviews];
+            let count: NSInteger = msg_send![views, count];
+
+            for i in 0..count {
+                let view: id = msg_send![views, objectAtIndex:i];
+                Self::print_nsview_tree(view, format!("-----{}", prefix).as_str());
             }
         }
     }
