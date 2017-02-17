@@ -23,6 +23,8 @@ pub struct DrawableGeometry {
 
 fn main() {
 
+    widgets::platform::Widgets::setup_app();
+
     let url = args().nth(1).unwrap_or("http://servo.org".to_owned());
     let window = GlutinWindow::new();
     let widgets = widgets::platform::Widgets::new(&window);

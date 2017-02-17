@@ -41,10 +41,6 @@ pub struct Widgets {
 impl Widgets {
     pub fn new(window: &GlutinWindow) -> Widgets {
         unsafe {
-            // FIXME: make sure this is only called once
-            declare_toolbar_delegate();
-            declare_uitarget();
-
             let winit_window = window.get_winit_window();
             let nswindow = winit_window.get_nswindow() as id;
 
@@ -53,8 +49,8 @@ impl Widgets {
             let event_queue = Box::new(Vec::new());
 
             // FIXME: initWithIdentifier_ <- can't we ust do a regular `init()`?
-            let toolbar = NSToolbar::alloc(nil)
-                .initWithIdentifier_(NSString::alloc(nil).init_str("tb1"));
+            let toolbar = NSToolbar::alloc(nil).autorelease();
+            toolbar.initWithIdentifier_(NSString::alloc(nil).init_str("tb1"));
 
             let toolbar_items = Self::build_toolbar_items();
             let toolbar_items = Box::new(toolbar_items);
@@ -144,10 +140,87 @@ impl Widgets {
         }
     }
 
-    pub fn set_statusbar_text(&self, text: &str) {
+    pub fn set_bottombar_text(&self, text: &str) {
         unsafe {
             let string = NSString::alloc(nil).init_str(text);
-            NSTextField::setStringValue_(self.statusbar, string);
+            NSTextField::setStringValue_(self.bottombar, string);
+        }
+    }
+
+    pub fn setup_app() {
+        declare_toolbar_delegate();
+        declare_uitarget();
+        unsafe {
+
+            let quit_item = {
+                let label = NSString::alloc(nil).init_str("Quit");
+                let action = selector("terminate:");
+                let key = NSString::alloc(nil).init_str("q");
+                NSMenuItem::alloc(nil).initWithTitle_action_keyEquivalent_(label, action, key).autorelease()
+            };
+
+            let reload_item = {
+                let label = NSString::alloc(nil).init_str("Reload");
+                let action = selector("on_reload_click");
+                let key = NSString::alloc(nil).init_str("r");
+                NSMenuItem::alloc(nil).initWithTitle_action_keyEquivalent_(label, action, key).autorelease()
+            };
+
+            let go_back_item = {
+                let label = NSString::alloc(nil).init_str("Back");
+                let action = selector("go_back");
+                let key = msg_send![class("NSString"), stringWithCharacters:&NSLeftArrowFunctionKey length:1];
+                NSMenuItem::alloc(nil).initWithTitle_action_keyEquivalent_(label, action, key).autorelease()
+            };
+
+            let go_fwd_item = {
+                let label = NSString::alloc(nil).init_str("Forward");
+                let action = selector("go_fwd:");
+                let key = msg_send![class("NSString"), stringWithCharacters:&NSRightArrowFunctionKey length:1];
+                NSMenuItem::alloc(nil).initWithTitle_action_keyEquivalent_(label, action, key).autorelease()
+            };
+
+            let open_location_item = {
+                let label = NSString::alloc(nil).init_str("Open Location");
+                let action = selector("open_location");
+                let key = NSString::alloc(nil).init_str("l");
+                NSMenuItem::alloc(nil).initWithTitle_action_keyEquivalent_(label, action, key).autorelease()
+            };
+
+
+            let app_menu = NSMenu::new(nil).autorelease();
+                app_menu.addItem_(quit_item);
+            let app_menu_item = NSMenuItem::new(nil).autorelease();
+                app_menu_item.setSubmenu_(app_menu);
+
+            let file_menu = NSMenu::new(nil).initWithTitle_(NSString::alloc(nil).init_str("File")).autorelease();
+                file_menu.addItem_(open_location_item);
+                file_menu.setAutoenablesItems(NO);
+            let file_menu_item = NSMenuItem::new(nil).autorelease();
+                file_menu_item.setSubmenu_(file_menu);
+
+            let view_menu = NSMenu::new(nil).initWithTitle_(NSString::alloc(nil).init_str("View")).autorelease();
+                view_menu.addItem_(reload_item);
+                view_menu.setAutoenablesItems(NO);
+            let view_menu_item = NSMenuItem::new(nil).autorelease();
+                view_menu_item.setSubmenu_(view_menu);
+
+            let history_menu = NSMenu::new(nil).initWithTitle_(NSString::alloc(nil).init_str("History")).autorelease();
+                history_menu.addItem_(go_back_item);
+                history_menu.addItem_(go_fwd_item);
+                history_menu.setAutoenablesItems(NO);
+            let history_menu_item = NSMenuItem::new(nil).autorelease();
+                history_menu_item.setSubmenu_(history_menu);
+
+            let menubar = NSMenu::new(nil).autorelease();
+                menubar.addItem_(app_menu_item);
+                menubar.addItem_(file_menu_item);
+                menubar.addItem_(view_menu_item);
+                menubar.addItem_(history_menu_item);
+
+
+            NSApp().setMainMenu_(menubar);
+
         }
     }
 
