@@ -125,15 +125,12 @@ fn main() {
                 }
                 ServoEvent::StatusChanged(status) => {
                     match status {
-                        None => widgets.set_statusbar_text(""),
-                        Some(text) => widgets.set_statusbar_text(text.as_str()),
+                        None => widgets.set_bottombar_text(""),
+                        Some(text) => widgets.set_bottombar_text(text.as_str()),
                     }
                 }
                 ServoEvent::TitleChanged(title) => {
-                    match title {
-                        None => widgets.set_urlbar_text(""),
-                        Some(text) => widgets.set_urlbar_text(text.as_str()),
-                    }
+                    window.get_winit_window().set_title(&title.unwrap_or("No Title".to_owned()));
                 }
                 e => {
                     println!("Unhandled Servo event: {:?}", e);

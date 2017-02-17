@@ -33,7 +33,7 @@ struct ToolbarItems {
 }
 
 pub struct Widgets {
-    statusbar: id,
+    bottombar: id,
     event_queue_ptr: *mut Vec<WidgetEvent>,
     toolbar_items_ptr: *mut ToolbarItems,
 }
@@ -79,17 +79,18 @@ impl Widgets {
             nswindow.setToolbar_(toolbar);
 
             let rect = NSRect::new(NSPoint::new(2., -2.), NSSize::new(400., 20.));
-            let statusbar = NSView::initWithFrame_(NSTextField::alloc(nil), rect);
-            msg_send![statusbar, setEditable:NO];
-            msg_send![statusbar, setSelectable:NO];
-            msg_send![statusbar, setBordered:NO];
-            msg_send![statusbar, setBackgroundColor:NSColor::clearColor(nil)];
+            let bottombar = NSTextField::alloc(nil).autorelease();
+            NSView::initWithFrame_(bottombar, rect);
+            msg_send![bottombar, setEditable: NO];
+            msg_send![bottombar, setSelectable: NO];
+            msg_send![bottombar, setBordered: NO];
+            msg_send![bottombar, setBackgroundColor: NSColor::clearColor(nil)];
 
             let nsview = winit_window.get_nsview() as id;
-            msg_send![nsview, addSubview:statusbar];
+            msg_send![nsview, addSubview: bottombar];
 
             Widgets {
-                statusbar: statusbar,
+                bottombar: bottombar,
                 event_queue_ptr: event_queue_ptr,
                 toolbar_items_ptr: toolbar_items_ptr,
             }
