@@ -23,8 +23,6 @@ use window::WindowExt;
 // FIXME: use autorelease, retain and release (see Drop & IdRef)
 // FIXME: move none native code to ../../widget.rs
 
-/// WINDOW
-
 struct ToolbarItems {
     reload_button: id,
     back_fwd_segment: id,
@@ -99,6 +97,8 @@ impl Widgets {
         }
     }
 
+    #[allow(dead_code)]
+    // FIXME: implement fmt::Debug instead
     fn print_nsview_tree(nsview: id, prefix: &str) {
         unsafe {
             let classname = {
@@ -157,6 +157,7 @@ impl Widgets {
     }
 
     pub fn set_urlbar_text(&self, text: &str) {
+        // FIXME: also use nswindow.setRepresentedURL_
         unsafe {
             let ref toolbar_items = *self.toolbar_items_ptr;
             let string = NSString::alloc(nil).init_str(text);
