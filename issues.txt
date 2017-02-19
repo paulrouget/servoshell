@@ -5,7 +5,6 @@
 - reload/stop button
 - figure out button layout magic values
 - searchbar
-- try multiple window instances (and make it so the nswindow can be added to the tabview via https://developer.apple.com/reference/appkit/nswindow/1855947-addtabbedwindow?language=objc)
 - https://github.com/tomaka/winit/issues/131
 - maybe only use msg_send
 - resize
@@ -20,6 +19,15 @@
 - support Cmd-N (new window)ww
 - submenu don't show up util window is unfocus and refocused
 - share a target for both toolbar items and menus
-- implement urlbar
 - https://github.com/servo/cocoa-rs/issues/147
 - https://github.com/servo/cocoa-rs/issues/155
+
+- we need a mapping nswindow -> Widgets.
+- then, have a global set of delegate methods, that will get the keyWindow (msg_send![NSApp(), keyWindow)
+- get Widgets, add event or perform widget actions
+- build menu bound to  delegate methods
+- from here, build "Open Location" (focus urlbar)
+- implement urlbar
+
+- multiwindow: multiNSWindow first maybe, with tabbed view
+  (nswindow added to the tabview via https://developer.apple.com/reference/appkit/nswindow/1855947-addtabbedwindow)
