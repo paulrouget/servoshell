@@ -12,7 +12,8 @@ winit = "0.5"
 glutin = "0.7"
 cocoa = "0.6"
 euclid = "0.10.3"
-libservo = {path = "../servo/components/servo"}
+open = "1.1.1"
+libservo = {path = "../servo/components/servo"} # paulrouget/servoshell (HeadParsed(url) & AllowNavigation)
 style_traits = {path = "../servo/components/style_traits"}
 servo_geometry = {path = "../servo/components/geometry"}
 

@@ -40,6 +40,7 @@ pub enum ServoEvent {
     SetFullScreenState(bool),
     Present,
     TitleChanged(Option<String>),
+    UnhandledURL(ServoUrl),
     URLChanged(ServoUrl),
     StatusChanged(Option<String>),
     LoadStart(bool, bool),
@@ -51,6 +52,11 @@ pub enum ServoEvent {
     Key(Option<char>, Key, constellation_msg::KeyModifiers),
 }
 
+pub enum FollowLinkPolicy {
+    FollowAnyLink,
+    FollowOriginalDomain
+}
+
 impl fmt::Debug for ServoEvent {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
@@ -59,6 +65,7 @@ impl fmt::Debug for ServoEvent {
             ServoEvent::SetFullScreenState(..) => write!(f, "SetFullScreenState"),
             ServoEvent::Present => write!(f, "Present"),
             ServoEvent::TitleChanged(..) => write!(f, "TitleChanged"),
+            ServoEvent::UnhandledURL(..) => write!(f, "UnhandledURL"),
             ServoEvent::URLChanged(..) => write!(f, "URLChanged"),
             ServoEvent::StatusChanged(..) => write!(f, "StatusChanged"),
             ServoEvent::LoadStart(..) => write!(f, "LoadStart"),
@@ -80,11 +87,22 @@ pub struct Servo {
 }
 
 impl Servo {
-    pub fn new(geometry: DrawableGeometry, riser: EventLoopRiser, url: &str) -> Servo {
+    pub fn new(geometry: DrawableGeometry,
+               riser: EventLoopRiser,
+               url: &str,
+               follow_link_policy: FollowLinkPolicy)
+               -> Servo {
+
+        let url = ServoUrl::parse(url).ok().unwrap(); // FIXME. What if fail?
+
+        let allowed_domain = match follow_link_policy {
+            FollowLinkPolicy::FollowOriginalDomain => Some(url.domain().unwrap().clone().to_owned()),
+            FollowLinkPolicy::FollowAnyLink => None
+        };
 
         let mut opts = opts::default_opts();
         opts.headless = false;
-        opts.url = ServoUrl::parse(url).ok();
+        opts.url = Some(url);
         opts::set_defaults(opts);
         // FIXME: Pipeline creation fails is layout_threads pref not set
         PREFS.set("layout.threads", PrefValue::Number(1.0));
@@ -93,6 +111,7 @@ impl Servo {
             event_queue: RefCell::new(Vec::new()),
             geometry: Cell::new(geometry),
             riser: riser,
+            allowed_domain: allowed_domain,
         });
 
         println!("{}", servo_version());
@@ -199,6 +218,7 @@ struct ServoCallbacks {
     event_queue: RefCell<Vec<ServoEvent>>,
     geometry: Cell<DrawableGeometry>,
     riser: EventLoopRiser,
+    allowed_domain: Option<String>,
 }
 
 impl ServoCallbacks {
@@ -217,6 +237,17 @@ impl WindowMethods for ServoCallbacks {
     fn supports_clipboard(&self) -> bool {
         // FIXME
         false
+    }
+
+    fn allow_navigation(&self, url: ServoUrl) -> bool {
+        let allow = self.allowed_domain
+            .as_ref()
+            .map(|domain| url.domain().unwrap() == domain)
+            .unwrap_or(false);
+        if !allow {
+            self.event_queue.borrow_mut().push(ServoEvent::UnhandledURL(url));
+        }
+        allow
     }
 
     fn create_compositor_channel(&self) -> CompositorChannel {

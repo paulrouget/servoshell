@@ -10,6 +10,7 @@ dependencies = [
  "libservo 0.0.1",
  "objc 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "objc-foundation 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "open 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "servo_geometry 0.0.1",
  "style_traits 0.0.1",
  "webrender_traits 0.14.0 (git+https://github.com/servo/webrender)",

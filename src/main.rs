@@ -5,12 +5,14 @@
 #[macro_use]
 extern crate objc;
 
+extern crate open;
+
 mod window;
 mod widgets;
 mod servo;
 
 use std::env::args;
-use servo::{Servo, ServoEvent, ServoCursor};
+use servo::{FollowLinkPolicy, Servo, ServoEvent, ServoCursor};
 use window::{GlutinWindow, WindowEvent, WindowMouseButton, WindowMouseCursor};
 use window::{WindowMouseScrollDelta, WindowElementState};
 
@@ -28,9 +30,12 @@ fn main() {
     let url = args().nth(1).unwrap_or("http://servo.org".to_owned());
     let window = GlutinWindow::new();
     let widgets = widgets::platform::Widgets::new(&window);
+
+    // FIXME: set policy via command line arg
     let servo = Servo::new(window.get_geometry(),
                            window.create_event_loop_riser(),
-                           &url);
+                           &url,
+                           FollowLinkPolicy::FollowOriginalDomain);
 
     let mut mouse_pos = (0, 0);
     let mut mouse_down_button: Option<WindowMouseButton> = None;
@@ -132,6 +137,9 @@ fn main() {
                 ServoEvent::TitleChanged(title) => {
                     window.get_winit_window().set_title(&title.unwrap_or("No Title".to_owned()));
                 }
+                ServoEvent::UnhandledURL(url) => {
+                    open::that(url.as_str()).ok();
+                }
                 e => {
                     println!("Unhandled Servo event: {:?}", e);
                 }
@@ -177,7 +185,8 @@ fn main() {
                                     mouse_down_button);
                     }
                 }
-                WindowEvent::Awakened => {
+                WindowEvent::Awakened | WindowEvent::TouchpadPressure(..) => {
+                    // Skip printing. Too many.
                 }
                 e => {
                     println!("Unhandled Window event: {:?}", e);
