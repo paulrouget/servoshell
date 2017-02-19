@@ -184,6 +184,14 @@ impl Widgets {
                 NSMenuItem::alloc(nil).initWithTitle_action_keyEquivalent_(label, action, key).autorelease()
             };
 
+            let about_item = {
+                let label = NSString::alloc(nil).init_str("About");
+                // msg_send![app, orderFrontStandardAboutPanel:nil];
+                let action = selector("orderFrontStandardAboutPanel:");
+                let key = NSString::alloc(nil).init_str("a");
+                NSMenuItem::alloc(nil).initWithTitle_action_keyEquivalent_(label, action, key).autorelease()
+            };
+
             let reload_item = {
                 let label = NSString::alloc(nil).init_str("Reload");
                 let action = selector("on_reload_click");
@@ -215,6 +223,7 @@ impl Widgets {
 
             let app_menu = NSMenu::new(nil).autorelease();
                 app_menu.addItem_(quit_item);
+                app_menu.addItem_(about_item);
             let app_menu_item = NSMenuItem::new(nil).autorelease();
                 app_menu_item.setSubmenu_(app_menu);
 
