@@ -21,6 +21,10 @@
 - share a target for both toolbar items and menus
 - https://github.com/servo/cocoa-rs/issues/147
 - https://github.com/servo/cocoa-rs/issues/155
+- app icon
+- shift content when tabbar is visible
+- add a icon to toggle tabbar
+- backport https://github.com/servo/glutin/pull/99 to winit
 
 - we need a mapping nswindow -> Widgets.
 - then, have a global set of delegate methods, that will get the keyWindow (msg_send![NSApp(), keyWindow)
@@ -31,3 +35,10 @@
 
 - multiwindow: multiNSWindow first maybe, with tabbed view
   (nswindow added to the tabview via https://developer.apple.com/reference/appkit/nswindow/1855947-addtabbedwindow)
+
+To file:
+- make it possible to either screenshot the pipeline (copy the NSOpenGLVIew into a NSImage)
+- add a hook for navigation
+
+
+Next: look at: [NSApp performSelector:@selector(terminate:) withObject:nil afterDelay:0.0];
