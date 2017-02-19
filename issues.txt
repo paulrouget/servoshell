@@ -1,37 +1,25 @@
-- libservo still depend on glutin, via skia. Skia could do without glutin. https://github.com/servo/skia/issues/127
-- /resources/ is necessary
-- rely on prefs
-- how to avoid copying Cargo.lock and resources
-- style_traits and servo_geometry necessary
-- rustc nightly
 - opaque status bar
 - sidebar
 - dark UI
-- tab (the key) through controls
+- tab (the key) through controls and unfocus urlbar
 - reload/stop button
 - figure out button layout magic values
 - searchbar
-- try multiple window instances
-- https://github.com/servo/servo/issues/15439
-- https://github.com/servo/cocoa-rs/issues/147
-- https://github.com/servo/webrender/issues/833
-- https://github.com/servo/cocoa-rs/issues/155
+- try multiple window instances (and make it so the nswindow can be added to the tabview via https://developer.apple.com/reference/appkit/nswindow/1855947-addtabbedwindow?language=objc)
 - https://github.com/tomaka/winit/issues/131
-- load_error never called by servo
-- update servo+resources/ and winit (see https://github.com/tomaka/winit/pull/132)
 - maybe only use msg_send
-- HeadParsed should come with back/fwd info. Or maybe we should have a dedicated event for history state change.
 - resize
 - black screen
 - logs
 - multiprocess
-- experiment with vertical scroll for history
+- experiment with horizontal scroll for history
 - experiment with scrollout toolbar
 - add menuitems and bind then to same actions as toolbaritems
-- no notification when navigating through history (can't update back/fwd buttons)
 - support View > View Tab Bar
 - support Cmd-[ and Cmd-] and make it default cocoa menu, and only use Cmd-left/right from glutin events
-- support Cmd-N (new window)
+- support Cmd-N (new window)ww
 - submenu don't show up util window is unfocus and refocused
 - share a target for both toolbar items and menus
 - implement urlbar
+- https://github.com/servo/cocoa-rs/issues/147
+- https://github.com/servo/cocoa-rs/issues/155
