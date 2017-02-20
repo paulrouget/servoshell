@@ -99,8 +99,14 @@ impl Widgets {
 
     #[allow(dead_code)]
     // FIXME: implement fmt::Debug instead
-    fn print_nsview_tree(nsview: id, prefix: &str) {
+    fn print_nsview_tree(nsview: Option<id>, prefix: &str) {
         unsafe {
+            let nsview = nsview.unwrap_or({
+                let w: id = msg_send![NSApp(), keyWindow];
+                let w: id = msg_send![w, contentView];
+                let w: id = msg_send![w, superview];
+                w
+            });
             let classname = {
                 use std::ffi::CStr;
                 use self::libc;
@@ -115,7 +121,7 @@ impl Widgets {
 
             for i in 0..count {
                 let view: id = msg_send![views, objectAtIndex:i];
-                Self::print_nsview_tree(view, format!("-----{}", prefix).as_str());
+                Self::print_nsview_tree(Some(view), format!("-----{}", prefix).as_str());
             }
         }
     }
