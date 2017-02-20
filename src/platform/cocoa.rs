@@ -313,6 +313,45 @@ impl Widgets {
             }
         }
     }
+
+    pub fn translate_toolbar(&self, y: f64) {
+        unsafe {
+            let toolbar = Widgets::get_titlebar_view();
+            if toolbar.is_none() {
+                println!("can't find toolbar");
+                return;
+            }
+            let toolbar = toolbar.unwrap();
+            let point = NSPoint::new(0., y / 2.0);
+            msg_send![toolbar, translateOriginToPoint:point];
+        }
+    }
+
+    fn get_titlebar_view() -> Option<id> {
+        unsafe {
+            unsafe fn get_view_for_class(nsview: id, class: &Class) -> Option<id> {
+                let subviews: id = msg_send![nsview, subviews];
+                let count: NSInteger = msg_send![subviews, count];
+                for i in 0..count {
+                    let view: id = msg_send![subviews, objectAtIndex:i];
+                    let is_class = msg_send![view, isKindOfClass:class];
+                    if is_class {
+                        return Some(view);
+                    }
+                    let sub_view_res = get_view_for_class(view, class);
+                    if sub_view_res.is_some() {
+                        return sub_view_res
+                    }
+                }
+                None
+            }
+            let class = Class::get("NSTitlebarContainerView").unwrap();
+            let window: id = msg_send![NSApp(), keyWindow];
+            let content_view: id = msg_send![window, contentView];
+            let super_view: id = msg_send![content_view, superview];
+            get_view_for_class(super_view, class)
+        }
+    }
 }
 
 extern "C" fn toolbar_allowed_item_identifiers(_this: &Object, _cmd: Sel, _toolbar: id) -> id {
