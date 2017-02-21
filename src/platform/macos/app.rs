@@ -124,9 +124,9 @@ fn register_app_delegate() {
         let superclass = NSObject::class();
         let mut decl = ClassDecl::new("AppDelegate", superclass).unwrap();
         decl.add_method(selector("applicationDidFinishLaunching:"),
-                        application_did_finish_launching as extern "C" fn(&Object, Sel, id));
+                        application_did_finish_launching as extern fn(&Object, Sel, id));
         decl.register();
     }
 }
 
-extern "C" fn application_did_finish_launching(_this: &Object, _cmd: Sel, _id: id) {}
+extern fn application_did_finish_launching(_this: &Object, _cmd: Sel, _id: id) {}

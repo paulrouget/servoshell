@@ -105,14 +105,14 @@ fn register_toolbar_target() {
         let superclass = NSObject::class();
         let mut decl = ClassDecl::new("ToolbarTarget", superclass).unwrap();
         decl.add_method(selector("reload_clicked"),
-                        reload_clicked as extern "C" fn(&Object, Sel));
+                        reload_clicked as extern fn(&Object, Sel));
         decl.add_method(selector("segment_clicked"),
-                        segment_clicked as extern "C" fn(&Object, Sel));
+                        segment_clicked as extern fn(&Object, Sel));
         decl.register();
     }
 }
 
-extern "C" fn reload_clicked(_this: &Object, _cmd: Sel) {
+extern fn reload_clicked(_this: &Object, _cmd: Sel) {
     unsafe {
         let window: id = msg_send![NSApp(), keyWindow];
         let delegate: id = msg_send![window, delegate];
@@ -120,7 +120,7 @@ extern "C" fn reload_clicked(_this: &Object, _cmd: Sel) {
     }
 }
 
-extern "C" fn segment_clicked(_this: &Object, _cmd: Sel) {
+extern fn segment_clicked(_this: &Object, _cmd: Sel) {
     unsafe {
         let window: id = msg_send![NSApp(), keyWindow];
         let toolbar: id = msg_send![window, toolbar];
@@ -143,22 +143,22 @@ fn register_toolbar_delegate() {
         let superclass = NSObject::class();
         let mut decl = ClassDecl::new("ToolbarDelegate", superclass).unwrap();
         decl.add_method(selector("toolbarAllowedItemIdentifiers:"),
-                        toolbar_allowed_item_identifiers as extern "C" fn(&Object, Sel, id) -> id);
+                        toolbar_allowed_item_identifiers as extern fn(&Object, Sel, id) -> id);
         decl.add_method(selector("toolbarDefaultItemIdentifiers:"),
-                        toolbar_default_item_identifiers as extern "C" fn(&Object, Sel, id) -> id);
+                        toolbar_default_item_identifiers as extern fn(&Object, Sel, id) -> id);
         decl.add_method(selector("toolbar:itemForItemIdentifier:willBeInsertedIntoToolbar:"),
-                        build_toolbar_item as extern "C" fn(&Object, Sel, id, id, BOOL) -> id);
+                        build_toolbar_item as extern fn(&Object, Sel, id, id, BOOL) -> id);
         decl.add_ivar::<*mut c_void>("toolbar_items");
         decl.register();
     }
 }
 
 
-extern "C" fn toolbar_allowed_item_identifiers(_this: &Object, _cmd: Sel, _toolbar: id) -> id {
+extern fn toolbar_allowed_item_identifiers(_this: &Object, _cmd: Sel, _toolbar: id) -> id {
     unsafe { NSArray::array(nil) }
 }
 
-extern "C" fn toolbar_default_item_identifiers(_this: &Object, _cmd: Sel, _toolbar: id) -> id {
+extern fn toolbar_default_item_identifiers(_this: &Object, _cmd: Sel, _toolbar: id) -> id {
     unsafe {
         // FIXME: could be static
         NSArray::arrayWithObjects(nil,
@@ -172,7 +172,7 @@ extern "C" fn toolbar_default_item_identifiers(_this: &Object, _cmd: Sel, _toolb
     }
 }
 
-extern "C" fn build_toolbar_item(this: &Object,
+extern fn build_toolbar_item(this: &Object,
                                  _cmd: Sel,
                                  _toolbar: id,
                                  identifier: id,
