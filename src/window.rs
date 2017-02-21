@@ -15,6 +15,7 @@ pub use self::winit::MouseCursor as WindowMouseCursor;
 pub use self::winit::MouseScrollDelta as WindowMouseScrollDelta;
 pub use self::winit::ElementState as WindowElementState;
 pub use self::winit::TouchPhase as WindowTouchPhase;
+pub use self::winit::VirtualKeyCode as WindowVirtualKeyCode;
 // FIXME: Can we avoid that?
 pub use self::winit::os::macos::WindowExt;
 

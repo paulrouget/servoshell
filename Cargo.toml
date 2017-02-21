@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Paul Rouget <me@paulrouget.com>"]
 
 [dependencies]
+bitflags = "0.7"
 libc = "*"
 objc = "0.2"
 objc-foundation = "*"

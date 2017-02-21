@@ -2,6 +2,7 @@
 name = "servoshell"
 version = "0.1.0"
 dependencies = [
+ "bitflags 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "cocoa 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "euclid 0.10.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "gleam 0.2.32 (registry+https://github.com/rust-lang/crates.io-index)",

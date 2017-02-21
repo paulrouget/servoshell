@@ -48,14 +48,14 @@ fn build_menu() {
         let go_back_item = {
             let label = NSString::alloc(nil).init_str("Back");
             let action = selector("go_back");
-            let key = msg_send![class("NSString"), stringWithCharacters:&NSLeftArrowFunctionKey length:1];
+            let key = NSString::alloc(nil).init_str("[");
             NSMenuItem::alloc(nil).initWithTitle_action_keyEquivalent_(label, action, key).autorelease()
         };
 
         let go_fwd_item = {
             let label = NSString::alloc(nil).init_str("Forward");
             let action = selector("go_forward");
-            let key = msg_send![class("NSString"), stringWithCharacters:&NSRightArrowFunctionKey length:1];
+            let key = NSString::alloc(nil).init_str("]");
             NSMenuItem::alloc(nil).initWithTitle_action_keyEquivalent_(label, action, key).autorelease()
         };
 

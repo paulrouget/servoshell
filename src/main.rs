@@ -4,16 +4,14 @@ extern crate open;
 
 // FIXME: is it possible to move all of that in platform/macos?
 // FIXME: here it's because macro can only be used if included in main.rs
-#[cfg(target_os = "macos")]
-#[macro_use]
 // FIXME: here it's because we want to access cocoa from platform/macos/delegate.rs
-extern crate objc;
-#[cfg(target_os = "macos")]
-extern crate cocoa;
-#[cfg(target_os = "macos")]
-extern crate objc_foundation;
-#[cfg(target_os = "macos")]
-extern crate libc;
+#[cfg(target_os = "macos")] 
+#[macro_use] extern crate objc;
+#[cfg(target_os = "macos")] extern crate cocoa;
+#[cfg(target_os = "macos")] extern crate objc_foundation;
+#[cfg(target_os = "macos")] extern crate libc;
+
+#[macro_use] extern crate bitflags;
 
 mod window;
 mod widgets;
@@ -23,13 +21,26 @@ mod platform;
 use std::env::args;
 use servo::{FollowLinkPolicy, Servo, ServoEvent, ServoCursor};
 use window::{GlutinWindow, WindowEvent, WindowMouseButton, WindowMouseCursor};
-use window::{WindowMouseScrollDelta, WindowElementState};
+use window::{WindowMouseScrollDelta, WindowElementState, WindowVirtualKeyCode};
 
 #[derive(Copy, Clone)]
 pub struct DrawableGeometry {
     inner_size: (u32, u32),
     position: (i32, i32),
     hidpi_factor: f32,
+}
+
+bitflags! {
+    flags KeyModifiers: u8 {
+        const LEFT_CONTROL = 1,
+        const RIGHT_CONTROL = 2,
+        const LEFT_SHIFT = 4,
+        const RIGHT_SHIFT = 8,
+        const LEFT_ALT = 16,
+        const RIGHT_ALT = 32,
+        const LEFT_SUPER = 64,
+        const RIGHT_SUPER = 128,
+    }
 }
 
 fn main() {
@@ -50,6 +61,7 @@ fn main() {
     let mut mouse_down_button: Option<WindowMouseButton> = None;
     let mut mouse_down_point = (0, 0);
     let mut first_load = true;
+    let mut key_modifiers = KeyModifiers::empty();
 
     loop {
         let mut winit_events = window.get_events();
@@ -175,6 +187,35 @@ fn main() {
                     }
                     let (x, y) = mouse_pos;
                     servo.scroll(x, y, dx, dy, phase);
+                }
+                WindowEvent::ReceivedCharacter(ch) => {
+                    println!("ReceivedCharacter: {:?}", ch);
+                }
+                WindowEvent::KeyboardInput(element_state, _scan_code, Some(virtual_key_code)) => {
+                    match virtual_key_code {
+                        WindowVirtualKeyCode::LControl => key_modifiers.toggle(LEFT_CONTROL),
+                        WindowVirtualKeyCode::RControl => key_modifiers.toggle(RIGHT_CONTROL),
+                        WindowVirtualKeyCode::LShift => key_modifiers.toggle(LEFT_SHIFT),
+                        WindowVirtualKeyCode::RShift => key_modifiers.toggle(RIGHT_SHIFT),
+                        WindowVirtualKeyCode::LAlt => key_modifiers.toggle(LEFT_ALT),
+                        WindowVirtualKeyCode::RAlt => key_modifiers.toggle(RIGHT_ALT),
+                        WindowVirtualKeyCode::LWin => key_modifiers.toggle(LEFT_SUPER),
+                        WindowVirtualKeyCode::RWin => key_modifiers.toggle(RIGHT_SUPER),
+                        _ => {}
+                    }
+
+                    let is_cmd = key_modifiers.intersects(LEFT_SUPER | RIGHT_SUPER);
+                    match (element_state, virtual_key_code, is_cmd) {
+                        (WindowElementState::Pressed, WindowVirtualKeyCode::Left, true) => {
+                            servo.go_back();
+                        },
+                        (WindowElementState::Pressed, WindowVirtualKeyCode::Right, true) => {
+                            servo.go_fwd();
+                        },
+                        _ => {
+                            // FIXME
+                        }
+                    }
                 }
                 WindowEvent::MouseInput(element_state, mouse_button) => {
                     if mouse_button == WindowMouseButton::Left ||
