@@ -5,13 +5,18 @@ extern crate open;
 // FIXME: is it possible to move all of that in platform/macos?
 // FIXME: here it's because macro can only be used if included in main.rs
 // FIXME: here it's because we want to access cocoa from platform/macos/delegate.rs
-#[cfg(target_os = "macos")] 
-#[macro_use] extern crate objc;
-#[cfg(target_os = "macos")] extern crate cocoa;
-#[cfg(target_os = "macos")] extern crate objc_foundation;
-#[cfg(target_os = "macos")] extern crate libc;
+#[cfg(target_os = "macos")]
+#[macro_use]
+extern crate objc;
+#[cfg(target_os = "macos")]
+extern crate cocoa;
+#[cfg(target_os = "macos")]
+extern crate objc_foundation;
+#[cfg(target_os = "macos")]
+extern crate libc;
 
-#[macro_use] extern crate bitflags;
+#[macro_use]
+extern crate bitflags;
 
 mod window;
 mod widgets;
@@ -208,10 +213,10 @@ fn main() {
                     match (element_state, virtual_key_code, is_cmd) {
                         (WindowElementState::Pressed, WindowVirtualKeyCode::Left, true) => {
                             servo.go_back();
-                        },
+                        }
                         (WindowElementState::Pressed, WindowVirtualKeyCode::Right, true) => {
                             servo.go_fwd();
-                        },
+                        }
                         _ => {
                             // FIXME
                         }
@@ -235,7 +240,8 @@ fn main() {
                                     mouse_down_button);
                     }
                 }
-                WindowEvent::Awakened | WindowEvent::TouchpadPressure(..) => {
+                WindowEvent::Awakened |
+                WindowEvent::TouchpadPressure(..) => {
                     // Skip printing. Too many.
                 }
                 e => {

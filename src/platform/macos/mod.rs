@@ -25,7 +25,6 @@ pub struct Widgets {
 }
 
 impl Widgets {
-
     pub fn setup_app() {
         app::setup();
     }

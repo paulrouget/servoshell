@@ -54,7 +54,7 @@ pub enum ServoEvent {
 
 pub enum FollowLinkPolicy {
     FollowAnyLink,
-    FollowOriginalDomain
+    FollowOriginalDomain,
 }
 
 impl fmt::Debug for ServoEvent {
@@ -96,8 +96,10 @@ impl Servo {
         let url = ServoUrl::parse(url).ok().unwrap(); // FIXME. What if fail?
 
         let allowed_domain = match follow_link_policy {
-            FollowLinkPolicy::FollowOriginalDomain => Some(url.domain().unwrap().clone().to_owned()),
-            FollowLinkPolicy::FollowAnyLink => None
+            FollowLinkPolicy::FollowOriginalDomain => {
+                Some(url.domain().unwrap().clone().to_owned())
+            }
+            FollowLinkPolicy::FollowAnyLink => None,
         };
 
         let mut opts = opts::default_opts();

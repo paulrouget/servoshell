@@ -14,12 +14,11 @@ static START: Once = ONCE_INIT;
 
 pub fn setup(nswindow: id) {
     unsafe {
-        START.call_once(|| {
-            register_window_delegate();
-        });
+        START.call_once(|| { register_window_delegate(); });
 
         nswindow.setTitleVisibility_(NSWindowTitleVisibility::NSWindowTitleHidden);
-        let mask = nswindow.styleMask() as NSUInteger | NSWindowMask::NSFullSizeContentViewWindowMask as NSUInteger;
+        let mask = nswindow.styleMask() as NSUInteger |
+                   NSWindowMask::NSFullSizeContentViewWindowMask as NSUInteger;
         nswindow.setStyleMask_(mask);
 
         // FIXME: dark ui
@@ -40,16 +39,18 @@ fn register_window_delegate() {
     unsafe {
         let superclass = NSObject::class();
         let mut decl = ClassDecl::new("WindowDelegate", superclass).unwrap();
-        decl.add_method(selector("reload"), reload as extern fn(&Object, Sel));
-        decl.add_method(selector("go_back"), go_back as extern fn(&Object, Sel));
-        decl.add_method(selector("go_forward"), go_forward as extern fn(&Object, Sel));
-        decl.add_method(selector("open_location"), open_location as extern fn(&Object, Sel));
+        decl.add_method(selector("reload"), reload as extern "C" fn(&Object, Sel));
+        decl.add_method(selector("go_back"), go_back as extern "C" fn(&Object, Sel));
+        decl.add_method(selector("go_forward"),
+                        go_forward as extern "C" fn(&Object, Sel));
+        decl.add_method(selector("open_location"),
+                        open_location as extern "C" fn(&Object, Sel));
         decl.add_ivar::<*mut c_void>("event_queue");
         decl.register();
     }
 }
 
-extern fn reload(this: &Object, _cmd: Sel) {
+extern "C" fn reload(this: &Object, _cmd: Sel) {
     println!("window delegate: on_reload");
     unsafe {
         let event_queue: &mut Vec<WidgetEvent> = {
@@ -60,7 +61,7 @@ extern fn reload(this: &Object, _cmd: Sel) {
     }
 }
 
-extern fn go_back(this: &Object, _cmd: Sel) {
+extern "C" fn go_back(this: &Object, _cmd: Sel) {
     println!("window delegate: on_go_back");
     unsafe {
         let event_queue: &mut Vec<WidgetEvent> = {
@@ -71,7 +72,7 @@ extern fn go_back(this: &Object, _cmd: Sel) {
     }
 }
 
-extern fn go_forward(this: &Object, _cmd: Sel) {
+extern "C" fn go_forward(this: &Object, _cmd: Sel) {
     println!("window delegate: on_go_forward");
     unsafe {
         let event_queue: &mut Vec<WidgetEvent> = {
@@ -82,6 +83,6 @@ extern fn go_forward(this: &Object, _cmd: Sel) {
     }
 }
 
-extern fn open_location(_this: &Object, _cmd: Sel) {
+extern "C" fn open_location(_this: &Object, _cmd: Sel) {
     println!("window delegate: on_open_location");
 }
