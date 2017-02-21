@@ -193,9 +193,6 @@ fn main() {
                     let (x, y) = mouse_pos;
                     servo.scroll(x, y, dx, dy, phase);
                 }
-                WindowEvent::ReceivedCharacter(ch) => {
-                    println!("ReceivedCharacter: {:?}", ch);
-                }
                 WindowEvent::KeyboardInput(element_state, _scan_code, Some(virtual_key_code)) => {
                     match virtual_key_code {
                         WindowVirtualKeyCode::LControl => key_modifiers.toggle(LEFT_CONTROL),
