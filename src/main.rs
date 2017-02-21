@@ -1,15 +1,24 @@
 #![feature(box_syntax)]
 
-// It's necessary to declare this here:
-// rustc: "an `extern crate` loading macros must be at the crate root"
-#[macro_use]
-extern crate objc;
-
 extern crate open;
+
+// FIXME: is it possible to move all of that in platform/macos?
+// FIXME: here it's because macro can only be used if included in main.rs
+#[cfg(target_os = "macos")]
+#[macro_use]
+// FIXME: here it's because we want to access cocoa from platform/macos/delegate.rs
+extern crate objc;
+#[cfg(target_os = "macos")]
+extern crate cocoa;
+#[cfg(target_os = "macos")]
+extern crate objc_foundation;
+#[cfg(target_os = "macos")]
+extern crate libc;
 
 mod window;
 mod widgets;
 mod servo;
+mod platform;
 
 use std::env::args;
 use servo::{FollowLinkPolicy, Servo, ServoEvent, ServoCursor};
@@ -25,11 +34,11 @@ pub struct DrawableGeometry {
 
 fn main() {
 
-    widgets::platform::Widgets::setup_app();
+    widgets::Widgets::setup_app();
 
     let url = args().nth(1).unwrap_or("http://servo.org".to_owned());
     let window = GlutinWindow::new();
-    let widgets = widgets::platform::Widgets::new(&window);
+    let widgets = widgets::Widgets::new(&window);
 
     // FIXME: set policy via command line arg
     let servo = Servo::new(window.get_geometry(),

@@ -17,6 +17,4 @@ impl fmt::Debug for WidgetEvent {
     }
 }
 
-#[cfg(target_os = "macos")]
-#[path="platform/cocoa.rs"]
-pub mod platform;
+pub use platform::Widgets;
