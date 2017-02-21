@@ -24,7 +24,7 @@ default_features = false
 version = "0.14.0"
 
 [replace]
-"winit:0.5.11" = { path = "../winit/" } # paulrouget/servoshell (fix segfault and keyboard)
+"winit:0.5.11" = { path = "../winit/" } # paulrouget/0.5.11.patched (fix segfault and keyboard)
 "cocoa:0.6.0" = { path = "../cocoa-rs/" } # paulrouget/toolbar
 "https://github.com/servo/webrender#0.15.0" = { path = "../webrender/webrender/" } # paulrouget/outOfWindowRendering
 "https://github.com/servo/webrender#webrender_traits:0.14.0" = { path = "../webrender/webrender_traits/" }
