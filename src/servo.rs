@@ -1,9 +1,4 @@
 extern crate servo;
-extern crate servo_geometry;
-extern crate style_traits;
-extern crate euclid;
-
-extern crate webrender_traits;
 
 use DrawableGeometry;
 use window::{EventLoopRiser, WindowTouchPhase, WindowMouseButton, WindowElementState};
@@ -15,6 +10,7 @@ use self::servo::compositing::windowing::{WindowMethods, MouseWindowEvent, Windo
                                           WindowNavigateMsg};
 use self::servo::compositing::compositor_thread::{self, CompositorProxy, CompositorReceiver};
 use self::servo::msg::constellation_msg::{self, Key};
+use self::servo::servo_geometry::DeviceIndependentPixel;
 use self::servo::euclid::{TypedPoint2D, Point2D, Size2D};
 use self::servo::euclid::scale_factor::ScaleFactor;
 use self::servo::euclid::size::TypedSize2D;
@@ -22,14 +18,14 @@ use self::servo::script_traits::DevicePixel;
 use self::servo::servo_url::ServoUrl;
 use self::servo::net_traits::net_error_list::NetError;
 use self::servo::script_traits::TouchEventType;
-use self::servo_geometry::ScreenPx;
+use self::servo::webrender_traits;
 
 use std::fmt;
 use std::sync::mpsc;
 use std::rc::Rc;
 use std::cell::{Cell, RefCell};
 
-pub use self::style_traits::cursor::Cursor as ServoCursor;
+pub use self::servo::style_traits::cursor::Cursor as ServoCursor;
 pub type CompositorChannel = (Box<CompositorProxy + Send>, Box<CompositorReceiver>);
 
 
@@ -261,8 +257,9 @@ impl WindowMethods for ServoCallbacks {
          box receiver as Box<CompositorReceiver>)
     }
 
-    fn scale_factor(&self) -> ScaleFactor<f32, ScreenPx, DevicePixel> {
-        ScaleFactor::new(self.geometry.get().hidpi_factor)
+    fn hidpi_factor(&self) -> ScaleFactor<f32, DeviceIndependentPixel, DevicePixel> {
+        let scale_factor = self.geometry.get().hidpi_factor;
+        ScaleFactor::new(scale_factor)
     }
 
     fn framebuffer_size(&self) -> TypedSize2D<u32, DevicePixel> {
@@ -271,7 +268,7 @@ impl WindowMethods for ServoCallbacks {
         TypedSize2D::new(scale_factor * width, scale_factor * height)
     }
 
-    fn size(&self) -> TypedSize2D<f32, ScreenPx> {
+    fn size(&self) -> TypedSize2D<f32, DeviceIndependentPixel> {
         let (width, height) = self.geometry.get().inner_size;
         TypedSize2D::new(width as f32, height as f32)
     }
