@@ -9,14 +9,14 @@ libc = "*"
 objc = "0.2"
 objc-foundation = "*"
 gleam = "0.2"
-winit = "0.5"
-glutin = "0.7"
 cocoa = "0.6"
+cgl = "0.1"
+core-foundation = "0.2.3"
+core-graphics = "0.3"
 open = "1.1.1"
 libservo = {path = "../servo/components/servo"} # paulrouget/servoshell (HeadParsed(url) & AllowNavigation)
 
 [replace]
-"winit:0.5.11" = { path = "../winit/" } # paulrouget/0.5.11.patched (fix segfault and keyboard)
 "cocoa:0.6.0" = { path = "../cocoa-rs/" } # paulrouget/toolbar
 "https://github.com/servo/webrender#0.18.0" = { path = "../webrender/webrender/" } # paulrouget/outOfWindowRendering
 "https://github.com/servo/webrender#webrender_traits:0.18.0" = { path = "../webrender/webrender_traits/" }

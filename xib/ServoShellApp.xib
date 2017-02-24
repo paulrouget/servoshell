@@ -669,6 +669,7 @@
                     </menu>
                 </menuItem>
             </items>
+            <point key="canvasLocation" x="193" y="199"/>
         </menu>
         <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" releasedWhenClosed="NO" animationBehavior="default" id="F0z-JX-Cv5">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" unifiedTitleAndToolbar="YES" fullSizeContentView="YES"/>
@@ -678,7 +679,7 @@
                 <rect key="frame" x="0.0" y="0.0" width="500" height="300"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <openGLView useAuxiliaryDepthBufferStencil="NO" allowOffline="YES" translatesAutoresizingMaskIntoConstraints="NO" id="qDa-ug-Wfv">
+                    <openGLView useAuxiliaryDepthBufferStencil="NO" useDoubleBufferingEnabled="YES" allowOffline="YES" wantsBestResolutionOpenGLSurface="YES" translatesAutoresizingMaskIntoConstraints="NO" id="qDa-ug-Wfv">
                         <rect key="frame" x="0.0" y="0.0" width="500" height="300"/>
                     </openGLView>
                 </subviews>
@@ -744,7 +745,7 @@
                             <rect key="frame" x="0.0" y="14" width="96" height="22"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" lineBreakMode="truncatingTail" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" placeholderString="Search or enter website name" usesSingleLineMode="YES" bezelStyle="round" id="2zA-pQ-Oee">
-                                <font key="font" metaFont="system" size="11"/>
+                                <font key="font" metaFont="smallSystem"/>
                                 <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 <allowedInputSourceLocales>
@@ -764,7 +765,7 @@
                     <toolbarItem reference="zfU-F1-hpy"/>
                 </defaultToolbarItems>
             </toolbar>
-            <point key="canvasLocation" x="150" y="452"/>
+            <point key="canvasLocation" x="218" y="435"/>
         </window>
     </objects>
     <resources>

@@ -1,8 +1,14 @@
 extern crate servo;
 
-use DrawableGeometry;
-use window::{EventLoopRiser, WindowTouchPhase, WindowMouseButton, WindowElementState};
+use cocoa::appkit::*;
+use cocoa::base::*;
+use cocoa::foundation::*;
 
+
+use DrawableGeometry;
+// use window::{EventLoopRiser, WindowTouchPhase, WindowMouseButton, WindowElementState};
+
+use EventLoopRiser;
 use self::servo::config::servo_version;
 use self::servo::servo_config::opts;
 use self::servo::servo_config::prefs::{PrefValue, PREFS};
@@ -86,7 +92,8 @@ impl Servo {
     pub fn new(geometry: DrawableGeometry,
                riser: EventLoopRiser,
                url: &str,
-               follow_link_policy: FollowLinkPolicy)
+               follow_link_policy: FollowLinkPolicy,
+               cxt: id)
                -> Servo {
 
         let url = ServoUrl::parse(url).ok().unwrap(); // FIXME. What if fail?
@@ -110,6 +117,7 @@ impl Servo {
             geometry: Cell::new(geometry),
             riser: riser,
             allowed_domain: allowed_domain,
+            cxt: cxt,
         });
 
         println!("{}", servo_version());
@@ -149,61 +157,61 @@ impl Servo {
         self.events_for_servo.borrow_mut().push(event);
     }
 
-    pub fn scroll(&self, x: i32, y: i32, dx: f32, dy: f32, phase: WindowTouchPhase) {
-        let scroll_location = webrender_traits::ScrollLocation::Delta(TypedPoint2D::new(dx, dy));
-        let phase = match phase {
-            WindowTouchPhase::Started => TouchEventType::Down,
-            WindowTouchPhase::Moved => TouchEventType::Move,
-            WindowTouchPhase::Ended => TouchEventType::Up,
-            WindowTouchPhase::Cancelled => TouchEventType::Cancel,
-        };
-        let event = WindowEvent::Scroll(scroll_location, TypedPoint2D::new(x, y), phase);
-        self.events_for_servo.borrow_mut().push(event);
-    }
+    // pub fn scroll(&self, x: i32, y: i32, dx: f32, dy: f32, phase: WindowTouchPhase) {
+    //     let scroll_location = webrender_traits::ScrollLocation::Delta(TypedPoint2D::new(dx, dy));
+    //     let phase = match phase {
+    //         WindowTouchPhase::Started => TouchEventType::Down,
+    //         WindowTouchPhase::Moved => TouchEventType::Move,
+    //         WindowTouchPhase::Ended => TouchEventType::Up,
+    //         WindowTouchPhase::Cancelled => TouchEventType::Cancel,
+    //     };
+    //     let event = WindowEvent::Scroll(scroll_location, TypedPoint2D::new(x, y), phase);
+    //     self.events_for_servo.borrow_mut().push(event);
+    // }
 
-    pub fn click(&self,
-                 x: i32,
-                 y: i32,
-                 org_x: i32,
-                 org_y: i32,
-                 element_state: WindowElementState,
-                 mouse_button: WindowMouseButton,
-                 mouse_down_button: Option<WindowMouseButton>) {
-        use self::servo::script_traits::MouseButton;
-        let max_pixel_dist = 10f64;
-        let event = match element_state {
-            WindowElementState::Pressed => {
-                MouseWindowEvent::MouseDown(MouseButton::Left,
-                                            TypedPoint2D::new(x as f32, y as f32))
-            }
-            WindowElementState::Released => {
-                let mouse_up_event = MouseWindowEvent::MouseUp(MouseButton::Left,
-                                                               TypedPoint2D::new(x as f32,
-                                                                                 y as f32));
-                match mouse_down_button {
-                    None => mouse_up_event,
-                    Some(but) if mouse_button == but => {
-                        // Same button
-                        let pixel_dist = Point2D::new(org_x, org_y) - Point2D::new(x, y);
-                        let pixel_dist =
-                            ((pixel_dist.x * pixel_dist.x + pixel_dist.y * pixel_dist.y) as f64)
-                                .sqrt();
-                        if pixel_dist < max_pixel_dist {
-                            self.events_for_servo
-                                .borrow_mut()
-                                .push(WindowEvent::MouseWindowEventClass(mouse_up_event));
-                            MouseWindowEvent::Click(MouseButton::Left,
-                                                    TypedPoint2D::new(x as f32, y as f32))
-                        } else {
-                            mouse_up_event
-                        }
-                    }
-                    Some(_) => mouse_up_event,
-                }
-            }
-        };
-        self.events_for_servo.borrow_mut().push(WindowEvent::MouseWindowEventClass(event));
-    }
+    // pub fn click(&self,
+    //              x: i32,
+    //              y: i32,
+    //              org_x: i32,
+    //              org_y: i32,
+    //              element_state: WindowElementState,
+    //              mouse_button: WindowMouseButton,
+    //              mouse_down_button: Option<WindowMouseButton>) {
+    //     use self::servo::script_traits::MouseButton;
+    //     let max_pixel_dist = 10f64;
+    //     let event = match element_state {
+    //         WindowElementState::Pressed => {
+    //             MouseWindowEvent::MouseDown(MouseButton::Left,
+    //                                         TypedPoint2D::new(x as f32, y as f32))
+    //         }
+    //         WindowElementState::Released => {
+    //             let mouse_up_event = MouseWindowEvent::MouseUp(MouseButton::Left,
+    //                                                            TypedPoint2D::new(x as f32,
+    //                                                                              y as f32));
+    //             match mouse_down_button {
+    //                 None => mouse_up_event,
+    //                 Some(but) if mouse_button == but => {
+    //                     // Same button
+    //                     let pixel_dist = Point2D::new(org_x, org_y) - Point2D::new(x, y);
+    //                     let pixel_dist =
+    //                         ((pixel_dist.x * pixel_dist.x + pixel_dist.y * pixel_dist.y) as f64)
+    //                             .sqrt();
+    //                     if pixel_dist < max_pixel_dist {
+    //                         self.events_for_servo
+    //                             .borrow_mut()
+    //                             .push(WindowEvent::MouseWindowEventClass(mouse_up_event));
+    //                         MouseWindowEvent::Click(MouseButton::Left,
+    //                                                 TypedPoint2D::new(x as f32, y as f32))
+    //                     } else {
+    //                         mouse_up_event
+    //                     }
+    //                 }
+    //                 Some(_) => mouse_up_event,
+    //             }
+    //         }
+    //     };
+    //     self.events_for_servo.borrow_mut().push(WindowEvent::MouseWindowEventClass(event));
+    // }
 
     pub fn sync(&self) {
         let clone = self.events_for_servo.borrow().clone();
@@ -217,6 +225,7 @@ struct ServoCallbacks {
     geometry: Cell<DrawableGeometry>,
     riser: EventLoopRiser,
     allowed_domain: Option<String>,
+    cxt: id,
 }
 
 impl ServoCallbacks {
@@ -296,7 +305,11 @@ impl WindowMethods for ServoCallbacks {
     }
 
     fn present(&self) {
-        self.event_queue.borrow_mut().push(ServoEvent::Present);
+        unsafe {
+            println!("flush");
+            msg_send![self.cxt, flushBuffer];
+        }
+        // self.event_queue.borrow_mut().push(ServoEvent::Present);
     }
 
     fn set_page_title(&self, title: Option<String>) {

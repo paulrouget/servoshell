@@ -29,8 +29,7 @@ impl GlutinWindow {
             .build()
             .expect("Failed to create window.");
 
-        unsafe {
-            use std::os::raw::c_void;
+
             glutin_window.make_current().expect("Couldn't make window current");
             gleam::gl::load_with(|s| glutin_window.get_proc_address(s) as *const c_void);
             gleam::gl::clear_color(1.0, 0.0, 0.0, 1.0);
