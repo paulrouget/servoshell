@@ -307,9 +307,11 @@ impl WindowMethods for ServoCallbacks {
 
     fn present(&self) {
         unsafe {
-            println!("flush");
+            println!("swap_buffers");
+            let pool = NSAutoreleasePool::new(nil);
             gleam::gl::clear_color(1.0, 0.0, 0.0, 1.0);
             msg_send![self.cxt, flushBuffer];
+            let _: () = msg_send![pool, release];
         }
         // self.event_queue.borrow_mut().push(ServoEvent::Present);
     }

@@ -51,14 +51,6 @@ fn main() {
     let (app, glview) = app::load_nib();
 
 
-    gleam::gl::load_with(|addr| {
-        let symbol_name: CFString = FromStr::from_str(addr).unwrap();
-        let framework_name: CFString = FromStr::from_str("com.apple.opengl").unwrap();
-        let framework = unsafe { CFBundleGetBundleWithIdentifier(framework_name.as_concrete_TypeRef()) };
-        let symbol = unsafe { CFBundleGetFunctionPointerForName(framework, symbol_name.as_concrete_TypeRef()) };
-        symbol as *const c_void
-    });
-
     let cxt = unsafe {
 
         glview.setWantsBestResolutionOpenGLSurface_(YES);
@@ -79,6 +71,8 @@ fn main() {
             0,
         ];
 
+        println!("attributes: {:?}", attributes);
+
         let pixelformat = NSOpenGLPixelFormat::alloc(nil).initWithAttributes_(&attributes);
         let cxt: id = NSOpenGLContext::alloc(nil).initWithFormat_shareContext_(pixelformat, nil);
         msg_send![cxt, setView:glview];
@@ -88,19 +82,25 @@ fn main() {
         cxt
     };
 
-
-    // necessary?
-    gleam::gl::clear_color(1.0, 0.0, 0.0, 1.0);
-    gleam::gl::clear(gleam::gl::COLOR_BUFFER_BIT);
-    // gleam::gl::finish();
-
     unsafe {
         msg_send![cxt, update];
         msg_send![cxt, makeCurrentContext];
     };
 
+
+    gleam::gl::load_with(|addr| {
+        println!("get_proc_addr");
+        let symbol_name: CFString = FromStr::from_str(addr).unwrap();
+        let framework_name: CFString = FromStr::from_str("com.apple.opengl").unwrap();
+        let framework = unsafe { CFBundleGetBundleWithIdentifier(framework_name.as_concrete_TypeRef()) };
+        let symbol = unsafe { CFBundleGetFunctionPointerForName(framework, symbol_name.as_concrete_TypeRef()) };
+        symbol as *const c_void
+    });
+
+    // necessary?
     gleam::gl::clear_color(1.0, 0.0, 0.0, 1.0);
     gleam::gl::clear(gleam::gl::COLOR_BUFFER_BIT);
+    // gleam::gl::finish();
 
 
     // // let url = args().nth(1).unwrap_or("http://servo.org".to_owned());
