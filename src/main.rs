@@ -108,12 +108,6 @@ fn main() {
 
     // FIXME: release cxt
     let cxt_ptr = Box::into_raw(Box::new(cxt));
-    unsafe {
-        let delegate = app_delegate::new_app_delegate();
-        (*delegate).set_ivar("context", cxt_ptr as *mut c_void);
-        msg_send![app, setDelegate:delegate];
-    }
-
     // necessary?
     gleam::gl::clear_color(1.0, 0.0, 0.0, 1.0);
     gleam::gl::clear(gleam::gl::COLOR_BUFFER_BIT);
@@ -126,6 +120,15 @@ fn main() {
                            EventLoopRiser {},
                            &url,
                            FollowLinkPolicy::FollowOriginalDomain);
+
+    let servo_ptr = Box::into_raw(Box::new(servo));
+
+    unsafe {
+        let delegate = app_delegate::new_app_delegate();
+        (*delegate).set_ivar("context", cxt_ptr as *mut c_void);
+        (*delegate).set_ivar("servo", servo_ptr as *mut c_void);
+        msg_send![app, setDelegate:delegate];
+    }
 
     unsafe {
         app.run();
