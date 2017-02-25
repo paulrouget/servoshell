@@ -3,6 +3,7 @@ extern crate servo;
 use cocoa::appkit::*;
 use cocoa::base::*;
 use cocoa::foundation::*;
+use gleam;
 
 
 use DrawableGeometry;
@@ -307,6 +308,7 @@ impl WindowMethods for ServoCallbacks {
     fn present(&self) {
         unsafe {
             println!("flush");
+            gleam::gl::clear_color(1.0, 0.0, 0.0, 1.0);
             msg_send![self.cxt, flushBuffer];
         }
         // self.event_queue.borrow_mut().push(ServoEvent::Present);

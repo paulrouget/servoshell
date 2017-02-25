@@ -50,7 +50,18 @@ impl EventLoopRiser {
 fn main() {
     let (app, glview) = app::load_nib();
 
+
+    gleam::gl::load_with(|addr| {
+        let symbol_name: CFString = FromStr::from_str(addr).unwrap();
+        let framework_name: CFString = FromStr::from_str("com.apple.opengl").unwrap();
+        let framework = unsafe { CFBundleGetBundleWithIdentifier(framework_name.as_concrete_TypeRef()) };
+        let symbol = unsafe { CFBundleGetFunctionPointerForName(framework, symbol_name.as_concrete_TypeRef()) };
+        symbol as *const c_void
+    });
+
     let cxt = unsafe {
+
+        glview.setWantsBestResolutionOpenGLSurface_(YES);
 
         let attributes = vec![
             NSOpenGLPFADoubleBuffer as u32,
@@ -70,60 +81,35 @@ fn main() {
 
         let pixelformat = NSOpenGLPixelFormat::alloc(nil).initWithAttributes_(&attributes);
         let cxt: id = NSOpenGLContext::alloc(nil).initWithFormat_shareContext_(pixelformat, nil);
-        // let pf = {
-        //     let get_attr = |attrib: appkit::NSOpenGLPixelFormatAttribute| -> i32 {
-        //         let mut value = 0;
-        //         NSOpenGLPixelFormat::getValues_forAttribute_forVirtualScreen_(
-        //             *pixelformat,
-        //             &mut value,
-        //             attrib,
-        //             NSOpenGLContext::currentVirtualScreen(*cxt));
-
-        //         value
-        //     };
-
-        //     PixelFormat {
-        //         hardware_accelerated: get_attr(appkit::NSOpenGLPFAAccelerated) != 0,
-        //         color_bits: (get_attr(appkit::NSOpenGLPFAColorSize) - get_attr(appkit::NSOpenGLPFAAlphaSize)) as u8,
-        //         alpha_bits: get_attr(appkit::NSOpenGLPFAAlphaSize) as u8,
-        //         depth_bits: get_attr(appkit::NSOpenGLPFADepthSize) as u8,
-        //         stencil_bits: get_attr(appkit::NSOpenGLPFAStencilSize) as u8,
-        //         stereoscopy: get_attr(appkit::NSOpenGLPFAStereo) != 0,
-        //         double_buffer: get_attr(appkit::NSOpenGLPFADoubleBuffer) != 0,
-        //         multisampling: if get_attr(appkit::NSOpenGLPFAMultisample) > 0 {
-        //             Some(get_attr(appkit::NSOpenGLPFASamples) as u16)
-        //         } else {
-        //             None
-        //         },
-        //         srgb: true,
-        //     }
-        // };
-
         msg_send![cxt, setView:glview];
-        let value = 0;
+        let value = 1;
         cxt.setValues_forParameter_(&value, NSOpenGLContextParameter::NSOpenGLCPSwapInterval);
         CGLEnable(cxt.CGLContextObj() as *mut _, kCGLCECrashOnRemovedFunctions);
         cxt
     };
 
 
-    gleam::gl::load_with(|addr| {
-        let symbol_name: CFString = FromStr::from_str(addr).unwrap();
-        let framework_name: CFString = FromStr::from_str("com.apple.opengl").unwrap();
-        let framework = unsafe { CFBundleGetBundleWithIdentifier(framework_name.as_concrete_TypeRef()) };
-        let symbol = unsafe { CFBundleGetFunctionPointerForName(framework, symbol_name.as_concrete_TypeRef()) };
-        symbol as *const c_void
-    });
+    // necessary?
     gleam::gl::clear_color(1.0, 0.0, 0.0, 1.0);
     gleam::gl::clear(gleam::gl::COLOR_BUFFER_BIT);
-    gleam::gl::finish();
+    // gleam::gl::finish();
 
-    let url = args().nth(1).unwrap_or("http://servo.org".to_owned());
-    let servo = Servo::new(DrawableGeometry { inner_size: (200, 200), position: (0, 0), hidpi_factor: 1.0, },
-                           EventLoopRiser {},
-                           &url,
-                           FollowLinkPolicy::FollowOriginalDomain,
-                           cxt);
+    unsafe {
+        msg_send![cxt, update];
+        msg_send![cxt, makeCurrentContext];
+    };
+
+    gleam::gl::clear_color(1.0, 0.0, 0.0, 1.0);
+    gleam::gl::clear(gleam::gl::COLOR_BUFFER_BIT);
+
+
+    // // let url = args().nth(1).unwrap_or("http://servo.org".to_owned());
+    // let url = "http://servo.org".to_owned();
+    // let servo = Servo::new(DrawableGeometry { inner_size: (200, 200), position: (0, 0), hidpi_factor: 1.0, },
+    //                        EventLoopRiser {},
+    //                        &url,
+    //                        FollowLinkPolicy::FollowOriginalDomain,
+    //                        cxt);
 
     unsafe {
         app.run();
