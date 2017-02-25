@@ -93,8 +93,7 @@ impl Servo {
     pub fn new(geometry: DrawableGeometry,
                riser: EventLoopRiser,
                url: &str,
-               follow_link_policy: FollowLinkPolicy,
-               cxt: id)
+               follow_link_policy: FollowLinkPolicy)
                -> Servo {
 
         let url = ServoUrl::parse(url).ok().unwrap(); // FIXME. What if fail?
@@ -118,7 +117,6 @@ impl Servo {
             geometry: Cell::new(geometry),
             riser: riser,
             allowed_domain: allowed_domain,
-            cxt: cxt,
         });
 
         println!("{}", servo_version());
@@ -226,7 +224,6 @@ struct ServoCallbacks {
     geometry: Cell<DrawableGeometry>,
     riser: EventLoopRiser,
     allowed_domain: Option<String>,
-    cxt: id,
 }
 
 impl ServoCallbacks {
@@ -307,11 +304,7 @@ impl WindowMethods for ServoCallbacks {
 
     fn present(&self) {
         unsafe {
-            println!("swap_buffers");
-            let pool = NSAutoreleasePool::new(nil);
-            gleam::gl::clear_color(1.0, 0.0, 0.0, 1.0);
-            msg_send![self.cxt, flushBuffer];
-            let _: () = msg_send![pool, release];
+            // FIXME
         }
         // self.event_queue.borrow_mut().push(ServoEvent::Present);
     }

@@ -35,9 +35,10 @@ pub struct DrawableGeometry {
     hidpi_factor: f32,
 }
 
+// FIXME: this should hold a reference to the gl context. As
+// of now, it's stored in the app delegate
 // Used by Servo to wake up the event loop
 pub struct EventLoopRiser {
-    id: id
 }
 
 impl EventLoopRiser {
@@ -46,11 +47,11 @@ impl EventLoopRiser {
         unsafe {
             let app: id = NSApp();
             let delegate: id = msg_send![app, delegate];
-            msg_send![delegate, performSelectorOnMainThread:sel!(flushGlContext) withObject:self.id waitUntilDone:NO];
+            msg_send![delegate, performSelectorOnMainThread:sel!(flushGlContext) withObject:nil waitUntilDone:NO];
         }
     }
     pub fn clone(&self) -> EventLoopRiser {
-        EventLoopRiser {id: self.id}
+        EventLoopRiser {}
     }
 }
 
@@ -105,8 +106,11 @@ fn main() {
         symbol as *const c_void
     });
 
+    // FIXME: release cxt
+    let cxt_ptr = Box::into_raw(Box::new(cxt));
     unsafe {
         let delegate = app_delegate::new_app_delegate();
+        (*delegate).set_ivar("context", cxt_ptr as *mut c_void);
         msg_send![app, setDelegate:delegate];
     }
 
@@ -115,15 +119,13 @@ fn main() {
     gleam::gl::clear(gleam::gl::COLOR_BUFFER_BIT);
     // gleam::gl::finish();
 
-    let *const cxt_r = cxt;
 
     // let url = args().nth(1).unwrap_or("http://servo.org".to_owned());
     let url = "http://servo.org".to_owned();
     let servo = Servo::new(DrawableGeometry { inner_size: (200, 200), position: (0, 0), hidpi_factor: 1.0, },
-                           EventLoopRiser {id: cxt_r},
+                           EventLoopRiser {},
                            &url,
-                           FollowLinkPolicy::FollowOriginalDomain,
-                           cxt);
+                           FollowLinkPolicy::FollowOriginalDomain);
 
     unsafe {
         app.run();

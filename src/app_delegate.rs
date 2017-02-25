@@ -11,13 +11,20 @@ static INIT: Once = ONCE_INIT;
 pub fn new_app_delegate() -> id {
     unsafe {
         INIT.call_once(|| {
-            extern fn flush_gl_context(_this: &Object, _sel: Sel, id: id) {
+            extern fn flush_gl_context(this: &Object, _sel: Sel) {
                 println!("flush_gl_context");
-                msg_send![id, flushBuffer];
+                unsafe {
+                    let context: &id = {
+                        let ivar: *mut c_void = *this.get_ivar("context");
+                        &*(ivar as *mut id)
+                    };
+                    msg_send![*context, flushBuffer];
+                }
             }
             let superclass = Class::get("NSObject").unwrap();
             let mut decl = ClassDecl::new("NSMyAppDelegate", superclass).unwrap();
             decl.add_method(sel!(flushGlContext), flush_gl_context as extern fn(&Object, Sel));
+            decl.add_ivar::<*mut c_void>("context");
             decl.register();
         });
         msg_send![Class::get("NSMyAppDelegate").unwrap(), alloc]
