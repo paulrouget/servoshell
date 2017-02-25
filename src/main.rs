@@ -23,6 +23,7 @@ use core_foundation::bundle::{CFBundleGetBundleWithIdentifier, CFBundleGetFuncti
 use std::os::raw::c_void;
 
 mod app;
+mod app_delegate;
 mod servo;
 
 use servo::{FollowLinkPolicy, Servo};
@@ -35,14 +36,21 @@ pub struct DrawableGeometry {
 }
 
 // Used by Servo to wake up the event loop
-pub struct EventLoopRiser {}
+pub struct EventLoopRiser {
+    id: id
+}
 
 impl EventLoopRiser {
     pub fn rise(&self) {
         println!("riser");
+        unsafe {
+            let app: id = NSApp();
+            let delegate: id = msg_send![app, delegate];
+            msg_send![delegate, performSelectorOnMainThread:sel!(flushGlContext) withObject:self.id waitUntilDone:NO];
+        }
     }
     pub fn clone(&self) -> EventLoopRiser {
-        EventLoopRiser {}
+        EventLoopRiser {id: self.id}
     }
 }
 
@@ -97,19 +105,25 @@ fn main() {
         symbol as *const c_void
     });
 
+    unsafe {
+        let delegate = app_delegate::new_app_delegate();
+        msg_send![app, setDelegate:delegate];
+    }
+
     // necessary?
     gleam::gl::clear_color(1.0, 0.0, 0.0, 1.0);
     gleam::gl::clear(gleam::gl::COLOR_BUFFER_BIT);
     // gleam::gl::finish();
 
+    let *const cxt_r = cxt;
 
-    // // let url = args().nth(1).unwrap_or("http://servo.org".to_owned());
-    // let url = "http://servo.org".to_owned();
-    // let servo = Servo::new(DrawableGeometry { inner_size: (200, 200), position: (0, 0), hidpi_factor: 1.0, },
-    //                        EventLoopRiser {},
-    //                        &url,
-    //                        FollowLinkPolicy::FollowOriginalDomain,
-    //                        cxt);
+    // let url = args().nth(1).unwrap_or("http://servo.org".to_owned());
+    let url = "http://servo.org".to_owned();
+    let servo = Servo::new(DrawableGeometry { inner_size: (200, 200), position: (0, 0), hidpi_factor: 1.0, },
+                           EventLoopRiser {id: cxt_r},
+                           &url,
+                           FollowLinkPolicy::FollowOriginalDomain,
+                           cxt);
 
     unsafe {
         app.run();
