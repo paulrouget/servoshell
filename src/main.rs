@@ -22,7 +22,7 @@ use core_foundation::string::CFString;
 use core_foundation::bundle::{CFBundleGetBundleWithIdentifier, CFBundleGetFunctionPointerForName};
 use std::os::raw::c_void;
 
-mod app;
+mod nib;
 mod app_delegate;
 mod servo;
 
@@ -57,12 +57,21 @@ impl EventLoopRiser {
 
 
 fn main() {
-    let (app, glview) = app::load_nib();
+    let (nsapp, nswindow, nsview) = nib::load();
 
+    let geometry = unsafe {
+        let frame: NSRect = msg_send![nsview, frame];
+        let hidpi_factor: CGFloat = msg_send![nswindow, backingScaleFactor];
+        DrawableGeometry {
+            inner_size: (frame.size.width as u32, frame.size.height as u32),
+            position: (0, 0),
+            hidpi_factor: hidpi_factor as f32,
+        }
+    };
 
     let cxt = unsafe {
 
-        glview.setWantsBestResolutionOpenGLSurface_(YES);
+        nsview.setWantsBestResolutionOpenGLSurface_(YES);
 
         let attributes = vec![
             NSOpenGLPFADoubleBuffer as u32,
@@ -84,7 +93,7 @@ fn main() {
 
         let pixelformat = NSOpenGLPixelFormat::alloc(nil).initWithAttributes_(&attributes);
         let cxt: id = NSOpenGLContext::alloc(nil).initWithFormat_shareContext_(pixelformat, nil);
-        msg_send![cxt, setView:glview];
+        msg_send![cxt, setView:nsview];
         let value = 1;
         cxt.setValues_forParameter_(&value, NSOpenGLContextParameter::NSOpenGLCPSwapInterval);
         CGLEnable(cxt.CGLContextObj() as *mut _, kCGLCECrashOnRemovedFunctions);
@@ -98,7 +107,6 @@ fn main() {
 
 
     gleam::gl::load_with(|addr| {
-        println!("get_proc_addr");
         let symbol_name: CFString = FromStr::from_str(addr).unwrap();
         let framework_name: CFString = FromStr::from_str("com.apple.opengl").unwrap();
         let framework = unsafe { CFBundleGetBundleWithIdentifier(framework_name.as_concrete_TypeRef()) };
@@ -111,15 +119,11 @@ fn main() {
     // necessary?
     gleam::gl::clear_color(1.0, 0.0, 0.0, 1.0);
     gleam::gl::clear(gleam::gl::COLOR_BUFFER_BIT);
-    // gleam::gl::finish();
+    gleam::gl::finish();
 
 
-    // let url = args().nth(1).unwrap_or("http://servo.org".to_owned());
     let url = "http://servo.org".to_owned();
-    let servo = Servo::new(DrawableGeometry { inner_size: (200, 200), position: (0, 0), hidpi_factor: 1.0, },
-                           EventLoopRiser {},
-                           &url,
-                           FollowLinkPolicy::FollowOriginalDomain);
+    let servo = Servo::new(geometry, EventLoopRiser {}, &url, FollowLinkPolicy::FollowOriginalDomain);
 
     let servo_ptr = Box::into_raw(Box::new(servo));
 
@@ -127,10 +131,10 @@ fn main() {
         let delegate = app_delegate::new_app_delegate();
         (*delegate).set_ivar("context", cxt_ptr as *mut c_void);
         (*delegate).set_ivar("servo", servo_ptr as *mut c_void);
-        msg_send![app, setDelegate:delegate];
+        msg_send![nsapp, setDelegate:delegate];
     }
 
     unsafe {
-        app.run();
+        nsapp.run();
     }
 }

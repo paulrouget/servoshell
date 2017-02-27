@@ -673,17 +673,11 @@
         </menu>
         <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" releasedWhenClosed="NO" animationBehavior="default" id="F0z-JX-Cv5">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" unifiedTitleAndToolbar="YES" fullSizeContentView="YES"/>
-            <rect key="contentRect" x="196" y="240" width="500" height="300"/>
+            <rect key="contentRect" x="196" y="240" width="800" height="600"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1280" height="800"/>
             <view key="contentView" wantsLayer="YES" id="se5-gp-TjO">
-                <rect key="frame" x="0.0" y="0.0" width="500" height="300"/>
+                <rect key="frame" x="0.0" y="0.0" width="800" height="600"/>
                 <autoresizingMask key="autoresizingMask"/>
-                <subviews>
-                    <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="A1p-Bb-vga">
-                        <rect key="frame" x="61" y="27" width="374" height="192"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    </customView>
-                </subviews>
             </view>
             <toolbar key="toolbar" implicitIdentifier="4E0C930B-D6E3-4B1A-BD8F-6F6D77EABB92" autosavesConfiguration="NO" displayMode="iconOnly" sizeMode="regular" id="sx5-7e-9QH">
                 <allowedToolbarItems>
@@ -730,6 +724,23 @@
                             </segmentedCell>
                         </segmentedControl>
                     </toolbarItem>
+                    <toolbarItem implicitItemIdentifier="C96D596F-2F1D-4593-B61F-B3E9AEAF72FC" label="Zoom" paletteLabel="Zoom" id="gzU-sd-yZN">
+                        <nil key="toolTip"/>
+                        <size key="minSize" width="67" height="25"/>
+                        <size key="maxSize" width="97" height="28"/>
+                        <segmentedControl key="view" verticalHuggingPriority="750" id="Q8f-vF-DzK">
+                            <rect key="frame" x="0.0" y="14" width="97" height="28"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <segmentedCell key="cell" borderStyle="border" alignment="left" style="texturedSquare" trackingMode="momentary" id="Ga1-Oc-ALA">
+                                <font key="font" metaFont="system"/>
+                                <segments>
+                                    <segment label="-" width="32"/>
+                                    <segment label="=" width="32" tag="1"/>
+                                    <segment label="+"/>
+                                </segments>
+                            </segmentedCell>
+                        </segmentedControl>
+                    </toolbarItem>
                     <toolbarItem implicitItemIdentifier="0422B209-DEF8-4C42-9DF6-35B0D943E9EF" label="Urlbar" paletteLabel="Urlbar" id="qY1-68-YpL">
                         <nil key="toolTip"/>
                         <size key="minSize" width="96" height="22"/>
@@ -755,6 +766,7 @@
                     <toolbarItem reference="qY1-68-YpL"/>
                     <toolbarItem reference="otQ-Ya-nkx"/>
                     <toolbarItem reference="Bnw-ok-nkW"/>
+                    <toolbarItem reference="gzU-sd-yZN"/>
                     <toolbarItem reference="zfU-F1-hpy"/>
                 </defaultToolbarItems>
             </toolbar>
