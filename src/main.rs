@@ -43,7 +43,6 @@ pub struct EventLoopRiser {
 
 impl EventLoopRiser {
     pub fn rise(&self) {
-        println!("riser");
         unsafe {
             let app: id = NSApp();
             let delegate: id = msg_send![app, delegate];
@@ -88,8 +87,6 @@ fn main() {
             NSOpenGLProfileVersion3_2Core as u32,
             0,
         ];
-
-        println!("attributes: {:?}", attributes);
 
         let pixelformat = NSOpenGLPixelFormat::alloc(nil).initWithAttributes_(&attributes);
         let cxt: id = NSOpenGLContext::alloc(nil).initWithFormat_shareContext_(pixelformat, nil);

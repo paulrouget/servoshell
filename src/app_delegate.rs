@@ -13,7 +13,6 @@ pub fn new_app_delegate() -> id {
     unsafe {
         INIT.call_once(|| {
             extern fn flush_gl_context(this: &Object, _sel: Sel) {
-                println!("flush_gl_context");
                 unsafe {
                     let context: &id = {
                         let ivar: *mut c_void = *this.get_ivar("context");
