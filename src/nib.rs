@@ -9,7 +9,7 @@ use objc::declare::ClassDecl;
 use objc::runtime::{Class, Object, Sel};
 use objc_foundation::{INSObject, NSObject};
 
-pub fn load() -> (id, id, id) {
+pub fn load() -> (id, id) {
     unsafe {
         // xib to nib: ibtool foobar.xib --compile foobar.nib
         let filename = NSString::alloc(nil).init_str("ServoShellApp.nib");
@@ -40,7 +40,6 @@ pub fn load() -> (id, id, id) {
 
             let is_app: BOOL = msg_send![instance, isKindOfClass:class("NSApplication")];
             if is_app == YES {
-                // Found NSApplication.
                 app = Some(instance);
             }
 
@@ -50,18 +49,6 @@ pub fn load() -> (id, id, id) {
             }
         }
 
-
-        let win = win.unwrap();
-        win.setTitleVisibility_(NSWindowTitleVisibility::NSWindowTitleHidden);
-        let mask = win.styleMask() as NSUInteger | NSWindowMask::NSFullSizeContentViewWindowMask as NSUInteger;
-        win.setStyleMask_(mask);
-
-        let app = app.unwrap_or(NSApp());
-        app.setActivationPolicy_(NSApplicationActivationPolicyRegular);
-        let current_app = NSRunningApplication::currentApplication(nil);
-        current_app.activateWithOptions_(NSApplicationActivateIgnoringOtherApps);
-
-        let view: id = msg_send![win, contentView];
-        (app, win, view)
+        (app.unwrap(), win.unwrap())
     }
 }

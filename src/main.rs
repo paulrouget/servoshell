@@ -56,7 +56,21 @@ impl EventLoopRiser {
 
 
 fn main() {
-    let (nsapp, nswindow, nsview) = nib::load();
+    let (nsapp, nswindow) = nib::load();
+
+    unsafe {
+        nswindow.setTitleVisibility_(NSWindowTitleVisibility::NSWindowTitleHidden);
+        let mask = nswindow.styleMask() as NSUInteger | NSWindowMask::NSFullSizeContentViewWindowMask as NSUInteger;
+        nswindow.setStyleMask_(mask);
+
+        nsapp.setActivationPolicy_(NSApplicationActivationPolicyRegular);
+        let current_app = NSRunningApplication::currentApplication(nil);
+        current_app.activateWithOptions_(NSApplicationActivateIgnoringOtherApps);
+    };
+
+    let nsview: id = unsafe {
+        msg_send![nswindow, contentView]
+    };
 
     let geometry = unsafe {
         let frame: NSRect = msg_send![nsview, frame];
