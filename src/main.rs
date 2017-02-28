@@ -6,6 +6,7 @@ extern crate objc;
 extern crate cocoa;
 extern crate objc_foundation;
 extern crate libc;
+extern crate rand;
 
 mod nib;
 mod initgl;
@@ -18,8 +19,8 @@ use cocoa::appkit::*;
 use cocoa::base::*;
 use cocoa::foundation::*;
 
-use servoengine::{ServoEngine, FollowLinkPolicy};
-use servoview::ServoView;
+use servoengine::{ServoEngine, ServoEvent, FollowLinkPolicy};
+use servoview::{ServoView, ViewEvent};
 
 fn main() {
 
@@ -36,25 +37,70 @@ fn main() {
         ServoEngine::new(geometry, riser, &url, policy)
     };
 
-    unsafe { msg_send![nsapp, finishLaunching] };
+    // Equivalent of NSApp.run()
 
+    unsafe { msg_send![nsapp, finishLaunching] };
     loop {
         unsafe {
             let pool = NSAutoreleasePool::new(nil);
-            // Poll for the next event, returning `nil` if there are none.
+
+            // Blocks until event available
             let nsevent = nsapp.nextEventMatchingMask_untilDate_inMode_dequeue_(
-                NSAnyEventMask.bits() /*FIXME: | NSEventMaskPressure.bits() */,
+                NSAnyEventMask.bits(),
                 NSDate::distantFuture(nil), NSDefaultRunLoopMode, YES);
-            msg_send![nsapp, sendEvent:nsevent];
+
+            let event_type = nsevent.eventType() as u64;
+            if event_type == NSApplicationDefined as u64 {
+                let event_subtype = nsevent.subtype() as i16;
+                if event_subtype == NSEventSubtype::NSApplicationActivatedEventType as i16 {
+                    let nswindow: id = msg_send![nsevent, window];
+                    let view_tag: NSInteger = msg_send![nsevent, data1];
+                    let content_view: id = msg_send![nswindow, contentView];
+                    let nsview: id = msg_send![content_view, viewWithTag:view_tag];
+                    msg_send![nsview, eventloopRised:nsevent];
+                }
+            } else {
+                msg_send![nsapp, sendEvent:nsevent];
+            }
+
+            // Get all pending events
+            loop {
+                let nsevent = nsapp.nextEventMatchingMask_untilDate_inMode_dequeue_(
+                    NSAnyEventMask.bits(),
+                    NSDate::distantPast(nil), NSDefaultRunLoopMode, YES);
+                msg_send![nsapp, sendEvent:nsevent];
+                if nsevent == nil {
+                    break
+                }
+            }
+
             msg_send![nsapp, updateWindows];
             msg_send![pool, release];
         }
 
-        println!("servoview events: {:?}", servoview.get_events());
-        println!("servoengine events: {:?}", servoengine.get_events());
+        for e in servoview.get_events().into_iter() {
+            match e {
+                ViewEvent::Rised => {
+                    servoview.swap_buffers();
+                    servoengine.sync();
+                },
+                _ => {
+                    println!("{:?}", e);
+                }
+            }
+        }
 
-        servoview.swap_buffers();
-        servoengine.sync();
+        for e in servoengine.get_events().into_iter() {
+            match e {
+                ServoEvent::Present => {
+                    servoview.swap_buffers();
+                }
+                _ => {
+                    println!("{:?}", e);
+                }
+            }
+        }
+
     }
 }
 

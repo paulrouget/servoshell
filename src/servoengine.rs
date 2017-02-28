@@ -1,23 +1,19 @@
 extern crate servo;
 
-// use window::{EventLoopRiser, WindowTouchPhase, WindowMouseButton, WindowElementState};
-
 use servoview::{DrawableGeometry, EventLoopRiser};
 use self::servo::config::servo_version;
 use self::servo::servo_config::opts;
 use self::servo::servo_config::prefs::{PrefValue, PREFS};
-use self::servo::compositing::windowing::{WindowMethods, /*MouseWindowEvent,*/ WindowEvent, WindowNavigateMsg};
+use self::servo::compositing::windowing::{WindowMethods, WindowEvent};
 use self::servo::compositing::compositor_thread::{self, CompositorProxy, CompositorReceiver};
 use self::servo::msg::constellation_msg::{self, Key};
 use self::servo::servo_geometry::DeviceIndependentPixel;
-use self::servo::euclid::{/*TypedPoint2D,*/ Point2D, Size2D};
+use self::servo::euclid::{Point2D, Size2D};
 use self::servo::euclid::scale_factor::ScaleFactor;
 use self::servo::euclid::size::TypedSize2D;
 use self::servo::script_traits::DevicePixel;
 use self::servo::servo_url::ServoUrl;
 use self::servo::net_traits::net_error_list::NetError;
-// use self::servo::script_traits::TouchEventType;
-// use self::servo::webrender_traits;
 
 use std::fmt;
 use std::sync::mpsc;
