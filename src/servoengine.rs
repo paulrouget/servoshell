@@ -1,31 +1,23 @@
 extern crate servo;
 
-use cocoa::appkit::*;
-use cocoa::base::*;
-use cocoa::foundation::*;
-use gleam;
-
-
-use DrawableGeometry;
 // use window::{EventLoopRiser, WindowTouchPhase, WindowMouseButton, WindowElementState};
 
-use EventLoopRiser;
+use servoview::{DrawableGeometry, EventLoopRiser};
 use self::servo::config::servo_version;
 use self::servo::servo_config::opts;
 use self::servo::servo_config::prefs::{PrefValue, PREFS};
-use self::servo::compositing::windowing::{WindowMethods, MouseWindowEvent, WindowEvent,
-                                          WindowNavigateMsg};
+use self::servo::compositing::windowing::{WindowMethods, /*MouseWindowEvent,*/ WindowEvent, WindowNavigateMsg};
 use self::servo::compositing::compositor_thread::{self, CompositorProxy, CompositorReceiver};
 use self::servo::msg::constellation_msg::{self, Key};
 use self::servo::servo_geometry::DeviceIndependentPixel;
-use self::servo::euclid::{TypedPoint2D, Point2D, Size2D};
+use self::servo::euclid::{/*TypedPoint2D,*/ Point2D, Size2D};
 use self::servo::euclid::scale_factor::ScaleFactor;
 use self::servo::euclid::size::TypedSize2D;
 use self::servo::script_traits::DevicePixel;
 use self::servo::servo_url::ServoUrl;
 use self::servo::net_traits::net_error_list::NetError;
-use self::servo::script_traits::TouchEventType;
-use self::servo::webrender_traits;
+// use self::servo::script_traits::TouchEventType;
+// use self::servo::webrender_traits;
 
 use std::fmt;
 use std::sync::mpsc;
@@ -82,19 +74,19 @@ impl fmt::Debug for ServoEvent {
     }
 }
 
-pub struct Servo {
+pub struct ServoEngine {
     // FIXME: it's annoying that event for servo are named "WindowEvent"
     events_for_servo: RefCell<Vec<WindowEvent>>,
     servo_browser: RefCell<servo::Browser<ServoCallbacks>>,
     callbacks: Rc<ServoCallbacks>,
 }
 
-impl Servo {
+impl ServoEngine {
     pub fn new(geometry: DrawableGeometry,
                riser: EventLoopRiser,
                url: &str,
                follow_link_policy: FollowLinkPolicy)
-               -> Servo {
+               -> ServoEngine {
 
         let url = ServoUrl::parse(url).ok().unwrap(); // FIXME. What if fail?
 
@@ -125,7 +117,7 @@ impl Servo {
 
         servo.handle_events(vec![WindowEvent::InitializeCompositing]);
 
-        Servo {
+        ServoEngine {
             events_for_servo: RefCell::new(Vec::new()),
             servo_browser: RefCell::new(servo),
             callbacks: callbacks,
@@ -136,27 +128,27 @@ impl Servo {
         self.callbacks.get_events()
     }
 
-    pub fn update_mouse_coordinates(&self, x: i32, y: i32) {
-        let event = WindowEvent::MouseWindowMoveEventClass(TypedPoint2D::new(x as f32, y as f32));
-        self.events_for_servo.borrow_mut().push(event);
-    }
+    // pub fn reload(&self) {
+    //     let event = WindowEvent::Reload;
+    //     self.events_for_servo.borrow_mut().push(event);
+    // }
 
-    pub fn reload(&self) {
-        let event = WindowEvent::Reload;
-        self.events_for_servo.borrow_mut().push(event);
-    }
+    // pub fn go_back(&self) {
+    //     let event = WindowEvent::Navigation(WindowNavigateMsg::Back);
+    //     self.events_for_servo.borrow_mut().push(event);
+    // }
 
-    pub fn go_back(&self) {
-        let event = WindowEvent::Navigation(WindowNavigateMsg::Back);
-        self.events_for_servo.borrow_mut().push(event);
-    }
+    // pub fn go_fwd(&self) {
+    //     let event = WindowEvent::Navigation(WindowNavigateMsg::Forward);
+    //     self.events_for_servo.borrow_mut().push(event);
+    // }
 
-    pub fn go_fwd(&self) {
-        let event = WindowEvent::Navigation(WindowNavigateMsg::Forward);
-        self.events_for_servo.borrow_mut().push(event);
-    }
+    // pub fn perform_mouse_move(&self, x: i32, y: i32) {
+    //     let event = WindowEvent::MouseWindowMoveEventClass(TypedPoint2D::new(x as f32, y as f32));
+    //     self.events_for_servo.borrow_mut().push(event);
+    // }
 
-    // pub fn scroll(&self, x: i32, y: i32, dx: f32, dy: f32, phase: WindowTouchPhase) {
+    // pub fn perform_scroll(&self, x: i32, y: i32, dx: f32, dy: f32, phase: WindowTouchPhase) {
     //     let scroll_location = webrender_traits::ScrollLocation::Delta(TypedPoint2D::new(dx, dy));
     //     let phase = match phase {
     //         WindowTouchPhase::Started => TouchEventType::Down,
@@ -168,7 +160,7 @@ impl Servo {
     //     self.events_for_servo.borrow_mut().push(event);
     // }
 
-    // pub fn click(&self,
+    // pub fn perform_click(&self,
     //              x: i32,
     //              y: i32,
     //              org_x: i32,
@@ -228,6 +220,8 @@ struct ServoCallbacks {
 
 impl ServoCallbacks {
     fn get_events(&self) -> Vec<ServoEvent> {
+        // FIXME: ports/glutin/window.rs uses mem::replace. Should we too?
+        // See: https://doc.rust-lang.org/core/mem/fn.replace.html
         let clone = self.event_queue.borrow().clone();
         self.event_queue.borrow_mut().clear();
         clone
@@ -303,10 +297,9 @@ impl WindowMethods for ServoCallbacks {
     }
 
     fn present(&self) {
-        unsafe {
-            // FIXME
-        }
-        // self.event_queue.borrow_mut().push(ServoEvent::Present);
+        // FIXME: what is that for? Aren't we supposed to flush buffer everytime
+        // CompositorProxy::send is called?
+        self.event_queue.borrow_mut().push(ServoEvent::Present);
     }
 
     fn set_page_title(&self, title: Option<String>) {
@@ -339,6 +332,7 @@ impl WindowMethods for ServoCallbacks {
     }
 
     fn set_cursor(&self, cursor: ServoCursor) {
+        println!("set_cursor: {:?}", cursor);
         self.event_queue.borrow_mut().push(ServoEvent::CursorChanged(cursor));
     }
 

@@ -2,150 +2,122 @@
 
 #[macro_use]
 extern crate objc;
-extern crate gleam;
+
 extern crate cocoa;
 extern crate objc_foundation;
 extern crate libc;
-extern crate core_foundation;
-extern crate cgl;
+
+mod nib;
+mod initgl;
+mod servoview;
+mod servoengine;
+
+use std::env::args;
 
 use cocoa::appkit::*;
 use cocoa::base::*;
 use cocoa::foundation::*;
 
-use cgl::{CGLEnable, kCGLCECrashOnRemovedFunctions};
-
-use std::env::args;
-use std::str::FromStr;
-use core_foundation::base::TCFType;
-use core_foundation::string::CFString;
-use core_foundation::bundle::{CFBundleGetBundleWithIdentifier, CFBundleGetFunctionPointerForName};
-use std::os::raw::c_void;
-
-mod nib;
-mod app_delegate;
-mod servo;
-
-use servo::{FollowLinkPolicy, Servo};
-
-#[derive(Copy, Clone)]
-pub struct DrawableGeometry {
-    inner_size: (u32, u32),
-    position: (i32, i32),
-    hidpi_factor: f32,
-}
-
-// FIXME: this should hold a reference to the gl context. As
-// of now, it's stored in the app delegate
-// Used by Servo to wake up the event loop
-pub struct EventLoopRiser {
-}
-
-impl EventLoopRiser {
-    pub fn rise(&self) {
-        unsafe {
-            let app: id = NSApp();
-            let delegate: id = msg_send![app, delegate];
-            msg_send![delegate, performSelectorOnMainThread:sel!(flushGlContext) withObject:nil waitUntilDone:NO];
-        }
-    }
-    pub fn clone(&self) -> EventLoopRiser {
-        EventLoopRiser {}
-    }
-}
-
+use servoengine::{ServoEngine, FollowLinkPolicy};
+use servoview::ServoView;
 
 fn main() {
-    let (nsapp, nswindow) = nib::load();
+
+    let (nsapp, nswindow, nsview) = load_nib("ServoShellApp.nib");
+
+    let servoview = ServoView::new(nsview);
+
+    let servoengine = {
+        let url = args().nth(1).unwrap_or("http://servo.org".to_owned());
+        let geometry = servoview.get_geometry();
+        let riser = servoview.create_eventloop_riser();
+        // FIXME: hardcoded value
+        let policy = FollowLinkPolicy::FollowOriginalDomain;
+        ServoEngine::new(geometry, riser, &url, policy)
+    };
+
+    unsafe { msg_send![nsapp, finishLaunching] };
+
+    loop {
+        unsafe {
+            let pool = NSAutoreleasePool::new(nil);
+            // Poll for the next event, returning `nil` if there are none.
+            let nsevent = nsapp.nextEventMatchingMask_untilDate_inMode_dequeue_(
+                NSAnyEventMask.bits() /*FIXME: | NSEventMaskPressure.bits() */,
+                NSDate::distantFuture(nil), NSDefaultRunLoopMode, YES);
+            msg_send![nsapp, sendEvent:nsevent];
+            msg_send![nsapp, updateWindows];
+            msg_send![pool, release];
+        }
+
+        println!("servoview events: {:?}", servoview.get_events());
+        println!("servoengine events: {:?}", servoengine.get_events());
+
+        servoview.swap_buffers();
+        servoengine.sync();
+    }
+}
+
+fn load_nib(path: &str) -> (id, id, id) /* (nsapp, nswindow, nsview) */ {
+    let (nsapp, nswindow) = {
+
+        servoview::register_nsservoview();
+
+        let instances = nib::load(path).unwrap();
+
+        let mut nsapp: Option<id> = None;
+        let mut nswindow: Option<id> = None;
+
+        fn is_instance_of(i: id, classname: &'static str) -> bool {
+            let is_instance: BOOL = unsafe {
+                let classname = class(classname);
+                msg_send![i, isKindOfClass:classname]
+            };
+            is_instance == YES
+        };
+
+        // FIXME: there's probably a more elegant way to do that
+        for i in instances.into_iter() {
+            unsafe {
+                use std::ffi::CStr;
+                let classname: id = msg_send![i, className];
+                let classname: *const libc::c_char = msg_send![classname, UTF8String];
+                let classname = CStr::from_ptr(classname).to_string_lossy().into_owned();
+                println!("Found object {:?}", classname);
+
+                if is_instance_of(i, "NSWindow") {
+                    nswindow = Some(i);
+                }
+                if is_instance_of(i, "NSApplication") {
+                    nsapp = Some(i);
+                }
+            }
+        }
+
+        let nsapp: id = match nsapp {
+            None => panic!("Couldn't not find NSApplication instance in Nib file"),
+            Some(id) => id
+        };
+
+        let nswindow: id = match nswindow {
+            None => panic!("Couldn't not find NSWindow instance in Nib file"),
+            Some(id) => id
+        };
+
+        (nsapp, nswindow)
+    };
 
     unsafe {
-        nswindow.setTitleVisibility_(NSWindowTitleVisibility::NSWindowTitleHidden);
-        let mask = nswindow.styleMask() as NSUInteger | NSWindowMask::NSFullSizeContentViewWindowMask as NSUInteger;
-        nswindow.setStyleMask_(mask);
-
         nsapp.setActivationPolicy_(NSApplicationActivationPolicyRegular);
         let current_app = NSRunningApplication::currentApplication(nil);
         current_app.activateWithOptions_(NSApplicationActivateIgnoringOtherApps);
-    };
 
-    let nsview: id = unsafe {
-        msg_send![nswindow, contentView]
-    };
-
-    let geometry = unsafe {
-        let frame: NSRect = msg_send![nsview, frame];
-        let hidpi_factor: CGFloat = msg_send![nswindow, backingScaleFactor];
-        DrawableGeometry {
-            inner_size: (frame.size.width as u32, frame.size.height as u32),
-            position: (0, 0),
-            hidpi_factor: hidpi_factor as f32,
-        }
-    };
-
-    let cxt = unsafe {
-
-        nsview.setWantsBestResolutionOpenGLSurface_(YES);
-
-        let attributes = vec![
-            NSOpenGLPFADoubleBuffer as u32,
-            NSOpenGLPFAClosestPolicy as u32,
-            NSOpenGLPFAColorSize as u32,
-            32,
-            NSOpenGLPFAAlphaSize as u32,
-            8,
-            NSOpenGLPFADepthSize as u32,
-            24,
-            NSOpenGLPFAStencilSize as u32,
-            8,
-            NSOpenGLPFAOpenGLProfile as u32,
-            NSOpenGLProfileVersion3_2Core as u32,
-            0,
-        ];
-
-        let pixelformat = NSOpenGLPixelFormat::alloc(nil).initWithAttributes_(&attributes);
-        let cxt: id = NSOpenGLContext::alloc(nil).initWithFormat_shareContext_(pixelformat, nil);
-        msg_send![cxt, setView:nsview];
-        let value = 1;
-        cxt.setValues_forParameter_(&value, NSOpenGLContextParameter::NSOpenGLCPSwapInterval);
-        CGLEnable(cxt.CGLContextObj() as *mut _, kCGLCECrashOnRemovedFunctions);
-        cxt
-    };
-
-    unsafe {
-        msg_send![cxt, update];
-        msg_send![cxt, makeCurrentContext];
-    };
-
-
-    gleam::gl::load_with(|addr| {
-        let symbol_name: CFString = FromStr::from_str(addr).unwrap();
-        let framework_name: CFString = FromStr::from_str("com.apple.opengl").unwrap();
-        let framework = unsafe { CFBundleGetBundleWithIdentifier(framework_name.as_concrete_TypeRef()) };
-        let symbol = unsafe { CFBundleGetFunctionPointerForName(framework, symbol_name.as_concrete_TypeRef()) };
-        symbol as *const c_void
-    });
-
-    // FIXME: release cxt
-    let cxt_ptr = Box::into_raw(Box::new(cxt));
-    // necessary?
-    gleam::gl::clear_color(1.0, 0.0, 0.0, 1.0);
-    gleam::gl::clear(gleam::gl::COLOR_BUFFER_BIT);
-    gleam::gl::finish();
-
-
-    let url = "http://servo.org".to_owned();
-    let servo = Servo::new(geometry, EventLoopRiser {}, &url, FollowLinkPolicy::FollowOriginalDomain);
-
-    let servo_ptr = Box::into_raw(Box::new(servo));
-
-    unsafe {
-        let delegate = app_delegate::new_app_delegate();
-        (*delegate).set_ivar("context", cxt_ptr as *mut c_void);
-        (*delegate).set_ivar("servo", servo_ptr as *mut c_void);
-        msg_send![nsapp, setDelegate:delegate];
+        nswindow.setTitleVisibility_(NSWindowTitleVisibility::NSWindowTitleHidden);
+        let mask = nswindow.styleMask() as NSUInteger | NSWindowMask::NSFullSizeContentViewWindowMask as NSUInteger;
+        nswindow.setStyleMask_(mask);
     }
 
-    unsafe {
-        nsapp.run();
-    }
+    let nsview: id = unsafe { msg_send![nswindow, contentView] };
+
+    (nsapp, nswindow, nsview)
 }

@@ -1,54 +1,30 @@
-use libc;
-use cocoa::appkit::*;
 use cocoa::base::*;
 use cocoa::foundation::*;
-use std::ffi::CStr;
-use std::process;
 
-use objc::declare::ClassDecl;
-use objc::runtime::{Class, Object, Sel};
-use objc_foundation::{INSObject, NSObject};
-
-pub fn load() -> (id, id) {
+pub fn load(path: &str) -> Result<Vec<id>, &'static str> {
     unsafe {
-        // xib to nib: ibtool foobar.xib --compile foobar.nib
-        let filename = NSString::alloc(nil).init_str("ServoShellApp.nib");
+        let filename = NSString::alloc(nil).init_str(path);
         let nsdata: id = msg_send![class("NSData"), dataWithContentsOfFile: filename];
         let nsnib: id = msg_send![class("NSNib"), alloc];
         msg_send![nsnib, initWithNibData:nsdata bundle:nil];
 
-        let instances: id = msg_send![class("NSArray"), alloc];
-        msg_send![instances, init];
+        let objects: id = msg_send![class("NSArray"), alloc];
+        msg_send![objects, init];
 
-        let success: BOOL = msg_send![nsnib, instantiateWithOwner:nil topLevelObjects:&instances];
+        let success: BOOL = msg_send![nsnib, instantiateWithOwner:nil topLevelObjects:&objects];
         if success == NO {
-            // Failed to load
-            process::exit(1);
+            return Err("Can't load nib file");
         }
 
-        let count: NSInteger = msg_send![instances, count];
+        let count: NSInteger = msg_send![objects, count];
 
-        let mut app: Option<id> = None;
-        let mut win: Option<id> = None;
+        let mut instances = Vec::new();
 
         for i in 0..count {
-            let instance: id = msg_send![instances, objectAtIndex: i];
-            let classname: id = msg_send![instance, className];
-            let classname: *const libc::c_char = msg_send![classname, UTF8String];
-            let classname = CStr::from_ptr(classname).to_string_lossy().into_owned();
-            println!("instances[{}] is {}", i, classname);
-
-            let is_app: BOOL = msg_send![instance, isKindOfClass:class("NSApplication")];
-            if is_app == YES {
-                app = Some(instance);
-            }
-
-            let is_win: BOOL = msg_send![instance, isKindOfClass:class("NSWindow")];
-            if is_win == YES {
-                win = Some(instance);
-            }
+            let instance: id = msg_send![objects, objectAtIndex:i];
+            instances.push(instance);
         }
 
-        (app.unwrap(), win.unwrap())
+        Ok(instances)
     }
 }
