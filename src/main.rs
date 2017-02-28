@@ -19,17 +19,16 @@ use cocoa::appkit::*;
 use cocoa::base::*;
 use cocoa::foundation::*;
 
-use servoengine::{ServoEngine, ServoEvent, FollowLinkPolicy};
+use servoengine::{configure_servo, ServoEngine, ServoEvent, FollowLinkPolicy};
 use servoview::{ServoView, ViewEvent};
 
-fn main() {
+fn open_window(url: &str) -> (id, ServoView, ServoEngine) {
 
-    let (nsapp, nswindow, nsview) = load_nib("ServoShellApp.nib");
+    let (nswindow, nsview) = load_win_from_nib();
 
     let servoview = ServoView::new(nsview);
 
     let servoengine = {
-        let url = args().nth(1).unwrap_or("http://servo.org".to_owned());
         let geometry = servoview.get_geometry();
         let riser = servoview.create_eventloop_riser();
         // FIXME: hardcoded value
@@ -37,8 +36,24 @@ fn main() {
         ServoEngine::new(geometry, riser, &url, policy)
     };
 
-    // Equivalent of NSApp.run()
+    (nswindow, servoview, servoengine)
+}
 
+fn main() {
+
+    let nsapp = load_app_from_nib();
+
+    let url = args().nth(1).unwrap_or("http://servo.org".to_owned());
+
+    // FIXME: initial url is global :(
+    configure_servo(&url);
+
+    let (w1, v1, e1) = open_window(&url);
+
+    let (w2, v2, e2) = open_window(&url);
+
+
+    // Equivalent of NSApp.run()
     unsafe { msg_send![nsapp, finishLaunching] };
     loop {
         unsafe {
@@ -78,25 +93,52 @@ fn main() {
             msg_send![pool, release];
         }
 
-        for e in servoview.get_events().into_iter() {
+        for e in v1.get_events().into_iter() {
             match e {
                 ViewEvent::Rised => {
-                    servoview.swap_buffers();
-                    servoengine.sync();
+                    println!("v1: {:?}", e);
+                    v1.swap_buffers();
+                    e1.sync();
                 },
                 _ => {
-                    println!("{:?}", e);
+                    println!("v1: {:?}", e);
                 }
             }
         }
 
-        for e in servoengine.get_events().into_iter() {
+        for e in e1.get_events().into_iter() {
             match e {
                 ServoEvent::Present => {
-                    servoview.swap_buffers();
+                    println!("e1: {:?}", e);
+                    v1.swap_buffers();
                 }
                 _ => {
-                    println!("{:?}", e);
+                    println!("e1 {:?}", e);
+                }
+            }
+        }
+
+        for e in v2.get_events().into_iter() {
+            match e {
+                ViewEvent::Rised => {
+                    println!("  v2: {:?}", e);
+                    v2.swap_buffers();
+                    e2.sync();
+                },
+                _ => {
+                    println!("  v2: {:?}", e);
+                }
+            }
+        }
+
+        for e in e2.get_events().into_iter() {
+            match e {
+                ServoEvent::Present => {
+                    println!("  e2: {:?}", e);
+                    v2.swap_buffers();
+                }
+                _ => {
+                    println!("  e2 {:?}", e);
                 }
             }
         }
@@ -104,36 +146,28 @@ fn main() {
     }
 }
 
-fn load_nib(path: &str) -> (id, id, id) /* (nsapp, nswindow, nsview) */ {
-    let (nsapp, nswindow) = {
+fn is_instance_of(i: id, classname: &'static str) -> bool {
+    let is_instance: BOOL = unsafe {
+        let classname = class(classname);
+        msg_send![i, isKindOfClass:classname]
+    };
+    is_instance == YES
+}
 
-        servoview::register_nsservoview();
+fn load_app_from_nib() -> id /* nsapp */ {
+    let nsapp = {
 
-        let instances = nib::load(path).unwrap();
-
+        let instances = nib::load("App.nib").unwrap();
         let mut nsapp: Option<id> = None;
-        let mut nswindow: Option<id> = None;
 
-        fn is_instance_of(i: id, classname: &'static str) -> bool {
-            let is_instance: BOOL = unsafe {
-                let classname = class(classname);
-                msg_send![i, isKindOfClass:classname]
-            };
-            is_instance == YES
-        };
-
-        // FIXME: there's probably a more elegant way to do that
+        // fixme: there's probably a more elegant way to do that
         for i in instances.into_iter() {
             unsafe {
                 use std::ffi::CStr;
                 let classname: id = msg_send![i, className];
                 let classname: *const libc::c_char = msg_send![classname, UTF8String];
                 let classname = CStr::from_ptr(classname).to_string_lossy().into_owned();
-                println!("Found object {:?}", classname);
-
-                if is_instance_of(i, "NSWindow") {
-                    nswindow = Some(i);
-                }
+                println!("found object {:?}", classname);
                 if is_instance_of(i, "NSApplication") {
                     nsapp = Some(i);
                 }
@@ -141,23 +175,55 @@ fn load_nib(path: &str) -> (id, id, id) /* (nsapp, nswindow, nsview) */ {
         }
 
         let nsapp: id = match nsapp {
-            None => panic!("Couldn't not find NSApplication instance in Nib file"),
+            None => panic!("couldn't not find NSApplication instance in nib file"),
             Some(id) => id
         };
 
-        let nswindow: id = match nswindow {
-            None => panic!("Couldn't not find NSWindow instance in Nib file"),
-            Some(id) => id
-        };
-
-        (nsapp, nswindow)
+        nsapp
     };
 
     unsafe {
         nsapp.setActivationPolicy_(NSApplicationActivationPolicyRegular);
         let current_app = NSRunningApplication::currentApplication(nil);
         current_app.activateWithOptions_(NSApplicationActivateIgnoringOtherApps);
+    }
 
+    nsapp
+}
+
+fn load_win_from_nib() -> (id, id) {
+    let nswindow = {
+
+        servoview::register_nsservoview();
+
+        let instances = nib::load("Window.nib").unwrap();
+
+        let mut nswindow: Option<id> = None;
+
+        // fixme: there's probably a more elegant way to do that
+        for i in instances.into_iter() {
+            unsafe {
+                use std::ffi::CStr;
+                let classname: id = msg_send![i, className];
+                let classname: *const libc::c_char = msg_send![classname, UTF8String];
+                let classname = CStr::from_ptr(classname).to_string_lossy().into_owned();
+                println!("found object {:?}", classname);
+
+                if is_instance_of(i, "NSWindow") {
+                    nswindow = Some(i);
+                }
+            }
+        }
+
+        let nswindow: id = match nswindow {
+            None => panic!("couldn't not find NSWindow instance in nib file"),
+            Some(id) => id
+        };
+
+        nswindow
+    };
+
+    unsafe {
         nswindow.setTitleVisibility_(NSWindowTitleVisibility::NSWindowTitleHidden);
         let mask = nswindow.styleMask() as NSUInteger | NSWindowMask::NSFullSizeContentViewWindowMask as NSUInteger;
         nswindow.setStyleMask_(mask);
@@ -165,5 +231,5 @@ fn load_nib(path: &str) -> (id, id, id) /* (nsapp, nswindow, nsview) */ {
 
     let nsview: id = unsafe { msg_send![nswindow, contentView] };
 
-    (nsapp, nswindow, nsview)
+    (nswindow, nsview)
 }

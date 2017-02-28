@@ -2,7 +2,6 @@
 <document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11762" systemVersion="16D32" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11762"/>
-        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication"/>
@@ -671,112 +670,5 @@
             </items>
             <point key="canvasLocation" x="193" y="199"/>
         </menu>
-        <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" releasedWhenClosed="NO" animationBehavior="default" id="F0z-JX-Cv5">
-            <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" unifiedTitleAndToolbar="YES" fullSizeContentView="YES"/>
-            <rect key="contentRect" x="196" y="240" width="800" height="600"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1280" height="800"/>
-            <view key="contentView" wantsLayer="YES" id="se5-gp-TjO" customClass="NSServoView">
-                <rect key="frame" x="0.0" y="0.0" width="800" height="600"/>
-                <autoresizingMask key="autoresizingMask"/>
-            </view>
-            <toolbar key="toolbar" implicitIdentifier="4E0C930B-D6E3-4B1A-BD8F-6F6D77EABB92" autosavesConfiguration="NO" displayMode="iconOnly" sizeMode="regular" id="sx5-7e-9QH">
-                <allowedToolbarItems>
-                    <toolbarItem implicitItemIdentifier="NSToolbarSpaceItem" id="4uL-Eu-bzJ"/>
-                    <toolbarItem implicitItemIdentifier="D8983A42-BE0A-4879-B0DF-FBA6570FB9FD" label="reload" paletteLabel="reload" image="NSRefreshTemplate" id="otQ-Ya-nkx">
-                        <nil key="toolTip"/>
-                        <size key="minSize" width="36" height="28"/>
-                        <size key="maxSize" width="40" height="28"/>
-                        <button key="view" verticalHuggingPriority="750" id="xWg-fx-ux9">
-                            <rect key="frame" x="2" y="14" width="36" height="28"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="NSRefreshTemplate" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="efa-UT-6o3">
-                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                <font key="font" metaFont="system"/>
-                            </buttonCell>
-                        </button>
-                    </toolbarItem>
-                    <toolbarItem implicitItemIdentifier="57F0C50E-F2E9-4394-89CE-EFD26C815591" label="stop" paletteLabel="stop" image="NSStopProgressTemplate" id="Bnw-ok-nkW">
-                        <nil key="toolTip"/>
-                        <size key="minSize" width="36" height="28"/>
-                        <size key="maxSize" width="40" height="28"/>
-                        <button key="view" verticalHuggingPriority="750" id="nBV-9C-Iw4">
-                            <rect key="frame" x="0.0" y="14" width="36" height="28"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="NSStopProgressTemplate" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="7gv-NT-Yan">
-                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                <font key="font" metaFont="system"/>
-                            </buttonCell>
-                        </button>
-                    </toolbarItem>
-                    <toolbarItem implicitItemIdentifier="40D4646D-659B-407C-8FBB-432B18EF0288" label="History" paletteLabel="History" id="Agy-K9-MXj">
-                        <nil key="toolTip"/>
-                        <size key="minSize" width="67" height="25"/>
-                        <size key="maxSize" width="69" height="28"/>
-                        <segmentedControl key="view" verticalHuggingPriority="750" id="Kng-pf-HeD">
-                            <rect key="frame" x="0.0" y="14" width="67" height="28"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <segmentedCell key="cell" borderStyle="border" alignment="left" style="texturedSquare" trackingMode="momentary" id="3Hp-3L-KfZ">
-                                <font key="font" metaFont="system"/>
-                                <segments>
-                                    <segment image="NSGoLeftTemplate" width="32"/>
-                                    <segment image="NSGoRightTemplate" width="32" tag="1"/>
-                                </segments>
-                            </segmentedCell>
-                        </segmentedControl>
-                    </toolbarItem>
-                    <toolbarItem implicitItemIdentifier="C96D596F-2F1D-4593-B61F-B3E9AEAF72FC" label="Zoom" paletteLabel="Zoom" id="gzU-sd-yZN">
-                        <nil key="toolTip"/>
-                        <size key="minSize" width="67" height="25"/>
-                        <size key="maxSize" width="97" height="28"/>
-                        <segmentedControl key="view" verticalHuggingPriority="750" id="Q8f-vF-DzK">
-                            <rect key="frame" x="0.0" y="14" width="97" height="28"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <segmentedCell key="cell" borderStyle="border" alignment="left" style="texturedSquare" trackingMode="momentary" id="Ga1-Oc-ALA">
-                                <font key="font" metaFont="system"/>
-                                <segments>
-                                    <segment label="-" width="32"/>
-                                    <segment label="=" width="32" tag="1"/>
-                                    <segment label="+"/>
-                                </segments>
-                            </segmentedCell>
-                        </segmentedControl>
-                    </toolbarItem>
-                    <toolbarItem implicitItemIdentifier="0422B209-DEF8-4C42-9DF6-35B0D943E9EF" label="Urlbar" paletteLabel="Urlbar" id="qY1-68-YpL">
-                        <nil key="toolTip"/>
-                        <size key="minSize" width="96" height="22"/>
-                        <size key="maxSize" width="400" height="22"/>
-                        <textField key="view" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="NO" id="wg0-YU-Rts">
-                            <rect key="frame" x="0.0" y="14" width="96" height="22"/>
-                            <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
-                            <textFieldCell key="cell" lineBreakMode="truncatingTail" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" placeholderString="Search or enter website name" usesSingleLineMode="YES" bezelStyle="round" id="2zA-pQ-Oee">
-                                <font key="font" metaFont="smallSystem"/>
-                                <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
-                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                <allowedInputSourceLocales>
-                                    <string>NSAllRomanInputSourcesLocaleIdentifier</string>
-                                </allowedInputSourceLocales>
-                            </textFieldCell>
-                        </textField>
-                    </toolbarItem>
-                    <toolbarItem implicitItemIdentifier="NSToolbarFlexibleSpaceItem" id="zfU-F1-hpy"/>
-                </allowedToolbarItems>
-                <defaultToolbarItems>
-                    <toolbarItem reference="Agy-K9-MXj"/>
-                    <toolbarItem reference="zfU-F1-hpy"/>
-                    <toolbarItem reference="qY1-68-YpL"/>
-                    <toolbarItem reference="otQ-Ya-nkx"/>
-                    <toolbarItem reference="Bnw-ok-nkW"/>
-                    <toolbarItem reference="gzU-sd-yZN"/>
-                    <toolbarItem reference="zfU-F1-hpy"/>
-                </defaultToolbarItems>
-            </toolbar>
-            <point key="canvasLocation" x="218" y="435"/>
-        </window>
     </objects>
-    <resources>
-        <image name="NSGoLeftTemplate" width="9" height="12"/>
-        <image name="NSGoRightTemplate" width="9" height="12"/>
-        <image name="NSRefreshTemplate" width="11" height="15"/>
-        <image name="NSStopProgressTemplate" width="11" height="11"/>
-    </resources>
 </document>

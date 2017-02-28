@@ -70,6 +70,16 @@ impl fmt::Debug for ServoEvent {
     }
 }
 
+pub fn configure_servo(url: &str) {
+    let url = ServoUrl::parse(url).ok().unwrap(); // FIXME. What if fail?
+    let mut opts = opts::default_opts();
+    opts.headless = false;
+    opts.url = Some(url);
+    opts::set_defaults(opts);
+    // FIXME: Pipeline creation fails is layout_threads pref not set
+    PREFS.set("layout.threads", PrefValue::Number(1.0));
+}
+
 pub struct ServoEngine {
     // FIXME: it's annoying that event for servo are named "WindowEvent"
     events_for_servo: RefCell<Vec<WindowEvent>>,
@@ -92,13 +102,6 @@ impl ServoEngine {
             }
             FollowLinkPolicy::FollowAnyLink => None,
         };
-
-        let mut opts = opts::default_opts();
-        opts.headless = false;
-        opts.url = Some(url);
-        opts::set_defaults(opts);
-        // FIXME: Pipeline creation fails is layout_threads pref not set
-        PREFS.set("layout.threads", PrefValue::Number(1.0));
 
         let callbacks = Rc::new(ServoCallbacks {
             event_queue: RefCell::new(Vec::new()),
