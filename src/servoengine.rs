@@ -11,14 +11,18 @@ use self::servo::servo_geometry::DeviceIndependentPixel;
 use self::servo::euclid::{Point2D, Size2D};
 use self::servo::euclid::scale_factor::ScaleFactor;
 use self::servo::euclid::size::TypedSize2D;
-use self::servo::script_traits::DevicePixel;
+use self::servo::euclid::point::TypedPoint2D;
+use self::servo::script_traits::{DevicePixel, TouchEventType};
 use self::servo::servo_url::ServoUrl;
 use self::servo::net_traits::net_error_list::NetError;
+use self::servo::webrender_traits;
 
 use std::fmt;
 use std::sync::mpsc;
 use std::rc::Rc;
 use std::cell::{Cell, RefCell};
+
+use view_events::{TouchPhase};
 
 pub use self::servo::style_traits::cursor::Cursor as ServoCursor;
 pub type CompositorChannel = (Box<CompositorProxy + Send>, Box<CompositorReceiver>);
@@ -147,17 +151,17 @@ impl ServoEngine {
     //     self.events_for_servo.borrow_mut().push(event);
     // }
 
-    // pub fn perform_scroll(&self, x: i32, y: i32, dx: f32, dy: f32, phase: WindowTouchPhase) {
-    //     let scroll_location = webrender_traits::ScrollLocation::Delta(TypedPoint2D::new(dx, dy));
-    //     let phase = match phase {
-    //         WindowTouchPhase::Started => TouchEventType::Down,
-    //         WindowTouchPhase::Moved => TouchEventType::Move,
-    //         WindowTouchPhase::Ended => TouchEventType::Up,
-    //         WindowTouchPhase::Cancelled => TouchEventType::Cancel,
-    //     };
-    //     let event = WindowEvent::Scroll(scroll_location, TypedPoint2D::new(x, y), phase);
-    //     self.events_for_servo.borrow_mut().push(event);
-    // }
+    pub fn perform_scroll(&self, x: i32, y: i32, dx: f32, dy: f32, phase: TouchPhase) {
+        let scroll_location = webrender_traits::ScrollLocation::Delta(TypedPoint2D::new(dx, dy));
+        let phase = match phase {
+            TouchPhase::Started => TouchEventType::Down,
+            TouchPhase::Moved => TouchEventType::Move,
+            TouchPhase::Ended => TouchEventType::Up,
+            TouchPhase::Cancelled => TouchEventType::Cancel
+        };
+        let event = WindowEvent::Scroll(scroll_location, TypedPoint2D::new(x, y), phase);
+        self.events_for_servo.borrow_mut().push(event);
+    }
 
     // pub fn perform_click(&self,
     //              x: i32,

@@ -1,38 +1,24 @@
+extern crate core_foundation;
+extern crate cgl;
+extern crate gleam;
+
+use cocoa::appkit;
 use cocoa::appkit::*;
 use cocoa::foundation::*;
 use cocoa::base::*;
-
-use initgl;
-
 use objc::declare::ClassDecl;
 use objc::runtime::{Class, Object, Sel};
-
 use rand::Rng;
 use rand::os::OsRng;
-
+use self::cgl::{CGLEnable, kCGLCECrashOnRemovedFunctions};
+use self::core_foundation::base::TCFType;
+use self::core_foundation::string::CFString;
+use self::core_foundation::bundle::{CFBundleGetBundleWithIdentifier, CFBundleGetFunctionPointerForName};
 use std::fmt;
 use std::os::raw::c_void;
+use std::str::FromStr;
 use std::sync::{Once, ONCE_INIT};
-
-#[derive(Clone)]
-pub enum ViewEvent {
-    Unknown,
-    Rised,
-    MouseUp,
-    MouseDown,
-}
-
-impl fmt::Debug for ViewEvent {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            ViewEvent::Unknown => write!(f, "Unknown"),
-            ViewEvent::MouseDown => write!(f, "MouseDown"),
-            ViewEvent::MouseUp => write!(f, "MouseUp"),
-            ViewEvent::Rised => write!(f, "Rised"),
-        }
-    }
-}
-
+use view_events::{ViewEvent, TouchPhase, MouseScrollDelta};
 
 static INIT: Once = ONCE_INIT;
 
@@ -47,6 +33,7 @@ pub fn register_nsservoview() {
             servoview_class.add_ivar::<NSInteger>("_tag");
 
             servoview_class.add_method(sel!(eventloopRised:), store_event as extern fn(&Object, Sel, id));
+            servoview_class.add_method(sel!(scrollWheel:), store_event as extern fn(&Object, Sel, id));
             servoview_class.add_method(sel!(mouseDown:), store_event as extern fn(&Object, Sel, id));
             servoview_class.add_method(sel!(mouseUp:), store_event as extern fn(&Object, Sel, id));
             servoview_class.add_method(sel!(mouseMoved:), store_event as extern fn(&Object, Sel, id));
@@ -94,11 +81,61 @@ pub struct ServoView {
 
 impl ServoView {
     pub fn new(nsview: id) -> ServoView {
-        let context: id = initgl::init(nsview);
+        let context: id = ServoView::init_gl(nsview);
         ServoView {
             nsview: nsview,
             context: context
         }
+    }
+
+    fn init_gl(nsview: id) -> id {
+        let ctx = unsafe {
+            nsview.setWantsBestResolutionOpenGLSurface_(YES);
+            let attributes = vec![NSOpenGLPFADoubleBuffer as u32,
+                                  NSOpenGLPFAClosestPolicy as u32,
+                                  NSOpenGLPFAColorSize as u32,
+                                  32,
+                                  NSOpenGLPFAAlphaSize as u32,
+                                  8,
+                                  NSOpenGLPFADepthSize as u32,
+                                  24,
+                                  NSOpenGLPFAStencilSize as u32,
+                                  8,
+                                  NSOpenGLPFAOpenGLProfile as u32,
+                                  NSOpenGLProfileVersion3_2Core as u32,
+                                  0];
+
+            let pixelformat = NSOpenGLPixelFormat::alloc(nil).initWithAttributes_(&attributes);
+            let ctx: id = NSOpenGLContext::alloc(nil).initWithFormat_shareContext_(pixelformat, nil);
+            msg_send![ctx, setView: nsview];
+            let value = 1;
+            ctx.setValues_forParameter_(&value, NSOpenGLContextParameter::NSOpenGLCPSwapInterval);
+            CGLEnable(ctx.CGLContextObj() as *mut _, kCGLCECrashOnRemovedFunctions);
+            ctx
+        };
+
+        unsafe {
+            msg_send![ctx, update];
+            msg_send![ctx, makeCurrentContext];
+        };
+
+        gleam::gl::load_with(|addr| {
+            let symbol_name: CFString = FromStr::from_str(addr).unwrap();
+            let framework_name: CFString = FromStr::from_str("com.apple.opengl").unwrap();
+            let framework = unsafe {
+                CFBundleGetBundleWithIdentifier(framework_name.as_concrete_TypeRef())
+            };
+            let symbol = unsafe {
+                CFBundleGetFunctionPointerForName(framework, symbol_name.as_concrete_TypeRef())
+            };
+            symbol as *const c_void
+        });
+
+        gleam::gl::clear_color(1.0, 0.0, 0.0, 1.0);
+        gleam::gl::clear(gleam::gl::COLOR_BUFFER_BIT);
+        gleam::gl::finish();
+
+        ctx
     }
 
     pub fn swap_buffers(&self) {
@@ -133,17 +170,37 @@ impl ServoView {
     }
 
     fn nsevent_to_viewevent(&self, nsevent: &id) -> ViewEvent {
-        let event_type = unsafe {nsevent.eventType()};
-        match event_type {
-            NSLeftMouseUp => ViewEvent::MouseUp,
-            NSLeftMouseDown => ViewEvent::MouseDown,
-            NSApplicationDefined => match unsafe {nsevent.subtype()} {
-                NSEventSubtype::NSApplicationActivatedEventType => {
-                    ViewEvent::Rised
+        unsafe {
+            let event_type = nsevent.eventType();
+            match event_type {
+                NSScrollWheel => {
+                    // Stolen from winit
+                    use self::MouseScrollDelta::{LineDelta, PixelDelta};
+                    let nswindow: id = nsevent.window();
+                    let hidpi_factor: CGFloat = msg_send![nswindow, backingScaleFactor];
+                    let hidpi_factor = hidpi_factor as f32;
+                    let delta = if nsevent.hasPreciseScrollingDeltas() == YES {
+                        PixelDelta(hidpi_factor * nsevent.scrollingDeltaX() as f32,
+                                   hidpi_factor * nsevent.scrollingDeltaY() as f32)
+                    } else {
+                        LineDelta(hidpi_factor * nsevent.scrollingDeltaX() as f32,
+                                  hidpi_factor * nsevent.scrollingDeltaY() as f32)
+                    };
+                    let phase = match nsevent.phase() {
+                        appkit::NSEventPhaseMayBegin | appkit::NSEventPhaseBegan => TouchPhase::Started,
+                        appkit::NSEventPhaseEnded => TouchPhase::Ended,
+                        _ => TouchPhase::Moved,
+                    };
+                    ViewEvent::MouseWheel(delta, phase)
                 },
-                _ => ViewEvent::Unknown
-            },
-            _ => ViewEvent::Unknown
+                NSApplicationDefined => match unsafe {nsevent.subtype()} {
+                    NSEventSubtype::NSApplicationActivatedEventType => {
+                        ViewEvent::Refresh
+                    },
+                    _ => ViewEvent::Awakened // FIXME: makes no sense
+                },
+                _ => ViewEvent::Awakened // FIXME: makes no sense
+            }
         }
     }
 

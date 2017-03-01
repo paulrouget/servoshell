@@ -9,9 +9,9 @@ extern crate libc;
 extern crate rand;
 
 mod nib;
-mod initgl;
 mod servoview;
 mod servoengine;
+mod view_events;
 
 use std::env::args;
 
@@ -20,7 +20,8 @@ use cocoa::base::*;
 use cocoa::foundation::*;
 
 use servoengine::{configure_servo, ServoEngine, ServoEvent, FollowLinkPolicy};
-use servoview::{ServoView, ViewEvent};
+use servoview::ServoView;
+use view_events::{ViewEvent, TouchPhase, MouseScrollDelta};
 
 fn open_window(url: &str) -> (id, ServoView, ServoEngine) {
 
@@ -48,10 +49,7 @@ fn main() {
     // FIXME: initial url is global :(
     configure_servo(&url);
 
-    let (w1, v1, e1) = open_window(&url);
-
-    let (w2, v2, e2) = open_window(&url);
-
+    let (_, view, engine) = open_window(&url);
 
     // Equivalent of NSApp.run()
     unsafe { msg_send![nsapp, finishLaunching] };
@@ -93,54 +91,44 @@ fn main() {
             msg_send![pool, release];
         }
 
-        for e in v1.get_events().into_iter() {
+        let mut sync_needed = false;
+
+        for e in view.get_events().into_iter() {
             match e {
-                ViewEvent::Rised => {
-                    println!("v1: {:?}", e);
-                    v1.swap_buffers();
-                    e1.sync();
+                ViewEvent::Refresh | ViewEvent::Awakened => {
+                    println!("view: {:?}", e);
+                    view.swap_buffers();
+                    sync_needed = true;
+                },
+                ViewEvent::MouseWheel(delta, phase) => {
+                    use self::MouseScrollDelta::{LineDelta, PixelDelta};
+                    let (dx, dy) = match delta {
+                        PixelDelta(dx, dy) => (dx, dy),
+                        _ => (0.0, 0.0) // FIXME
+                    };
+                    engine.perform_scroll(0,0,dx,dy,phase);
+                    sync_needed = true;
                 },
                 _ => {
-                    println!("v1: {:?}", e);
+                    println!("view: {:?}", e);
                 }
             }
         }
 
-        for e in e1.get_events().into_iter() {
+        for e in engine.get_events().into_iter() {
             match e {
                 ServoEvent::Present => {
-                    println!("e1: {:?}", e);
-                    v1.swap_buffers();
+                    println!("engine: {:?}", e);
+                    view.swap_buffers();
                 }
                 _ => {
-                    println!("e1 {:?}", e);
+                    println!("engine {:?}", e);
                 }
             }
         }
 
-        for e in v2.get_events().into_iter() {
-            match e {
-                ViewEvent::Rised => {
-                    println!("  v2: {:?}", e);
-                    v2.swap_buffers();
-                    e2.sync();
-                },
-                _ => {
-                    println!("  v2: {:?}", e);
-                }
-            }
-        }
-
-        for e in e2.get_events().into_iter() {
-            match e {
-                ServoEvent::Present => {
-                    println!("  e2: {:?}", e);
-                    v2.swap_buffers();
-                }
-                _ => {
-                    println!("  e2 {:?}", e);
-                }
-            }
+        if sync_needed {
+            engine.sync();
         }
 
     }
