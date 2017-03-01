@@ -2,6 +2,9 @@ extern crate core_foundation;
 extern crate cgl;
 extern crate gleam;
 
+use DrawableGeometry;
+use platform::EventLoopRiser;
+
 use cocoa::appkit;
 use cocoa::appkit::*;
 use cocoa::foundation::*;
@@ -14,7 +17,6 @@ use self::cgl::{CGLEnable, kCGLCECrashOnRemovedFunctions};
 use self::core_foundation::base::TCFType;
 use self::core_foundation::string::CFString;
 use self::core_foundation::bundle::{CFBundleGetBundleWithIdentifier, CFBundleGetFunctionPointerForName};
-use std::fmt;
 use std::os::raw::c_void;
 use std::str::FromStr;
 use std::sync::{Once, ONCE_INIT};
@@ -193,7 +195,7 @@ impl ServoView {
                     };
                     ViewEvent::MouseWheel(delta, phase)
                 },
-                NSApplicationDefined => match unsafe {nsevent.subtype()} {
+                NSApplicationDefined => match nsevent.subtype() {
                     NSEventSubtype::NSApplicationActivatedEventType => {
                         ViewEvent::Refresh
                     },
@@ -236,44 +238,4 @@ impl ServoView {
     // pub fn is_fullscreen() -> bool {
     //     false
     // }
-}
-
-#[derive(Copy, Clone)]
-pub struct DrawableGeometry {
-    pub inner_size: (u32, u32),
-    pub position: (i32, i32),
-    pub hidpi_factor: f32,
-}
-
-// Used by Servo to wake up the event loop
-pub struct EventLoopRiser {
-    window_number: NSInteger,
-    view_tag: NSInteger,
-}
-
-impl EventLoopRiser {
-    pub fn rise(&self) {
-        unsafe {
-            let pool = NSAutoreleasePool::new(nil);
-            let event: id = msg_send![class("NSEvent"),
-                    otherEventWithType:NSApplicationDefined
-                    location:NSPoint::new(0.0, 0.0)
-                    modifierFlags:NSEventModifierFlags::empty()
-                    timestamp:0.0
-                    windowNumber:self.window_number
-                    context:nil
-                    subtype:NSEventSubtype::NSApplicationActivatedEventType
-                    data1:self.view_tag
-                    data2:0];
-            msg_send![event, retain];
-            msg_send![NSApp(), postEvent:event atStart:NO];
-            NSAutoreleasePool::drain(pool);
-        }
-    }
-    pub fn clone(&self) -> EventLoopRiser {
-        EventLoopRiser {
-            window_number: self.window_number,
-            view_tag: self.view_tag,
-        }
-    }
 }

@@ -1,6 +1,5 @@
 extern crate servo;
 
-use servoview::{DrawableGeometry, EventLoopRiser};
 use self::servo::config::servo_version;
 use self::servo::servo_config::opts;
 use self::servo::servo_config::prefs::{PrefValue, PREFS};
@@ -16,6 +15,10 @@ use self::servo::script_traits::{DevicePixel, TouchEventType};
 use self::servo::servo_url::ServoUrl;
 use self::servo::net_traits::net_error_list::NetError;
 use self::servo::webrender_traits;
+use self::servo::style_traits::cursor::Cursor as ServoCursor;
+
+use DrawableGeometry;
+use platform::EventLoopRiser;
 
 use std::fmt;
 use std::sync::mpsc;
@@ -24,9 +27,7 @@ use std::cell::{Cell, RefCell};
 
 use view_events::{TouchPhase};
 
-pub use self::servo::style_traits::cursor::Cursor as ServoCursor;
 pub type CompositorChannel = (Box<CompositorProxy + Send>, Box<CompositorReceiver>);
-
 
 #[derive(Clone)]
 pub enum ServoEvent {
@@ -84,19 +85,19 @@ pub fn configure_servo(url: &str) {
     PREFS.set("layout.threads", PrefValue::Number(1.0));
 }
 
-pub struct ServoEngine {
+pub struct ServoWrapper {
     // FIXME: it's annoying that event for servo are named "WindowEvent"
     events_for_servo: RefCell<Vec<WindowEvent>>,
     servo_browser: RefCell<servo::Browser<ServoCallbacks>>,
     callbacks: Rc<ServoCallbacks>,
 }
 
-impl ServoEngine {
+impl ServoWrapper {
     pub fn new(geometry: DrawableGeometry,
                riser: EventLoopRiser,
                url: &str,
                follow_link_policy: FollowLinkPolicy)
-               -> ServoEngine {
+               -> ServoWrapper {
 
         let url = ServoUrl::parse(url).ok().unwrap(); // FIXME. What if fail?
 
@@ -120,7 +121,7 @@ impl ServoEngine {
 
         servo.handle_events(vec![WindowEvent::InitializeCompositing]);
 
-        ServoEngine {
+        ServoWrapper {
             events_for_servo: RefCell::new(Vec::new()),
             servo_browser: RefCell::new(servo),
             callbacks: callbacks,

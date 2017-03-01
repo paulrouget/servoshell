@@ -1,7 +1,7 @@
 use cocoa::base::*;
 use cocoa::foundation::*;
 
-pub fn load(path: &str) -> Result<Vec<id>, &'static str> {
+pub fn load_nib(path: &str) -> Result<Vec<id>, &'static str> {
     unsafe {
         let filename = NSString::alloc(nil).init_str(path);
         let nsdata: id = msg_send![class("NSData"), dataWithContentsOfFile: filename];
@@ -28,3 +28,12 @@ pub fn load(path: &str) -> Result<Vec<id>, &'static str> {
         Ok(instances)
     }
 }
+
+pub fn id_is_instance_of(id: id, classname: &'static str) -> bool {
+    let is_instance: BOOL = unsafe {
+        let classname = class(classname);
+        msg_send![id, isKindOfClass:classname]
+    };
+    is_instance == YES
+}
+

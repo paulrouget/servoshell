@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 // Stolen from winit
 
 use std::path::PathBuf;
