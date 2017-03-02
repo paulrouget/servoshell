@@ -27,14 +27,10 @@ pub struct DrawableGeometry {
 
 fn main() {
 
-    app::load().unwrap();
-
-    let view = app::new_window().unwrap();
-
     let url = args().nth(1).unwrap_or("http://servo.org".to_owned());
-
     configure_servo(&url);
-
+    app::load().unwrap();
+    let view = app::new_window().unwrap();
     let servo = {
         let geometry = view.get_geometry();
         let riser = view.create_eventloop_riser();
@@ -63,16 +59,6 @@ fn main() {
                     sync_needed = true;
                 }
                 _ => { }
-            }
-        }
-
-        for e in servo.get_events().into_iter() {
-            match e {
-                ServoEvent::Present => {
-                    swap_buffers_needed = true;
-                }
-                _ => {
-                }
             }
         }
 
