@@ -265,7 +265,7 @@ impl WindowMethods for ServoCallbacks {
         TypedSize2D::new(scale_factor * width, scale_factor * height)
     }
 
-    fn layout_window_rect(&self) -> TypedRect<u32, DevicePixel> {
+    fn window_rect(&self) -> TypedRect<u32, DevicePixel> {
         let scale_factor = self.geometry.get().hidpi_factor as u32;
         let mut size = self.framebuffer_size();
 
