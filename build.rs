@@ -10,8 +10,8 @@ use std::process::Command;
 // #[cfg(target_os = "macos")]
 
 fn main() {
-    let out_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
-    let app_dir = Path::new(&out_dir).join("Servo Shell");
+    let out_dir = Path::new("target/").join(env::var("PROFILE").unwrap());
+    let app_dir = Path::new(&out_dir).join("ServoShell.app");
     let bin_dir = app_dir.join("Contents").join("MacOS");
     let res_dir = app_dir.join("Resources");
 
@@ -22,14 +22,13 @@ fn main() {
     let dir_content = fs::read_dir(org_res_dir).unwrap().map(|e| {
         e.unwrap().path().to_str().unwrap().to_owned()
     }).collect::<Vec<String>>();
-    let options = dir::CopyOptions::new();
+    let mut options = dir::CopyOptions::new();
+    options.overwrite = true;
     copy_items(&dir_content, &res_dir, &options).unwrap();
 
     let res_dir_str = res_dir.to_str().unwrap();
     ibtool("macos/xib/App.xib", res_dir_str);
     ibtool("macos/xib/Window.xib", res_dir_str);
-
-    let exe_name = Path::new(&out_dir).join("servoshell"));
 }
 
 fn ibtool(src: &str, out_dir: &str) {
@@ -43,3 +42,4 @@ fn ibtool(src: &str, out_dir: &str) {
         .ok()
         .expect("ibtool failed");
 }
+
