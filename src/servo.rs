@@ -9,15 +9,16 @@ use self::servo::msg::constellation_msg::{self, Key};
 use self::servo::servo_geometry::DeviceIndependentPixel;
 use self::servo::euclid::{Point2D, Size2D};
 use self::servo::euclid::scale_factor::ScaleFactor;
-use self::servo::euclid::size::TypedSize2D;
 use self::servo::euclid::point::TypedPoint2D;
+use self::servo::euclid::rect::TypedRect;
+use self::servo::euclid::size::TypedSize2D;
 use self::servo::script_traits::{DevicePixel, TouchEventType};
 use self::servo::servo_url::ServoUrl;
 use self::servo::net_traits::net_error_list::NetError;
 use self::servo::webrender_traits;
 use self::servo::style_traits::cursor::Cursor as ServoCursor;
 
-use DrawableGeometry;
+use view::{DrawableGeometry, TouchPhase};
 use platform::EventLoopRiser;
 
 use std::fmt;
@@ -25,11 +26,7 @@ use std::sync::mpsc;
 use std::rc::Rc;
 use std::cell::{Cell, RefCell};
 
-use view_events::{TouchPhase};
-
-pub type CompositorChannel = (Box<CompositorProxy + Send>, Box<CompositorReceiver>);
-
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum ServoEvent {
     SetWindowInnerSize(u32, u32),
     SetWindowPosition(i32, i32),
@@ -37,7 +34,6 @@ pub enum ServoEvent {
     Present,
     TitleChanged(Option<String>),
     UnhandledURL(ServoUrl),
-    URLChanged(ServoUrl),
     StatusChanged(Option<String>),
     LoadStart(bool, bool),
     LoadEnd(bool, bool, bool),
@@ -48,64 +44,50 @@ pub enum ServoEvent {
     Key(Option<char>, Key, constellation_msg::KeyModifiers),
 }
 
+pub type CompositorChannel = (Box<CompositorProxy + Send>, Box<CompositorReceiver>);
+
 pub enum FollowLinkPolicy {
     FollowAnyLink,
     FollowOriginalDomain,
 }
 
-impl fmt::Debug for ServoEvent {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            ServoEvent::SetWindowInnerSize(..) => write!(f, "SetWindowInnerSize"),
-            ServoEvent::SetWindowPosition(..) => write!(f, "SetWindowPosition"),
-            ServoEvent::SetFullScreenState(..) => write!(f, "SetFullScreenState"),
-            ServoEvent::Present => write!(f, "Present"),
-            ServoEvent::TitleChanged(..) => write!(f, "TitleChanged"),
-            ServoEvent::UnhandledURL(..) => write!(f, "UnhandledURL"),
-            ServoEvent::URLChanged(..) => write!(f, "URLChanged"),
-            ServoEvent::StatusChanged(..) => write!(f, "StatusChanged"),
-            ServoEvent::LoadStart(..) => write!(f, "LoadStart"),
-            ServoEvent::LoadEnd(..) => write!(f, "LoadEnd"),
-            ServoEvent::LoadError(..) => write!(f, "LoadError"),
-            ServoEvent::HeadParsed(..) => write!(f, "HeadParsed"),
-            ServoEvent::CursorChanged(..) => write!(f, "CursorChanged"),
-            ServoEvent::FaviconChanged(..) => write!(f, "FaviconChanged"),
-            ServoEvent::Key(..) => write!(f, "Key"),
-        }
-    }
-}
-
-pub fn configure_servo(url: &str) {
-    let url = ServoUrl::parse(url).ok().unwrap(); // FIXME. What if fail?
-    let mut opts = opts::default_opts();
-    opts.headless = false;
-    opts.url = Some(url);
-    opts::set_defaults(opts);
-    // FIXME: Pipeline creation fails is layout_threads pref not set
-    PREFS.set("layout.threads", PrefValue::Number(1.0));
-}
-
-pub struct ServoWrapper {
+pub struct Servo {
     // FIXME: it's annoying that event for servo are named "WindowEvent"
     events_for_servo: RefCell<Vec<WindowEvent>>,
     servo_browser: RefCell<servo::Browser<ServoCallbacks>>,
     callbacks: Rc<ServoCallbacks>,
 }
 
-impl ServoWrapper {
+impl Servo {
+
+    pub fn configure(url: &str) {
+        let url = ServoUrl::parse(url).ok().unwrap(); // FIXME. What if fail?
+        let mut opts = opts::default_opts();
+        let a = 0;
+        opts.headless = false;
+        opts.url = Some(url);
+        opts::set_defaults(opts);
+        // FIXME: Pipeline creation fails is layout_threads pref not set
+        PREFS.set("layout.threads", PrefValue::Number(1.0));
+    }
+
+    pub fn version(&self) -> String {
+        servo_version()
+    }
+
     pub fn new(geometry: DrawableGeometry,
                riser: EventLoopRiser,
                url: &str,
                follow_link_policy: FollowLinkPolicy)
-               -> ServoWrapper {
+               -> Servo {
 
         let url = ServoUrl::parse(url).ok().unwrap(); // FIXME. What if fail?
 
-        let allowed_domain = match follow_link_policy {
-            FollowLinkPolicy::FollowOriginalDomain => {
-                Some(url.domain().unwrap().clone().to_owned())
+        let allowed_domain = match (follow_link_policy, url.domain()) {
+            (FollowLinkPolicy::FollowOriginalDomain, Some(domain)) => {
+                Some(domain.clone().to_owned())
             }
-            FollowLinkPolicy::FollowAnyLink => None,
+            _ => None
         };
 
         let callbacks = Rc::new(ServoCallbacks {
@@ -115,13 +97,11 @@ impl ServoWrapper {
             allowed_domain: allowed_domain,
         });
 
-        println!("{}", servo_version());
-
         let mut servo = servo::Browser::new(callbacks.clone());
 
         servo.handle_events(vec![WindowEvent::InitializeCompositing]);
 
-        ServoWrapper {
+        Servo {
             events_for_servo: RefCell::new(Vec::new()),
             servo_browser: RefCell::new(servo),
             callbacks: callbacks,
@@ -161,6 +141,13 @@ impl ServoWrapper {
             TouchPhase::Cancelled => TouchEventType::Cancel
         };
         let event = WindowEvent::Scroll(scroll_location, TypedPoint2D::new(x, y), phase);
+        self.events_for_servo.borrow_mut().push(event);
+    }
+
+    pub fn update_geometry(&self, geometry: DrawableGeometry) {
+        self.callbacks.update_geometry(geometry);
+        println!("New size: {:?}", self.callbacks.framebuffer_size());
+        let event = WindowEvent::Resize(self.callbacks.framebuffer_size());
         self.events_for_servo.borrow_mut().push(event);
     }
 
@@ -226,9 +213,14 @@ impl ServoCallbacks {
     fn get_events(&self) -> Vec<ServoEvent> {
         // FIXME: ports/glutin/window.rs uses mem::replace. Should we too?
         // See: https://doc.rust-lang.org/core/mem/fn.replace.html
+        // FIXME: maybe use drain
         let clone = self.event_queue.borrow().clone();
         self.event_queue.borrow_mut().clear();
         clone
+    }
+
+    fn update_geometry(&self, geometry: DrawableGeometry) {
+        self.geometry.set(geometry);
     }
 }
 
@@ -269,17 +261,33 @@ impl WindowMethods for ServoCallbacks {
 
     fn framebuffer_size(&self) -> TypedSize2D<u32, DevicePixel> {
         let scale_factor = self.geometry.get().hidpi_factor as u32;
-        let (width, height) = self.geometry.get().inner_size;
+        let (width, height) = self.geometry.get().view_size;
         TypedSize2D::new(scale_factor * width, scale_factor * height)
     }
 
+    fn layout_window_rect(&self) -> TypedRect<u32, DevicePixel> {
+        let scale_factor = self.geometry.get().hidpi_factor as u32;
+        let mut size = self.framebuffer_size();
+
+        let (top, right, bottom, left) = self.geometry.get().margins;
+        let top = top * scale_factor;
+        let right = right * scale_factor;
+        let bottom = bottom * scale_factor;
+        let left = left * scale_factor;
+
+        size.height = size.height - top - bottom;
+        size.width = size.width - left - right;
+        
+        TypedRect::new(TypedPoint2D::new(left, top), size)
+    }
+
     fn size(&self) -> TypedSize2D<f32, DeviceIndependentPixel> {
-        let (width, height) = self.geometry.get().inner_size;
+        let (width, height) = self.geometry.get().view_size;
         TypedSize2D::new(width as f32, height as f32)
     }
 
     fn client_window(&self) -> (Size2D<u32>, Point2D<i32>) {
-        let (width, height) = self.geometry.get().inner_size;
+        let (width, height) = self.geometry.get().view_size;
         let (x, y) = self.geometry.get().position;
         (Size2D::new(width, height), Point2D::new(x as i32, y as i32))
     }
@@ -308,10 +316,6 @@ impl WindowMethods for ServoCallbacks {
 
     fn set_page_title(&self, title: Option<String>) {
         self.event_queue.borrow_mut().push(ServoEvent::TitleChanged(title));
-    }
-
-    fn set_page_url(&self, url: ServoUrl) {
-        self.event_queue.borrow_mut().push(ServoEvent::URLChanged(url));
     }
 
     fn status(&self, status: Option<String>) {

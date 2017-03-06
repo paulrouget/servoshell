@@ -1,5 +1,8 @@
+use cocoa::appkit::*;
 use cocoa::base::*;
 use cocoa::foundation::*;
+use objc::runtime::Object;
+use std::os::raw::c_void;
 
 pub fn load_nib(path: &str) -> Result<Vec<id>, &'static str> {
     unsafe {
@@ -37,3 +40,10 @@ pub fn id_is_instance_of(id: id, classname: &'static str) -> bool {
     is_instance == YES
 }
 
+
+pub fn get_event_queue<T>(this: &Object) -> &mut Vec<T> {
+    unsafe {
+        let ivar: *mut c_void = *this.get_ivar("event_queue");
+        &mut *(ivar as *mut Vec<T>)
+    }
+}

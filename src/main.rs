@@ -8,62 +8,97 @@ extern crate rand;
 extern crate cocoa;
 extern crate objc_foundation;
 
+mod app;
+mod window;
+mod view;
+mod servo;
 mod platform;
-mod servo_wrapper;
-mod view_events;
+
+use app::AppEvent;
+use window::WindowEvent;
+use view::ViewEvent;
+use servo::ServoEvent;
 
 use std::env::args;
 
-use platform::app;
-use servo_wrapper::{configure_servo, ServoWrapper, ServoEvent, FollowLinkPolicy};
-use view_events::{ViewEvent, MouseScrollDelta};
-
-#[derive(Copy, Clone)]
-pub struct DrawableGeometry {
-    pub inner_size: (u32, u32),
-    pub position: (i32, i32),
-    pub hidpi_factor: f32,
-}
+use app::App;
+use servo::{Servo, FollowLinkPolicy};
 
 fn main() {
 
+    let app = App::new().unwrap();
+    let (window, view) = app.create_window().unwrap();
+
     let url = args().nth(1).unwrap_or("http://servo.org".to_owned());
-    configure_servo(&url);
-    app::load().unwrap();
-    let view = app::new_window().unwrap();
+    Servo::configure(&url);
     let servo = {
         let geometry = view.get_geometry();
-        let riser = view.create_eventloop_riser();
+        let riser = window.create_eventloop_riser();
         let policy = FollowLinkPolicy::FollowOriginalDomain;
-        ServoWrapper::new(geometry, riser, &url, policy)
+        Servo::new(geometry, riser, &url, policy)
     };
 
-    app::run(|| {
+    println!("Servo version: {}", servo.version());
+
+    app.run(|| {
+
+        let app_events = app.get_events();
+        let win_events = window.get_events();
+        let view_events = view.get_events();
+        let servo_events = servo.get_events();
+
+        if !app_events.is_empty() {
+            println!("app_events: {:?}", app_events);
+        }
+        if !win_events.is_empty() {
+            println!("win_events: {:?}", win_events);
+        }
+        if !view_events.is_empty() {
+            println!("view_events: {:?}", view_events);
+        }
+        if !servo_events.is_empty() {
+            println!("servo_events: {:?}", servo_events);
+        }
 
         let mut sync_needed = false;
-        let mut swap_buffers_needed = false;
 
-        for e in view.get_events().into_iter() {
-            match e {
-                ViewEvent::Refresh | ViewEvent::Awakened => {
-                    swap_buffers_needed = true;
+        for event in win_events {
+            match event {
+                WindowEvent::EventLoopRised => {
                     sync_needed = true;
                 }
-                ViewEvent::MouseWheel(delta, phase) => {
-                    use self::MouseScrollDelta::PixelDelta;
-                    let (dx, dy) = match delta {
-                        PixelDelta(dx, dy) => (dx, dy),
-                        _ => (0.0, 0.0) // FIXME
-                    };
-                    servo.perform_scroll(0,0,dx,dy,phase);
+                WindowEvent::GeometryDidChange => {
+                    servo.update_geometry(view.get_geometry());
+                    view.update_drawable();
                     sync_needed = true;
                 }
                 _ => { }
             }
         }
 
-        if swap_buffers_needed {
-            view.swap_buffers();
+        for event in view_events {
+            match event {
+                ViewEvent::MouseWheel(delta, phase) => {
+                    let (x, y) = match delta {
+                        view::MouseScrollDelta::PixelDelta(x, y) => {
+                            (x, y)
+                        },
+                        _ => (0.0, 0.0),
+                    };
+                    servo.perform_scroll(0, 0, x, y, phase);
+                    sync_needed = true;
+                }
+                _ => { }
+            }
+        }
+
+        for event in servo_events {
+            match event {
+                ServoEvent::Present => {
+                    view.swap_buffers();
+                }
+                _ => { }
+            }
         }
 
         if sync_needed {

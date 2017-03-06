@@ -1,153 +1,200 @@
-use libc;
 use cocoa::appkit::*;
 use cocoa::base::*;
 use cocoa::foundation::*;
-use platform::ServoView;
-use super::servo_view::register_nsservoview;
+use objc::declare::ClassDecl;
+use objc::runtime::{Class, Object, Sel};
+use std::os::raw::c_void;
+use super::{View, Window};
+use super::view;
+use super::window;
 use super::utils;
+use std::sync::{Once, ONCE_INIT};
 
-pub fn load() -> Result<(), &'static str> {
+use app::AppEvent;
 
-    register_nsservoview();
+static INIT: Once = ONCE_INIT;
 
-    let instances = match utils::load_nib("App.nib") {
-        Ok(instances) => instances,
-        Err(msg) => return Err(msg),
-    };
-
-    let mut nsapp: Option<id> = None;
-
-    // fixme: there's probably a more elegant way to do that
-    for i in instances.into_iter() {
-        unsafe {
-            use std::ffi::CStr;
-            let classname: id = msg_send![i, className];
-            let classname: *const libc::c_char = msg_send![classname, UTF8String];
-            let classname = CStr::from_ptr(classname).to_string_lossy().into_owned();
-            println!("found object {:?}", classname);
-            if utils::id_is_instance_of(i, "NSApplication") {
-                nsapp = Some(i);
-            }
-        }
-    }
-
-    let nsapp: id = match nsapp {
-        None => return Err("Couldn't not find NSApplication instance in nib file"),
-        Some(id) => id
-    };
-
+pub fn register() {
     unsafe {
-        nsapp.setActivationPolicy_(NSApplicationActivationPolicyRegular);
-        let current_app = NSRunningApplication::currentApplication(nil);
-        current_app.activateWithOptions_(NSApplicationActivateIgnoringOtherApps);
-    }
+        INIT.call_once(|| {
 
-    Ok(())
+            let superclass = Class::get("NSObject").unwrap();
+            let mut class = ClassDecl::new("NSShellApplicationDelegate", superclass).unwrap();
+            class.add_ivar::<*mut c_void>("event_queue");
+
+            class.add_method(sel!(applicationDidFinishLaunching:), did_finish_launching as extern fn(&Object, Sel, id));
+            extern fn did_finish_launching(this: &Object, _sel: Sel, _notification: id) {
+                utils::get_event_queue(this).push(AppEvent::DidFinishLaunching)
+            }
+
+            class.add_method(sel!(applicationDidChangeScreenParameter:), did_change_screen_parameter as extern fn(&Object, Sel, id));
+            extern fn did_change_screen_parameter(this: &Object, _sel: Sel, _notification: id) {
+                utils::get_event_queue(this).push(AppEvent::DidChangeScreenParameters)
+            }
+
+            class.add_method(sel!(applicationWillTerminate:), will_terminate as extern fn(&Object, Sel, id));
+            extern fn will_terminate(this: &Object, _sel: Sel, _notification: id) {
+                utils::get_event_queue(this).push(AppEvent::WillTerminate)
+            }
+
+            class.register();
+        });
+    }
 }
 
-// Equivalent of NSApp.run()
-pub fn run<F>(callback: F) where F: Fn() {
 
-    let nsapp = unsafe { NSApp() };
+pub struct App {
+    nsapp: id
+}
 
-    unsafe { msg_send![nsapp, finishLaunching] };
+impl App {
 
-    loop {
+    pub fn new() -> Result<App, &'static str> {
+
+        // FIXME: move that earlier.
+        register();
+        view::register();
+        window::register();
+
+        let instances = match utils::load_nib("App.nib") {
+            Ok(instances) => instances,
+            Err(msg) => return Err(msg),
+        };
+
+        let nsapp = instances.into_iter().find(|i| {
+            utils::id_is_instance_of(*i, "NSApplication")
+        });
+
+        let nsapp: id = match nsapp {
+            None => return Err("Couldn't not find NSApplication instance in nib file"),
+            Some(id) => id,
+        };
+
         unsafe {
-            let pool = NSAutoreleasePool::new(nil);
+            nsapp.setActivationPolicy_(NSApplicationActivationPolicyRegular);
+            let current_app = NSRunningApplication::currentApplication(nil);
+            current_app.activateWithOptions_(NSApplicationActivateIgnoringOtherApps);
+        }
 
-            // Blocks until event available
-            let nsevent = nsapp.nextEventMatchingMask_untilDate_inMode_dequeue_(
-                NSAnyEventMask.bits(),
-                NSDate::distantFuture(nil), NSDefaultRunLoopMode, YES);
+        // FIXME: release and set delegate to nil
+        let event_queue: Vec<AppEvent> = Vec::new();
+        let event_queue_ptr = Box::into_raw(Box::new(event_queue));
+        unsafe {
+            let delegate: id = msg_send![class("NSShellApplicationDelegate"), alloc];
+            (*delegate).set_ivar("event_queue", event_queue_ptr as *mut c_void);
+            msg_send![nsapp, setDelegate:delegate];
+        }
 
-            let event_type = nsevent.eventType() as u64;
-            if event_type == NSApplicationDefined as u64 {
-                let event_subtype = nsevent.subtype() as i16;
-                if event_subtype == NSEventSubtype::NSApplicationActivatedEventType as i16 {
-                    let nswindow: id = msg_send![nsevent, window];
-                    let view_tag: NSInteger = msg_send![nsevent, data1];
-                    let content_view: id = msg_send![nswindow, contentView];
-                    let nsview: id = msg_send![content_view, viewWithTag:view_tag];
-                    msg_send![nsview, eventloopRised:nsevent];
-                }
-            } else {
-                msg_send![nsapp, sendEvent:nsevent];
-            }
+        Ok(App {
+            nsapp: nsapp
+        })
+    }
 
-            // Get all pending events
-            loop {
-                let nsevent = nsapp.nextEventMatchingMask_untilDate_inMode_dequeue_(
+    pub fn get_events(&self) -> Vec<AppEvent> {
+        let nsobject = unsafe {
+            let delegate: id = msg_send![self.nsapp, delegate];
+            &*delegate
+        };
+        utils::get_event_queue(nsobject).drain(..).collect()
+    }
+
+    // Equivalent of NSApp.run()
+    pub fn run<F>(&self, callback: F) where F: Fn() {
+
+        unsafe { msg_send![self.nsapp, finishLaunching] };
+
+        loop {
+            unsafe {
+                let pool = NSAutoreleasePool::new(nil);
+
+                // Blocks until event available
+                let nsevent = self.nsapp.nextEventMatchingMask_untilDate_inMode_dequeue_(
                     NSAnyEventMask.bits(),
-                    NSDate::distantPast(nil), NSDefaultRunLoopMode, YES);
-                msg_send![nsapp, sendEvent:nsevent];
-                if nsevent == nil {
-                    break
+                    NSDate::distantFuture(nil), NSDefaultRunLoopMode, YES);
+
+                let event_type = nsevent.eventType() as u64;
+                if event_type == NSApplicationDefined as u64 {
+                    let event_subtype = nsevent.subtype() as i16;
+                    if event_subtype == NSEventSubtype::NSApplicationActivatedEventType as i16 {
+                        let nswindow: id = msg_send![nsevent, window];
+                        msg_send![nswindow, eventLoopRised];
+                    }
+                } else {
+                    msg_send![self.nsapp, sendEvent: nsevent];
+                }
+
+                // Get all pending events
+                loop {
+                    let nsevent = self.nsapp.nextEventMatchingMask_untilDate_inMode_dequeue_(
+                        NSAnyEventMask.bits(),
+                        NSDate::distantPast(nil), NSDefaultRunLoopMode, YES);
+                    msg_send![self.nsapp, sendEvent: nsevent];
+                    if nsevent == nil {
+                        break;
+                    }
+                }
+
+                msg_send![self.nsapp, updateWindows];
+                msg_send![pool, release];
+            }
+            callback();
+        }
+    }
+
+    pub fn create_window(&self) -> Result<(Window, View), &'static str> {
+        let nswindow = match App::create_native_window() {
+            Ok(w) => w,
+            Err(msg) => return Err(msg),
+        };
+        let nsview = match App::find_nsservoview(nswindow) {
+            Ok(v) => v,
+            Err(msg) => return Err(msg),
+        };
+        Ok((Window::new(nswindow), View::new(nsview)))
+    }
+
+    fn create_native_window() -> Result<id, &'static str> {
+        let instances = match utils::load_nib("Window.nib") {
+            Ok(instances) => instances,
+            Err(msg) => return Err(msg),
+        };
+
+        let mut nswindow: Option<id> = None;
+
+        // FIXME: there's probably a more elegant way to do that
+        for i in instances.into_iter() {
+            unsafe {
+                println!("Instance: {:?}", i);
+                if utils::id_is_instance_of(i, "NSShellWindow") {
+                    nswindow = Some(i);
                 }
             }
-
-            msg_send![nsapp, updateWindows];
-            msg_send![pool, release];
         }
 
-        callback();
+        let nswindow = match nswindow {
+            None => return Err("Couldn't not find NSWindow instance in nib file"),
+            Some(id) => id,
+        };
 
-    }
-}
-
-pub fn new_window() -> Result<ServoView, &'static str> {
-    let nswindow = match create_native_window() {
-        Ok(w) => w,
-        Err(msg) => return Err(msg),
-    };
-    let nsview = match find_nsservoview(nswindow) {
-        Ok(v) => v,
-        Err(msg) => return Err(msg),
-    };
-    Ok(ServoView::new(nsview))
-}
-
-fn find_nsservoview(nswindow: id) -> Result<id, &'static str> {
-    // Depends on the Xib.
-    // FIXME: search for identifier instead,
-    // or maybe className
-    Ok(unsafe {nswindow.contentView()})
-}
-
-fn create_native_window() -> Result<id, &'static str> {
-
-    let instances = match utils::load_nib("Window.nib") {
-        Ok(instances) => instances,
-        Err(msg) => return Err(msg),
-    };
-
-    let mut nswindow: Option<id> = None;
-
-    // fixme: there's probably a more elegant way to do that
-    for i in instances.into_iter() {
         unsafe {
-            use std::ffi::CStr;
-            let classname: id = msg_send![i, className];
-            let classname: *const libc::c_char = msg_send![classname, UTF8String];
-            let classname = CStr::from_ptr(classname).to_string_lossy().into_owned();
-            println!("found object {:?}", classname);
-
-            if utils::id_is_instance_of(i, "NSWindow") {
-                nswindow = Some(i);
-            }
+            nswindow.setTitleVisibility_(NSWindowTitleVisibility::NSWindowTitleHidden);
+            let mask = nswindow.styleMask() as NSUInteger |
+                       NSWindowMask::NSFullSizeContentViewWindowMask as NSUInteger;
+            nswindow.setStyleMask_(mask);
         }
+
+        Ok(nswindow)
     }
 
-    let nswindow = match nswindow {
-        None => return Err("Couldn't not find NSWindow instance in nib file"),
-        Some(id) => id
-    };
 
-    unsafe {
-        nswindow.setTitleVisibility_(NSWindowTitleVisibility::NSWindowTitleHidden);
-        let mask = nswindow.styleMask() as NSUInteger | NSWindowMask::NSFullSizeContentViewWindowMask as NSUInteger;
-        nswindow.setStyleMask_(mask);
+
+    fn find_nsservoview(nswindow: id) -> Result<id, &'static str> {
+        // Depends on the Xib.
+        // FIXME: search for identifier instead,
+        // or maybe className
+        Ok(unsafe {
+            msg_send![nswindow, contentView]
+        })
     }
 
-    Ok(nswindow)
 }
