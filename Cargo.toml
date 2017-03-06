@@ -2,6 +2,8 @@
 name = "servoshell"
 version = "0.1.0"
 authors = ["Paul Rouget <me@paulrouget.com>"]
+description = "A basic MacOS servo-based browser"
+build = "build.rs"
 
 [dependencies]
 bitflags = "0.7"
@@ -14,8 +16,12 @@ cgl = "0.1"
 core-foundation = "0.2.3"
 core-graphics = "0.3"
 open = "1.1.1"
-libservo = {path = "../servo/components/servo"} # 84a44a4014 + paul/head_parsed_url + paul/follow-link
+libservo = {path = "../servo/components/servo"} # 217d0a6153 + paul/head_parsed_url + paul/follow-link + paul/winParams
 rand = "0.3"
+
+[build-dependencies]
+fs_extra = "0.3.1"
 
 [replace]
 "cocoa:0.6.0" = { path = "../cocoa-rs/" } # paulrouget/toolbar
+
