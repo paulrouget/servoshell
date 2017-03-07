@@ -342,6 +342,22 @@
                                     <action selector="reload:" target="-1" id="glo-Mm-g2U"/>
                                 </connections>
                             </menuItem>
+                            <menuItem isSeparatorItem="YES" id="ATf-5w-ZaX"/>
+                            <menuItem title="Actual Size" keyEquivalent="s" id="PuN-AR-sUs">
+                                <connections>
+                                    <action selector="zoomImageToActualSize:" target="-1" id="Agh-J2-2qs"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Zoom In" keyEquivalent="=" id="Eh4-UM-9O2">
+                                <connections>
+                                    <action selector="zoomIn:" target="-1" id="aSq-27-HXv"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Zoom Out" keyEquivalent="-" id="etw-Jj-dRL">
+                                <connections>
+                                    <action selector="zoomOut:" target="-1" id="0b4-ms-Iwo"/>
+                                </connections>
+                            </menuItem>
                         </items>
                     </menu>
                 </menuItem>
