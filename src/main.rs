@@ -47,23 +47,26 @@ fn main() {
         let view_events = view.get_events();
         let servo_events = servo.get_events();
 
-        if !app_events.is_empty() {
-            println!("app_events: {:?}", app_events);
-        }
-        if !win_events.is_empty() {
-            println!("win_events: {:?}", win_events);
-        }
-        if !view_events.is_empty() {
-            println!("view_events: {:?}", view_events);
-        }
-        if !servo_events.is_empty() {
-            println!("servo_events: {:?}", servo_events);
-        }
+        // if !app_events.is_empty() {
+        //     println!("app_events: {:?}", app_events);
+        // }
+        // if !win_events.is_empty() {
+        //     println!("win_events: {:?}", win_events);
+        // }
+        // if !view_events.is_empty() {
+        //     println!("view_events: {:?}", view_events);
+        // }
+        // if !servo_events.is_empty() {
+        //     println!("servo_events: {:?}", servo_events);
+        // }
 
         let mut sync_needed = false;
 
         for event in win_events {
             match event {
+                WindowEvent::ReloadClicked => {
+                    println!("Yep. Reload clicked.");
+                }
                 WindowEvent::EventLoopRised => {
                     sync_needed = true;
                 }
