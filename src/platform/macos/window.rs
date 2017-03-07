@@ -65,11 +65,6 @@ pub fn register() {
                     utils::get_event_queue(this).push(WindowEvent::GeometryDidChange)
                 }
 
-                class.add_method(sel!(reloadClicked), reload_clicked as extern fn(&Object, Sel));
-                extern fn reload_clicked(this: &Object, _sel: Sel) {
-                    utils::get_event_queue(this).push(WindowEvent::ReloadClicked)
-                }
-
                 class.register();
             }
         });
@@ -90,46 +85,10 @@ impl Window {
             let delegate: id = msg_send![class("NSShellWindowDelegate"), alloc];
             (*delegate).set_ivar("event_queue", event_queue_ptr);
             msg_send![nswindow, setDelegate:delegate];
-
-            let toolbar: id = msg_send![nswindow, toolbar];
-            let items: id = msg_send![toolbar, items];
-            let count: NSInteger = msg_send![items, count];
-            for i in 0..count {
-                let item: id = msg_send![items, objectAtIndex:i];
-                // FIXME: why delegate and not nswindow?
-                Window::bind_toolbaritem(item, delegate);
-            }
         }
 
         Window {
             nswindow: nswindow,
-        }
-    }
-
-    fn bind_toolbaritem(item: id, delegate: id) {
-        unsafe {
-            let item_identifier: id = msg_send![item, itemIdentifier];
-
-            if NSString::isEqualToString(item_identifier, "ShellToolbarReloadItem") {
-                msg_send![item, setAction:sel!(reloadClicked)];
-                msg_send![item, setTarget:delegate];
-            }
-
-            if NSString::isEqualToString(item_identifier, "ShellToolbarStopItem") {
-                msg_send![item, setAction:sel!(reloadClicked)];
-                msg_send![item, setTarget:delegate];
-            }
-
-            if NSString::isEqualToString(item_identifier, "ShellToolbarHistoryItem") {
-                msg_send![item, setAction:sel!(historyClicked)];
-                msg_send![item, setTarget:delegate];
-            }
-
-            if NSString::isEqualToString(item_identifier, "ShellToolbarZoomItem") {
-                msg_send![item, setAction:sel!(zoomClicked)];
-                msg_send![item, setTarget:delegate];
-            }
-
         }
     }
 

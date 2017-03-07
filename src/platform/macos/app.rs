@@ -4,7 +4,6 @@ use cocoa::foundation::*;
 use objc::declare::ClassDecl;
 use objc::runtime::{Class, Object, Sel};
 use std::os::raw::c_void;
-use super::{View, Window};
 use super::view;
 use super::window;
 use super::utils;
@@ -37,6 +36,18 @@ pub fn register() {
                 utils::get_event_queue(this).push(AppEvent::WillTerminate)
             }
 
+            class.add_method(sel!(validateMenuItem:), validate_menu_item as extern fn(&Object, Sel, id) -> BOOL);
+            class.add_method(sel!(validateUserInterfaceItem:), validate_menu_item as extern fn(&Object, Sel, id) -> BOOL);
+            extern fn validate_menu_item(this: &Object, _sel: Sel, _menu: id) -> BOOL {
+                println!("VALIDATE");
+                YES
+            }
+
+            class.add_method(sel!(reload), reload as extern fn(&Object, Sel));
+            extern fn reload(this: &Object, _sel: Sel) {
+                println!("RELOAD");
+            }
+
             class.register();
         });
     }
@@ -44,7 +55,7 @@ pub fn register() {
 
 
 pub struct App {
-    nsapp: id
+    nsapp: id,
 }
 
 impl App {
@@ -61,12 +72,21 @@ impl App {
             Err(msg) => return Err(msg),
         };
 
-        let nsapp = instances.into_iter().find(|i| {
-            utils::id_is_instance_of(*i, "NSApplication")
-        });
+        let mut nsapp: Option<id> = None;
+        let mut delegate: Option<id> = None;
+
+        for i in instances.into_iter() {
+            if utils::id_is_instance_of(i, "NSApplication") { nsapp = Some(i) }
+            if utils::id_is_instance_of(i, "NSShellApplicationDelegate") { delegate = Some(i) }
+        }
 
         let nsapp: id = match nsapp {
             None => return Err("Couldn't not find NSApplication instance in nib file"),
+            Some(id) => id,
+        };
+
+        let delegate: id = match delegate {
+            None => return Err("Couldn't not find NSShellApplicationDelegate instance in nib file"),
             Some(id) => id,
         };
 
@@ -80,13 +100,12 @@ impl App {
         let event_queue: Vec<AppEvent> = Vec::new();
         let event_queue_ptr = Box::into_raw(Box::new(event_queue));
         unsafe {
-            let delegate: id = msg_send![class("NSShellApplicationDelegate"), alloc];
             (*delegate).set_ivar("event_queue", event_queue_ptr as *mut c_void);
             msg_send![nsapp, setDelegate:delegate];
         }
 
         Ok(App {
-            nsapp: nsapp
+            nsapp: nsapp,
         })
     }
 
@@ -141,7 +160,7 @@ impl App {
         }
     }
 
-    pub fn create_window(&self) -> Result<(Window, View), &'static str> {
+    pub fn create_window(&self) -> Result<(window::Window, view::View), &'static str> {
         let nswindow = match App::create_native_window() {
             Ok(w) => w,
             Err(msg) => return Err(msg),
@@ -150,7 +169,7 @@ impl App {
             Ok(v) => v,
             Err(msg) => return Err(msg),
         };
-        Ok((Window::new(nswindow), View::new(nsview)))
+        Ok((window::Window::new(nswindow), view::View::new(nsview)))
     }
 
     fn create_native_window() -> Result<id, &'static str> {
@@ -159,17 +178,9 @@ impl App {
             Err(msg) => return Err(msg),
         };
 
-        let mut nswindow: Option<id> = None;
-
-        // FIXME: there's probably a more elegant way to do that
-        for i in instances.into_iter() {
-            unsafe {
-                println!("Instance: {:?}", i);
-                if utils::id_is_instance_of(i, "NSShellWindow") {
-                    nswindow = Some(i);
-                }
-            }
-        }
+        let nswindow = instances.into_iter().find(|i| {
+            utils::id_is_instance_of(*i, "NSShellWindow")
+        });
 
         let nswindow = match nswindow {
             None => return Err("Couldn't not find NSWindow instance in nib file"),
