@@ -1,4 +1,3 @@
-use cocoa::appkit::*;
 use cocoa::base::*;
 use cocoa::foundation::*;
 use objc::runtime::Object;

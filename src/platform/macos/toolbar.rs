@@ -1,5 +1,4 @@
 use cocoa::appkit::*;
-use cocoa::foundation::*;
 use cocoa::base::*;
 use objc::declare::ClassDecl;
 use objc::runtime::{Class, Object, Sel};

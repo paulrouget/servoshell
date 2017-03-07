@@ -19,6 +19,7 @@ use app::AppEvent;
 use window::WindowEvent;
 use view::ViewEvent;
 use servo::ServoEvent;
+use controls::ControlEvent;
 
 use std::env::args;
 
@@ -43,8 +44,10 @@ fn main() {
 
     println!("Servo version: {}", servo.version());
 
-    ctrls.set_command_state(controls::ControlEvent::Reload, false);
-    ctrls.set_command_state(controls::ControlEvent::Stop, true);
+    ctrls.set_command_state(ControlEvent::Reload, false);
+    ctrls.set_command_state(ControlEvent::Stop, true);
+
+    view.enter_fullscreen();
 
     app.run(|| {
 
@@ -54,23 +57,54 @@ fn main() {
         let view_events = view.get_events();
         let servo_events = servo.get_events();
 
-        // if !app_events.is_empty() {
-        //     println!("app_events: {:?}", app_events);
-        // }
-        // if !win_events.is_empty() {
-        //     println!("win_events: {:?}", win_events);
-        // }
-        // if !view_events.is_empty() {
-        //     println!("view_events: {:?}", view_events);
-        // }
-        // if !servo_events.is_empty() {
-        //     println!("servo_events: {:?}", servo_events);
-        // }
-        if !ctrls_events.is_empty() {
-            println!("ctrls_events: {:?}", ctrls_events);
+        // FIXME: it's really annoying we need this
+        let mut sync_needed = false;
+
+        for event in app_events {
+            match event {
+                AppEvent::DidFinishLaunching => {
+                    // FIXME: does this work?
+                }
+                AppEvent::WillTerminate => {
+                    // FIXME: does this work?
+                }
+                AppEvent::DidChangeScreenParameters => {
+                    // FIXME: does this work?
+                    servo.update_geometry(view.get_geometry());
+                    view.update_drawable();
+                    sync_needed = true;
+                }
+            }
         }
 
-        let mut sync_needed = false;
+        for event in ctrls_events {
+            match event {
+                ControlEvent::Stop => {
+                    // FIXME
+                }
+                ControlEvent::Reload => {
+                    servo.reload();
+                    sync_needed = true;
+                }
+                ControlEvent::GoBack => {
+                    servo.go_back();
+                    sync_needed = true;
+                }
+                ControlEvent::GoForward => {
+                    servo.go_forward();
+                    sync_needed = true;
+                }
+                ControlEvent::ZoomIn => {
+                    // FIXME
+                }
+                ControlEvent::ZoomOut => {
+                    // FIXME
+                }
+                ControlEvent::ZoomToActualSize => {
+                    // FIXME
+                }
+            }
+        }
 
         for event in win_events {
             match event {
@@ -82,7 +116,15 @@ fn main() {
                     view.update_drawable();
                     sync_needed = true;
                 }
-                _ => { }
+                WindowEvent::DidEnterFullScreen => {
+                    // FIXME
+                }
+                WindowEvent::DidExitFullScreen => {
+                    // FIXME
+                }
+                WindowEvent::WillClose => {
+                    // FIXME
+                }
             }
         }
 
@@ -98,16 +140,57 @@ fn main() {
                     servo.perform_scroll(0, 0, x, y, phase);
                     sync_needed = true;
                 }
-                _ => { }
             }
         }
 
         for event in servo_events {
             match event {
+                ServoEvent::SetWindowInnerSize(..) => {
+                    // ignore
+                }
+                ServoEvent::SetWindowPosition(..) => {
+                    // ignore
+                }
+                ServoEvent::SetFullScreenState(fullscreen) => {
+                    if fullscreen {
+                        view.enter_fullscreen();
+                    } else {
+                        view.exit_fullscreen();
+                    }
+                }
                 ServoEvent::Present => {
                     view.swap_buffers();
                 }
-                _ => { }
+                ServoEvent::TitleChanged(title) => {
+                    window.set_title(&title.unwrap_or("No Title".to_owned()));
+
+                }
+                ServoEvent::UnhandledURL(..) => {
+                    // FIXME
+                }
+                ServoEvent::StatusChanged(..) => {
+                    // FIXME
+                }
+                ServoEvent::LoadStart(..) => {
+                    // FIXME
+                }
+                ServoEvent::LoadEnd(..) => {
+                    // FIXME
+                }
+                ServoEvent::LoadError(..) => {
+                    // FIXME
+                }
+                ServoEvent::HeadParsed(url) => {
+                    window.set_url(url.as_str());
+                }
+                ServoEvent::CursorChanged(..) => {
+                    // FIXME
+                }
+                ServoEvent::FaviconChanged(..) => {
+                    // FIXME
+                }
+                ServoEvent::Key(..) => {
+                }
             }
         }
 

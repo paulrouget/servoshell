@@ -3,7 +3,7 @@ extern crate servo;
 use self::servo::config::servo_version;
 use self::servo::servo_config::opts;
 use self::servo::servo_config::prefs::{PrefValue, PREFS};
-use self::servo::compositing::windowing::{WindowMethods, WindowEvent};
+use self::servo::compositing::windowing::{WindowMethods, WindowEvent, WindowNavigateMsg};
 use self::servo::compositing::compositor_thread::{self, CompositorProxy, CompositorReceiver};
 use self::servo::msg::constellation_msg::{self, Key};
 use self::servo::servo_geometry::DeviceIndependentPixel;
@@ -21,7 +21,6 @@ use self::servo::style_traits::cursor::Cursor as ServoCursor;
 use view::{DrawableGeometry, TouchPhase};
 use platform::EventLoopRiser;
 
-use std::fmt;
 use std::sync::mpsc;
 use std::rc::Rc;
 use std::cell::{Cell, RefCell};
@@ -63,7 +62,6 @@ impl Servo {
     pub fn configure(url: &str) {
         let url = ServoUrl::parse(url).ok().unwrap(); // FIXME. What if fail?
         let mut opts = opts::default_opts();
-        let a = 0;
         opts.headless = false;
         opts.url = Some(url);
         opts::set_defaults(opts);
@@ -112,20 +110,20 @@ impl Servo {
         self.callbacks.get_events()
     }
 
-    // pub fn reload(&self) {
-    //     let event = WindowEvent::Reload;
-    //     self.events_for_servo.borrow_mut().push(event);
-    // }
+    pub fn reload(&self) {
+        let event = WindowEvent::Reload;
+        self.events_for_servo.borrow_mut().push(event);
+    }
 
-    // pub fn go_back(&self) {
-    //     let event = WindowEvent::Navigation(WindowNavigateMsg::Back);
-    //     self.events_for_servo.borrow_mut().push(event);
-    // }
+    pub fn go_back(&self) {
+        let event = WindowEvent::Navigation(WindowNavigateMsg::Back);
+        self.events_for_servo.borrow_mut().push(event);
+    }
 
-    // pub fn go_fwd(&self) {
-    //     let event = WindowEvent::Navigation(WindowNavigateMsg::Forward);
-    //     self.events_for_servo.borrow_mut().push(event);
-    // }
+    pub fn go_forward(&self) {
+        let event = WindowEvent::Navigation(WindowNavigateMsg::Forward);
+        self.events_for_servo.borrow_mut().push(event);
+    }
 
     // pub fn perform_mouse_move(&self, x: i32, y: i32) {
     //     let event = WindowEvent::MouseWindowMoveEventClass(TypedPoint2D::new(x as f32, y as f32));
@@ -138,7 +136,6 @@ impl Servo {
             TouchPhase::Started => TouchEventType::Down,
             TouchPhase::Moved => TouchEventType::Move,
             TouchPhase::Ended => TouchEventType::Up,
-            TouchPhase::Cancelled => TouchEventType::Cancel
         };
         let event = WindowEvent::Scroll(scroll_location, TypedPoint2D::new(x, y), phase);
         self.events_for_servo.borrow_mut().push(event);
@@ -146,7 +143,6 @@ impl Servo {
 
     pub fn update_geometry(&self, geometry: DrawableGeometry) {
         self.callbacks.update_geometry(geometry);
-        println!("New size: {:?}", self.callbacks.framebuffer_size());
         let event = WindowEvent::Resize(self.callbacks.framebuffer_size());
         self.events_for_servo.borrow_mut().push(event);
     }

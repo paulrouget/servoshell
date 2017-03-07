@@ -4,9 +4,7 @@ pub use platform::Window;
 pub enum WindowEvent {
     EventLoopRised,
     GeometryDidChange,
-    WillEnterFullScreen,
     DidEnterFullScreen,
-    WillExitFullScreen,
     DidExitFullScreen,
     WillClose,
 }

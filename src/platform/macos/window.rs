@@ -59,12 +59,30 @@ pub fn register() {
         let mut class = ClassDecl::new("NSShellWindowDelegate", superclass).unwrap();
         class.add_ivar::<*mut c_void>("event_queue");
 
-        extern fn did_resize(this: &Object, _sel: Sel, _notification: id) {
-            utils::get_event_queue(this).push(WindowEvent::GeometryDidChange)
+        // FIXME: Don't use strings. And maybe use a map to avoid the duplicate code with add_method. See controls.
+        extern fn record_notification(this: &Object, _sel: Sel, notification: id) {
+            let event = unsafe {
+                let name: id = msg_send![notification, name];
+                if NSString::isEqualToString(name, "NSWindowDidResizeNotification") {
+                    Some(WindowEvent::GeometryDidChange)
+                } else if NSString::isEqualToString(name, "NSWindowDidEnterFullScreenNotification") {
+                    Some(WindowEvent::DidEnterFullScreen)
+                } else if NSString::isEqualToString(name, "NSWindowDidExitFullScreenNotification") {
+                    Some(WindowEvent::DidExitFullScreen)
+                } else if NSString::isEqualToString(name, "NSWindowWillCloseNotification") {
+                    Some(WindowEvent::WillClose)
+                } else {
+                    None
+                }
+            };
+            utils::get_event_queue(this).push(event.unwrap());
         }
 
         unsafe {
-            class.add_method(sel!(windowDidResize:), did_resize as extern fn(&Object, Sel, id));
+            class.add_method(sel!(windowDidResize:), record_notification as extern fn(&Object, Sel, id));
+            class.add_method(sel!(windowDidEnterFullScreen:), record_notification as extern fn(&Object, Sel, id));
+            class.add_method(sel!(windowDidExitFullScreen:), record_notification as extern fn(&Object, Sel, id));
+            class.add_method(sel!(windowWillClose:), record_notification as extern fn(&Object, Sel, id));
         }
 
         class.register();
@@ -100,7 +118,7 @@ impl Window {
         utils::get_event_queue(nsobject).drain(..).collect()
     }
 
-    pub fn set_url(&self, url: &str) {
+    pub fn set_url(&self, _url: &str) {
         // FIXME: can't get NSWindow::representedURL to work
     }
 

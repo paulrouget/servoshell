@@ -8,7 +8,6 @@ use super::view;
 use super::window;
 use super::utils;
 use super::controls;
-use super::app;
 
 use app::AppEvent;
 
@@ -52,13 +51,9 @@ impl App {
             Err(msg) => return Err(msg),
         };
 
-        let mut nsapp: Option<id> = None;
-        let mut delegate: Option<id> = None;
-
-        // FIXME: use find
-        for i in instances.into_iter() {
-            if utils::id_is_instance_of(i, "NSApplication") { nsapp = Some(i) }
-        }
+        let nsapp = instances.into_iter().find(|i| {
+            utils::id_is_instance_of(*i, "NSApplication")
+        });
 
         let nsapp: id = match nsapp {
             None => return Err("Couldn't not find NSApplication instance in nib file"),

@@ -8,5 +8,6 @@ pub enum ControlEvent {
     GoForward,
     ZoomIn,
     ZoomOut,
+    ZoomToActualSize
 }
 

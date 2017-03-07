@@ -12,6 +12,7 @@ static INIT: Once = ONCE_INIT;
 pub fn init() {
     INIT.call_once(|| {
         app::register();
+        controls::register();
         toolbar::register();
         view::register();
         window::register();

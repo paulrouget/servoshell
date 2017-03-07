@@ -69,41 +69,6 @@ impl View {
         }
     }
 
-    fn nsevent_to_viewevent(&self, event: NSViewEvent) -> Option<ViewEvent> {
-        match event {
-            NSViewEvent::NSEvent(nsevent) => {
-                unsafe {
-                    let event_type = nsevent.eventType();
-                    match event_type {
-                        NSScrollWheel => {
-                            // Stolen from winit
-                            use self::MouseScrollDelta::{LineDelta, PixelDelta};
-                            let nswindow: id = nsevent.window();
-                            let hidpi_factor: CGFloat = msg_send![nswindow, backingScaleFactor];
-                            let hidpi_factor = hidpi_factor as f32;
-                            let delta = if nsevent.hasPreciseScrollingDeltas() == YES {
-                                PixelDelta(hidpi_factor * nsevent.scrollingDeltaX() as f32,
-                                hidpi_factor * nsevent.scrollingDeltaY() as f32)
-                            } else {
-                                LineDelta(hidpi_factor * nsevent.scrollingDeltaX() as f32,
-                                hidpi_factor * nsevent.scrollingDeltaY() as f32)
-                            };
-                            let phase = match nsevent.phase() {
-                                appkit::NSEventPhaseMayBegin | appkit::NSEventPhaseBegan => TouchPhase::Started,
-                                appkit::NSEventPhaseEnded => TouchPhase::Ended,
-                                _ => TouchPhase::Moved,
-                            };
-                            Some(ViewEvent::MouseWheel(delta, phase))
-                        },
-                        _ => {
-                            None
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     pub fn swap_buffers(&self) {
         unsafe {
             msg_send![self.context, flushBuffer];
@@ -152,6 +117,53 @@ impl View {
             e.unwrap()
         }).collect();
         events
+    }
+
+    pub fn enter_fullscreen(&self) {
+        unsafe {
+            msg_send![self.nsview, enterFullScreenMode:nil withOptions:nil];
+        }
+    }
+
+    pub fn exit_fullscreen(&self) {
+        unsafe {
+            msg_send![self.nsview, exitFullScreenModeWithOptions:nil];
+        }
+    }
+
+    fn nsevent_to_viewevent(&self, event: NSViewEvent) -> Option<ViewEvent> {
+        match event {
+            NSViewEvent::NSEvent(nsevent) => {
+                unsafe {
+                    let event_type = nsevent.eventType();
+                    match event_type {
+                        NSScrollWheel => {
+                            // Stolen from winit
+                            use self::MouseScrollDelta::{LineDelta, PixelDelta};
+                            let nswindow: id = nsevent.window();
+                            let hidpi_factor: CGFloat = msg_send![nswindow, backingScaleFactor];
+                            let hidpi_factor = hidpi_factor as f32;
+                            let delta = if nsevent.hasPreciseScrollingDeltas() == YES {
+                                PixelDelta(hidpi_factor * nsevent.scrollingDeltaX() as f32,
+                                hidpi_factor * nsevent.scrollingDeltaY() as f32)
+                            } else {
+                                LineDelta(hidpi_factor * nsevent.scrollingDeltaX() as f32,
+                                hidpi_factor * nsevent.scrollingDeltaY() as f32)
+                            };
+                            let phase = match nsevent.phase() {
+                                appkit::NSEventPhaseMayBegin | appkit::NSEventPhaseBegan => TouchPhase::Started,
+                                appkit::NSEventPhaseEnded => TouchPhase::Ended,
+                                _ => TouchPhase::Moved,
+                            };
+                            Some(ViewEvent::MouseWheel(delta, phase))
+                        },
+                        _ => {
+                            None
+                        }
+                    }
+                }
+            }
+        }
     }
 
     fn init_gl(nsview: id) -> id {

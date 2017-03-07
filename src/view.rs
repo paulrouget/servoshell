@@ -12,10 +12,14 @@ pub struct DrawableGeometry {
 
 #[derive(Debug, Clone)]
 pub enum ViewEvent {
-    GeometryDidChange,
+
+    // FIXME: this event comes from the window at the moment.
+    // Maybe this should come from the view
+    // GeometryDidChange,
+
     MouseWheel(MouseScrollDelta, TouchPhase),
-    MouseInput(ElementState, MouseButton),
-    MouseMoved(i32, i32),
+    // MouseInput(ElementState, MouseButton),
+    // MouseMoved(i32, i32),
 }
 
 #[derive(Debug, Clone)]
@@ -23,20 +27,20 @@ pub enum TouchPhase {
     Started,
     Moved,
     Ended,
-    Cancelled
+    // FIXME: Cancelled
 }
 
-#[derive(Debug, Clone)]
-pub enum ElementState {
-    Pressed,
-    Released,
-}
+// #[derive(Debug, Clone)]
+// pub enum ElementState {
+//     Pressed,
+//     Released,
+// }
 
-#[derive(Debug, Clone)]
-pub enum MouseButton {
-    Left,
-    Right,
-}
+// #[derive(Debug, Clone)]
+// pub enum MouseButton {
+//     Left,
+//     Right,
+// }
 
 #[derive(Debug, Clone)]
 pub enum MouseScrollDelta {
