@@ -9,13 +9,5 @@ pub enum WindowEvent {
     WillExitFullScreen,
     DidExitFullScreen,
     WillClose,
-
-    ReloadClicked,
-    StopClicked,
-    HistoryBackClicked,
-    HistoryForwardClicked,
-    ZoomInClicked,
-    ZoomOutClicked,
-    ResetZoomClicked,
 }
 

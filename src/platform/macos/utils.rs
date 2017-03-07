@@ -3,6 +3,7 @@ use cocoa::base::*;
 use cocoa::foundation::*;
 use objc::runtime::Object;
 use std::os::raw::c_void;
+use std::collections::HashMap;
 
 pub fn load_nib(path: &str) -> Result<Vec<id>, &'static str> {
     unsafe {
@@ -40,10 +41,17 @@ pub fn id_is_instance_of(id: id, classname: &'static str) -> bool {
     is_instance == YES
 }
 
+pub fn get_event_queue<T>(obj: &Object) -> &mut Vec<T> {
+    get_ivar(obj, "event_queue")
+}
 
-pub fn get_event_queue<T>(this: &Object) -> &mut Vec<T> {
+pub fn get_command_states<A, B>(obj: &Object) -> &mut HashMap<A, B> {
+    get_ivar(obj, "command_states")
+}
+
+pub fn get_ivar<'a, T>(obj: &'a Object, var: &'static str) -> &'a mut T {
     unsafe {
-        let ivar: *mut c_void = *this.get_ivar("event_queue");
-        &mut *(ivar as *mut Vec<T>)
+        let ivar: *mut c_void = *obj.get_ivar(var);
+        &mut *(ivar as *mut T)
     }
 }

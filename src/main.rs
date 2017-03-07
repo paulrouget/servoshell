@@ -9,6 +9,7 @@ extern crate cocoa;
 extern crate objc_foundation;
 
 mod app;
+mod controls;
 mod window;
 mod view;
 mod servo;
@@ -26,8 +27,10 @@ use servo::{Servo, FollowLinkPolicy};
 
 fn main() {
 
-    let app = App::new().unwrap();
-    let (window, view) = app.create_window().unwrap();
+    platform::init();
+
+    let (app, ctrls) = App::load().unwrap();
+    let (window, view) = app.create_window(&ctrls).unwrap();
 
     let url = args().nth(1).unwrap_or("http://servo.org".to_owned());
     Servo::configure(&url);
@@ -40,9 +43,13 @@ fn main() {
 
     println!("Servo version: {}", servo.version());
 
+    ctrls.set_command_state(controls::ControlEvent::Reload, false);
+    ctrls.set_command_state(controls::ControlEvent::Stop, true);
+
     app.run(|| {
 
         let app_events = app.get_events();
+        let ctrls_events = ctrls.get_events();
         let win_events = window.get_events();
         let view_events = view.get_events();
         let servo_events = servo.get_events();
@@ -59,14 +66,14 @@ fn main() {
         // if !servo_events.is_empty() {
         //     println!("servo_events: {:?}", servo_events);
         // }
+        if !ctrls_events.is_empty() {
+            println!("ctrls_events: {:?}", ctrls_events);
+        }
 
         let mut sync_needed = false;
 
         for event in win_events {
             match event {
-                WindowEvent::ReloadClicked => {
-                    println!("Yep. Reload clicked.");
-                }
                 WindowEvent::EventLoopRised => {
                     sync_needed = true;
                 }

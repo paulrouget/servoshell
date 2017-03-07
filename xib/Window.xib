@@ -9,7 +9,7 @@
         <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" releasedWhenClosed="NO" animationBehavior="default" id="vcB-Pn-Wg9" customClass="NSShellWindow">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" unifiedTitleAndToolbar="YES" fullSizeContentView="YES"/>
             <rect key="contentRect" x="196" y="240" width="600" height="300"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1280" height="777"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1440" height="900"/>
             <view key="contentView" wantsLayer="YES" id="aec-nG-MTq" customClass="NSServoView">
                 <rect key="frame" x="0.0" y="0.0" width="600" height="300"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -17,20 +17,23 @@
             <toolbar key="toolbar" implicitIdentifier="4E0C930B-D6E3-4B1A-BD8F-6F6D77EABB92" autosavesConfiguration="NO" displayMode="iconOnly" sizeMode="regular" id="ann-49-zau">
                 <allowedToolbarItems>
                     <toolbarItem implicitItemIdentifier="NSToolbarSpaceItem" id="HZ7-iT-z1G"/>
-                    <toolbarItem implicitItemIdentifier="D8983A42-BE0A-4879-B0DF-FBA6570FB9FD" label="reload" paletteLabel="reload" image="NSRefreshTemplate" id="syX-Rt-Bai">
+                    <toolbarItem implicitItemIdentifier="D8983A42-BE0A-4879-B0DF-FBA6570FB9FD" label="Reload" paletteLabel="Reload" image="NSRefreshTemplate" id="syX-Rt-Bai" customClass="NSValidableToolbarItem">
                         <nil key="toolTip"/>
                         <size key="minSize" width="36" height="28"/>
                         <size key="maxSize" width="40" height="28"/>
                         <button key="view" verticalHuggingPriority="750" id="koT-VX-Img">
-                            <rect key="frame" x="2" y="14" width="36" height="28"/>
+                            <rect key="frame" x="4" y="14" width="36" height="28"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="NSRefreshTemplate" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="dlf-ii-2rc">
                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                 <font key="font" metaFont="system"/>
                             </buttonCell>
                         </button>
+                        <connections>
+                            <action selector="reload:" target="-1" id="uV6-ep-cg0"/>
+                        </connections>
                     </toolbarItem>
-                    <toolbarItem implicitItemIdentifier="57F0C50E-F2E9-4394-89CE-EFD26C815591" label="stop" paletteLabel="stop" image="NSStopProgressTemplate" id="Ryh-a2-Juw">
+                    <toolbarItem implicitItemIdentifier="57F0C50E-F2E9-4394-89CE-EFD26C815591" label="stop" paletteLabel="stop" image="NSStopProgressTemplate" id="Ryh-a2-Juw" customClass="NSValidableToolbarItem">
                         <nil key="toolTip"/>
                         <size key="minSize" width="36" height="28"/>
                         <size key="maxSize" width="40" height="28"/>
@@ -42,6 +45,9 @@
                                 <font key="font" metaFont="system"/>
                             </buttonCell>
                         </button>
+                        <connections>
+                            <action selector="stop:" target="-1" id="QAU-TI-xpV"/>
+                        </connections>
                     </toolbarItem>
                     <toolbarItem implicitItemIdentifier="40D4646D-659B-407C-8FBB-432B18EF0288" label="History" paletteLabel="History" id="eQy-xS-rWz">
                         <nil key="toolTip"/>

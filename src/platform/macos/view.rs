@@ -16,7 +16,6 @@ use self::core_foundation::string::CFString;
 use self::core_foundation::bundle::{CFBundleGetBundleWithIdentifier, CFBundleGetFunctionPointerForName};
 use std::os::raw::c_void;
 use std::str::FromStr;
-use std::sync::{Once, ONCE_INIT};
 use view::{ViewEvent, TouchPhase, MouseScrollDelta};
 use super::utils;
 
@@ -24,39 +23,35 @@ enum NSViewEvent {
     NSEvent(id),
 }
 
-static INIT: Once = ONCE_INIT;
-
 pub fn register() {
-    unsafe {
-        INIT.call_once(|| {
+    let superclass = Class::get("NSView").unwrap();
+    let mut class = ClassDecl::new("NSServoView", superclass).unwrap();
 
-            let superclass = Class::get("NSView").unwrap();
-            let mut class = ClassDecl::new("NSServoView", superclass).unwrap();
+    class.add_ivar::<*mut c_void>("event_queue");
 
-            class.add_ivar::<*mut c_void>("event_queue");
-
-            class.add_method(sel!(scrollWheel:), store_nsevent as extern fn(&Object, Sel, id));
-            class.add_method(sel!(mouseDown:), store_nsevent as extern fn(&Object, Sel, id));
-            class.add_method(sel!(mouseUp:), store_nsevent as extern fn(&Object, Sel, id));
-            class.add_method(sel!(mouseMoved:), store_nsevent as extern fn(&Object, Sel, id));
-            extern fn store_nsevent(this: &Object, _sel: Sel, event: id) {
-                unsafe { msg_send![event, retain] }
-                utils::get_event_queue(this).push(NSViewEvent::NSEvent(event));
-            }
-
-            class.add_method(sel!(awakeFromNib), awake_from_nib as extern fn(&mut Object, Sel));
-            extern fn awake_from_nib(this: &mut Object, _sel: Sel) {
-                // FIXME: is that the best way to create a raw pointer?
-                let event_queue: Vec<NSViewEvent> = Vec::new();
-                let event_queue_ptr = Box::into_raw(Box::new(event_queue));
-                unsafe {
-                    this.set_ivar("event_queue", event_queue_ptr as *mut c_void);
-                }
-            }
-
-            class.register();
-        });
+    extern fn store_nsevent(this: &Object, _sel: Sel, event: id) {
+        unsafe { msg_send![event, retain] }
+        utils::get_event_queue(this).push(NSViewEvent::NSEvent(event));
     }
+
+    extern fn awake_from_nib(this: &mut Object, _sel: Sel) {
+        // FIXME: is that the best way to create a raw pointer?
+        let event_queue: Vec<NSViewEvent> = Vec::new();
+        let event_queue_ptr = Box::into_raw(Box::new(event_queue));
+        unsafe {
+            this.set_ivar("event_queue", event_queue_ptr as *mut c_void);
+        }
+    }
+
+    unsafe {
+        class.add_method(sel!(scrollWheel:), store_nsevent as extern fn(&Object, Sel, id));
+        class.add_method(sel!(mouseDown:), store_nsevent as extern fn(&Object, Sel, id));
+        class.add_method(sel!(mouseUp:), store_nsevent as extern fn(&Object, Sel, id));
+        class.add_method(sel!(mouseMoved:), store_nsevent as extern fn(&Object, Sel, id));
+        class.add_method(sel!(awakeFromNib), awake_from_nib as extern fn(&mut Object, Sel));
+    }
+
+    class.register();
 }
 
 pub struct View {

@@ -7,65 +7,45 @@ use std::os::raw::c_void;
 use super::view;
 use super::window;
 use super::utils;
-use std::sync::{Once, ONCE_INIT};
+use super::controls;
+use super::app;
 
 use app::AppEvent;
 
-static INIT: Once = ONCE_INIT;
-
 pub fn register() {
-    unsafe {
-        INIT.call_once(|| {
+    let superclass = Class::get("NSObject").unwrap();
+    let mut class = ClassDecl::new("NSShellApplicationDelegate", superclass).unwrap();
+    class.add_ivar::<*mut c_void>("event_queue");
 
-            let superclass = Class::get("NSObject").unwrap();
-            let mut class = ClassDecl::new("NSShellApplicationDelegate", superclass).unwrap();
-            class.add_ivar::<*mut c_void>("event_queue");
-
-            class.add_method(sel!(applicationDidFinishLaunching:), did_finish_launching as extern fn(&Object, Sel, id));
-            extern fn did_finish_launching(this: &Object, _sel: Sel, _notification: id) {
-                utils::get_event_queue(this).push(AppEvent::DidFinishLaunching)
-            }
-
-            class.add_method(sel!(applicationDidChangeScreenParameter:), did_change_screen_parameter as extern fn(&Object, Sel, id));
-            extern fn did_change_screen_parameter(this: &Object, _sel: Sel, _notification: id) {
-                utils::get_event_queue(this).push(AppEvent::DidChangeScreenParameters)
-            }
-
-            class.add_method(sel!(applicationWillTerminate:), will_terminate as extern fn(&Object, Sel, id));
-            extern fn will_terminate(this: &Object, _sel: Sel, _notification: id) {
-                utils::get_event_queue(this).push(AppEvent::WillTerminate)
-            }
-
-            class.add_method(sel!(validateMenuItem:), validate_menu_item as extern fn(&Object, Sel, id) -> BOOL);
-            class.add_method(sel!(validateUserInterfaceItem:), validate_menu_item as extern fn(&Object, Sel, id) -> BOOL);
-            extern fn validate_menu_item(this: &Object, _sel: Sel, _menu: id) -> BOOL {
-                println!("VALIDATE");
-                YES
-            }
-
-            class.add_method(sel!(reload), reload as extern fn(&Object, Sel));
-            extern fn reload(this: &Object, _sel: Sel) {
-                println!("RELOAD");
-            }
-
-            class.register();
-        });
+    extern fn did_finish_launching(this: &Object, _sel: Sel, _notification: id) {
+        utils::get_event_queue(this).push(AppEvent::DidFinishLaunching)
     }
+
+    extern fn did_change_screen_parameter(this: &Object, _sel: Sel, _notification: id) {
+        utils::get_event_queue(this).push(AppEvent::DidChangeScreenParameters)
+    }
+
+    extern fn will_terminate(this: &Object, _sel: Sel, _notification: id) {
+        utils::get_event_queue(this).push(AppEvent::WillTerminate)
+    }
+
+    unsafe {
+        class.add_method(sel!(applicationDidFinishLaunching:), did_finish_launching as extern fn(&Object, Sel, id));
+        class.add_method(sel!(applicationDidChangeScreenParameter:), did_change_screen_parameter as extern fn(&Object, Sel, id));
+        class.add_method(sel!(applicationWillTerminate:), will_terminate as extern fn(&Object, Sel, id));
+    }
+
+    class.register();
 }
 
 
 pub struct App {
-    nsapp: id,
+    nsapp: id
 }
 
 impl App {
 
-    pub fn new() -> Result<App, &'static str> {
-
-        // FIXME: move that earlier.
-        register();
-        view::register();
-        window::register();
+    pub fn load() -> Result<(App, controls::Controls), &'static str> {
 
         let instances = match utils::load_nib("App.nib") {
             Ok(instances) => instances,
@@ -75,18 +55,13 @@ impl App {
         let mut nsapp: Option<id> = None;
         let mut delegate: Option<id> = None;
 
+        // FIXME: use find
         for i in instances.into_iter() {
             if utils::id_is_instance_of(i, "NSApplication") { nsapp = Some(i) }
-            if utils::id_is_instance_of(i, "NSShellApplicationDelegate") { delegate = Some(i) }
         }
 
         let nsapp: id = match nsapp {
             None => return Err("Couldn't not find NSApplication instance in nib file"),
-            Some(id) => id,
-        };
-
-        let delegate: id = match delegate {
-            None => return Err("Couldn't not find NSShellApplicationDelegate instance in nib file"),
             Some(id) => id,
         };
 
@@ -100,13 +75,15 @@ impl App {
         let event_queue: Vec<AppEvent> = Vec::new();
         let event_queue_ptr = Box::into_raw(Box::new(event_queue));
         unsafe {
+            let delegate: id = msg_send![class("NSShellApplicationDelegate"), alloc];
             (*delegate).set_ivar("event_queue", event_queue_ptr as *mut c_void);
             msg_send![nsapp, setDelegate:delegate];
         }
 
-        Ok(App {
-            nsapp: nsapp,
-        })
+        let app = App {nsapp: nsapp};
+        let controls = controls::Controls::new();
+
+        Ok((app, controls))
     }
 
     pub fn get_events(&self) -> Vec<AppEvent> {
@@ -160,7 +137,7 @@ impl App {
         }
     }
 
-    pub fn create_window(&self) -> Result<(window::Window, view::View), &'static str> {
+    pub fn create_window(&self, controls: &controls::Controls) -> Result<(window::Window, view::View), &'static str> {
         let nswindow = match App::create_native_window() {
             Ok(w) => w,
             Err(msg) => return Err(msg),
@@ -169,7 +146,8 @@ impl App {
             Ok(v) => v,
             Err(msg) => return Err(msg),
         };
-        Ok((window::Window::new(nswindow), view::View::new(nsview)))
+        let nsresponder = controls.get_nsresponder();
+        Ok((window::Window::new(nswindow, nsresponder), view::View::new(nsview)))
     }
 
     fn create_native_window() -> Result<id, &'static str> {
