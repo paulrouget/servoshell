@@ -306,8 +306,6 @@ impl WindowMethods for ServoCallbacks {
     }
 
     fn present(&self) {
-        // FIXME: what is that for? Aren't we supposed to flush buffer everytime
-        // CompositorProxy::send is called?
         self.event_queue.borrow_mut().push(ServoEvent::Present);
     }
 
