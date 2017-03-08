@@ -6,18 +6,26 @@ use super::utils;
 use controls::ControlEvent;
 use std::collections::HashMap;
 
-// FIXME: implement Hash for Sel instead of using a str
-// FIXME: can we use macro instead of this hashmap (which is instanciate at 2 different locations)
-fn map_action_to_event() -> HashMap<&'static str, ControlEvent> {
-    let mut map = HashMap::new();
-    map.insert("reload:", ControlEvent::Reload);
-    map.insert("stop:", ControlEvent::Stop);
-    map.insert("goBack:", ControlEvent::GoBack);
-    map.insert("goForward:", ControlEvent::GoForward);
-    map.insert("zoomIn:", ControlEvent::ZoomIn);
-    map.insert("zoomOut:", ControlEvent::ZoomOut);
-    map.insert("zoomImageToActualSize:", ControlEvent::ZoomToActualSize);
-    map
+// FIXME: this is ugly. Also, we are duplicating the list
+// of Selector (see the add_method list)
+fn action_to_event(action: Sel) -> Option<ControlEvent> {
+    if action == sel!(reload:) {
+        Some(ControlEvent::Reload)
+    } else if action == sel!(stop:) {
+        Some(ControlEvent::Stop)
+    } else if action == sel!(goBack:) {
+        Some(ControlEvent::GoBack)
+    } else if action == sel!(goForward:) {
+        Some(ControlEvent::GoForward)
+    } else if action == sel!(zoomIn:) {
+        Some(ControlEvent::ZoomIn)
+    } else if action == sel!(zoomOut:) {
+        Some(ControlEvent::ZoomOut)
+    } else if action == sel!(zoomImageToActualSize:) {
+        Some(ControlEvent::ZoomToActualSize)
+    } else {
+        None
+    }
 }
 
 pub fn register() {
@@ -25,35 +33,39 @@ pub fn register() {
     let mut class = ClassDecl::new("NSShellResponder", superclass).unwrap();
     class.add_ivar::<*mut c_void>("event_queue");
     class.add_ivar::<*mut c_void>("command_states");
-    class.add_ivar::<*mut c_void>("action_to_event");
-
-    for action in map_action_to_event().keys() {
-        unsafe {
-            class.add_method(selector(action), record_action as extern fn(&Object, Sel, id));
-        }
-    }
-    unsafe {
-        class.add_method(sel!(validateUserInterfaceItem:), validate_ui as extern fn(&Object, Sel, id) -> BOOL);
-    }
 
     extern fn record_action(this: &Object, _sel: Sel, item: id) {
         let action: Sel = unsafe {msg_send![item, action]};
-        let action = action.name();
-        let action_to_event: &mut HashMap<&str, ControlEvent> = utils::get_ivar(this, "action_to_event");
-        let event = action_to_event.get(action).unwrap();
-        utils::get_event_queue(this).push(event);
+        match action_to_event(action) {
+            Some(event) => utils::get_event_queue(this).push(event),
+            None => panic!("Unexpected action to record"),
+        }
     }
 
     extern fn validate_ui(this: &Object, _sel: Sel, item: id) -> BOOL {
         let map: &mut HashMap<ControlEvent, bool> = utils::get_command_states(this);
         let action: Sel = unsafe {msg_send![item, action]};
-        let action = action.name();
-        let action_to_event: &mut HashMap<&str, ControlEvent> = utils::get_ivar(this, "action_to_event");
-        let event = action_to_event.get(action).unwrap();
-        match map.get(&event) {
-            Some(enabled) if *enabled => YES,
-            _ => NO
+        match action_to_event(action) {
+            Some(event) => {
+                match map.get(&event) {
+                    Some(enabled) if *enabled => YES,
+                    _ => NO
+                }
+            },
+            None => panic!("Unexpected action to validate"),
         }
+    }
+
+    unsafe {
+        class.add_method(sel!(reload:), record_action as extern fn(&Object, Sel, id));
+        class.add_method(sel!(stop:), record_action as extern fn(&Object, Sel, id));
+        class.add_method(sel!(goBack:), record_action as extern fn(&Object, Sel, id));
+        class.add_method(sel!(goForward:), record_action as extern fn(&Object, Sel, id));
+        class.add_method(sel!(zoomIn:), record_action as extern fn(&Object, Sel, id));
+        class.add_method(sel!(zoomOut:), record_action as extern fn(&Object, Sel, id));
+        class.add_method(sel!(zoomImageToActualSize:), record_action as extern fn(&Object, Sel, id));
+
+        class.add_method(sel!(validateUserInterfaceItem:), validate_ui as extern fn(&Object, Sel, id) -> BOOL);
     }
 
     class.register();
@@ -70,16 +82,12 @@ impl Controls {
         let command_states: HashMap<ControlEvent, bool> = HashMap::new();
         let command_states_ptr = Box::into_raw(Box::new(command_states));
 
-        let action_to_event = map_action_to_event();
-        let action_to_event_ptr = Box::into_raw(Box::new(action_to_event));
-
         let event_queue: Vec<ControlEvent> = Vec::new();
         let event_queue_ptr = Box::into_raw(Box::new(event_queue));
 
         let nsresponder = unsafe {
             let nsresponder: id = msg_send![class("NSShellResponder"), alloc];
             (*nsresponder).set_ivar("command_states", command_states_ptr as *mut c_void);
-            (*nsresponder).set_ivar("action_to_event", action_to_event_ptr as *mut c_void);
             (*nsresponder).set_ivar("event_queue", event_queue_ptr as *mut c_void);
             nsresponder
         };
@@ -103,5 +111,4 @@ impl Controls {
         let command_states = utils::get_command_states(nsobject);
         command_states.insert(event, enabled);
     }
-
 }

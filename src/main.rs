@@ -44,9 +44,6 @@ fn main() {
 
     println!("Servo version: {}", servo.version());
 
-    ctrls.set_command_state(ControlEvent::Reload, false);
-    ctrls.set_command_state(ControlEvent::Stop, true);
-
     view.enter_fullscreen();
 
     app.run(|| {
@@ -172,10 +169,12 @@ fn main() {
                     // FIXME
                 }
                 ServoEvent::LoadStart(..) => {
-                    // FIXME
+                    ctrls.set_command_state(ControlEvent::Reload, false);
+                    ctrls.set_command_state(ControlEvent::Stop, true);
                 }
                 ServoEvent::LoadEnd(..) => {
-                    // FIXME
+                    ctrls.set_command_state(ControlEvent::Reload, true);
+                    ctrls.set_command_state(ControlEvent::Stop, false);
                 }
                 ServoEvent::LoadError(..) => {
                     // FIXME
@@ -190,6 +189,7 @@ fn main() {
                     // FIXME
                 }
                 ServoEvent::Key(..) => {
+                    // FIXME
                 }
             }
         }
