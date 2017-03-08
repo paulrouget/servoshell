@@ -192,8 +192,10 @@ impl Servo {
     // }
 
     pub fn sync(&self) {
-        let clone = self.events_for_servo.borrow().clone();
-        self.events_for_servo.borrow_mut().clear();
+        // FIXME: ports/glutin/window.rs uses mem::replace. Should we too?
+        // See: https://doc.rust-lang.org/core/mem/fn.replace.html
+        let mut events = self.events_for_servo.borrow_mut();
+        let clone = events.drain(..).collect();
         self.servo_browser.borrow_mut().handle_events(clone);
     }
 }
@@ -209,10 +211,9 @@ impl ServoCallbacks {
     fn get_events(&self) -> Vec<ServoEvent> {
         // FIXME: ports/glutin/window.rs uses mem::replace. Should we too?
         // See: https://doc.rust-lang.org/core/mem/fn.replace.html
-        // FIXME: maybe use drain
-        let clone = self.event_queue.borrow().clone();
-        self.event_queue.borrow_mut().clear();
-        clone
+        let mut events = self.event_queue.borrow_mut();
+        let copy = events.drain(..).collect();
+        copy
     }
 
     fn update_geometry(&self, geometry: DrawableGeometry) {
