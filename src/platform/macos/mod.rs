@@ -9,6 +9,12 @@ use std::env;
 use std::sync::{Once, ONCE_INIT};
 use std::path::PathBuf;
 
+pub use self::app::App;
+pub use self::window::Window;
+pub use self::window::EventLoopRiser;
+pub use self::view::View;
+pub use self::controls::Controls;
+
 static INIT: Once = ONCE_INIT;
 
 pub fn init() {
@@ -41,9 +47,3 @@ pub fn get_resources_path() -> Option<PathBuf> {
 
     None
 }
-
-pub use self::app::App;
-pub use self::window::Window;
-pub use self::window::EventLoopRiser;
-pub use self::view::View;
-pub use self::controls::Controls;

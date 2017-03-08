@@ -344,7 +344,6 @@ impl WindowMethods for ServoCallbacks {
     }
 
     fn set_cursor(&self, cursor: ServoCursor) {
-        println!("set_cursor: {:?}", cursor);
         self.event_queue.borrow_mut().push(ServoEvent::CursorChanged(cursor));
     }
 
@@ -365,7 +364,7 @@ struct ShellCompositorProxy {
 impl CompositorProxy for ShellCompositorProxy {
     fn send(&self, msg: compositor_thread::Msg) {
         if let Err(err) = self.sender.send(msg) {
-            println!("Failed to send response ({}).", err);
+            warn!("Failed to send response ({}).", err);
         }
         self.riser.rise()
     }

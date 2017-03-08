@@ -3,8 +3,11 @@
 #[macro_use]
 extern crate objc;
 
+#[macro_use]
+extern crate log;
+
+extern crate simplelog;
 extern crate libc;
-extern crate rand;
 extern crate cocoa;
 extern crate objc_foundation;
 
@@ -20,13 +23,25 @@ use window::WindowEvent;
 use view::ViewEvent;
 use servo::ServoEvent;
 use controls::ControlEvent;
-
+use simplelog::{CombinedLogger, Config, LogLevel, LogLevelFilter, TermLogger, WriteLogger};
+use std::fs::File;
 use std::env::args;
-
 use app::App;
 use servo::{Servo, FollowLinkPolicy};
 
 fn main() {
+
+    let log_file = File::create("/tmp/servoshell.log").unwrap();
+    let log_config = Config {
+        time: None,
+        level: Some(LogLevel::Info),
+        target: Some(LogLevel::Info),
+        location: Some(LogLevel::Info),
+    };
+    let _ = CombinedLogger::init(vec![
+        TermLogger::new(LogLevelFilter::Info, log_config).unwrap(),
+        WriteLogger::new(LogLevelFilter::Info, log_config, log_file)
+    ]);
 
     platform::init();
 
@@ -42,7 +57,7 @@ fn main() {
         Servo::new(geometry, riser, &url, policy)
     };
 
-    println!("Servo version: {}", servo.version());
+    info!("Servo version: {}", servo.version());
 
     view.enter_fullscreen();
 
