@@ -63,11 +63,18 @@ impl Servo {
 
     pub fn configure(url: &str) -> Result<(), &'static str> {
 
-        let path = platform::get_resources_path().unwrap().join("servo_resources");
+        let path = match platform::get_resources_path() {
+            Some(path) => path.join("servo_resources"),
+            None => panic!("Can't find resources directory"),
+        };
+
         let path = path.to_str().unwrap().to_string();
         set_resources_path(Some(path));
 
-        let url = ServoUrl::parse(url).ok().unwrap(); // FIXME. What if fail?
+        let url = match ServoUrl::parse(url) {
+            Ok(url) => url,
+            Err(_) => panic!("Can't parse initial URL: {}", url)
+        };
         let mut opts = opts::default_opts();
         opts.headless = false;
         opts.url = Some(url);

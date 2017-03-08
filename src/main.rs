@@ -55,7 +55,12 @@ fn main() {
     let (app, ctrls) = App::load().unwrap();
     let (window, view) = app.create_window(&ctrls).unwrap();
 
-    let url = args().nth(1).unwrap_or("http://servo.org".to_owned());
+    // Skip first argument (executable), and find the first
+    // argument that doesn't start with `-`
+    let url = args().skip(1).find(|arg| {
+        !arg.starts_with("-")
+    }).unwrap_or("http://servo.org".to_owned());
+
     Servo::configure(&url).unwrap();
     let servo = {
         let geometry = view.get_geometry();
