@@ -17,6 +17,8 @@ fn action_to_event(action: Sel) -> Option<ControlEvent> {
         Some(ControlEvent::GoBack)
     } else if action == sel!(goForward:) {
         Some(ControlEvent::GoForward)
+    } else if action == sel!(openLocation:) {
+        Some(ControlEvent::OpenLocation)
     } else if action == sel!(zoomIn:) {
         Some(ControlEvent::ZoomIn)
     } else if action == sel!(zoomOut:) {
@@ -61,6 +63,7 @@ pub fn register() {
         class.add_method(sel!(stop:), record_action as extern fn(&Object, Sel, id));
         class.add_method(sel!(goBack:), record_action as extern fn(&Object, Sel, id));
         class.add_method(sel!(goForward:), record_action as extern fn(&Object, Sel, id));
+        class.add_method(sel!(openLocation:), record_action as extern fn(&Object, Sel, id));
         class.add_method(sel!(zoomIn:), record_action as extern fn(&Object, Sel, id));
         class.add_method(sel!(zoomOut:), record_action as extern fn(&Object, Sel, id));
         class.add_method(sel!(zoomImageToActualSize:), record_action as extern fn(&Object, Sel, id));

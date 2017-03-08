@@ -118,8 +118,38 @@ impl Window {
         utils::get_event_queue(nsobject).drain(..).collect()
     }
 
-    pub fn set_url(&self, _url: &str) {
+    pub fn set_url(&self, url: &str) {
         // FIXME: can't get NSWindow::representedURL to work
+        unsafe {
+            let item = self.get_toolbar_item("urlbar").unwrap();
+            let urlbar: id = msg_send![item, view];
+            let string = NSString::alloc(nil).init_str(url);
+            msg_send![urlbar, setStringValue:string];
+        }
+    }
+
+    pub fn focus_urlbar(&self) {
+        unsafe {
+            let item = self.get_toolbar_item("urlbar").unwrap();
+            let urlbar: id = msg_send![item, view];
+            msg_send![urlbar, becomeFirstResponder];
+        }
+    }
+
+    fn get_toolbar_item(&self, identifier: &str) -> Option<id> {
+        unsafe {
+            let toolbar: id = msg_send![self.nswindow, toolbar];
+            let items: id = msg_send![toolbar, items];
+            let count: NSInteger = msg_send![items, count];
+            for i in 0..count {
+                let item: id = msg_send![items, objectAtIndex:i];
+                let item_identifier: id = msg_send![item, itemIdentifier];
+                if NSString::isEqualToString(item_identifier, identifier) {
+                    return Some(item);
+                }
+            }
+            None
+        }
     }
 
     pub fn set_title(&self, title: &str) {

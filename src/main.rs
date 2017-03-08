@@ -71,7 +71,7 @@ fn main() {
 
     info!("Servo version: {}", servo.version());
 
-    view.enter_fullscreen();
+    ctrls.set_command_state(ControlEvent::OpenLocation, true);
 
     app.run(|| {
 
@@ -128,6 +128,9 @@ fn main() {
                     ControlEvent::GoForward => {
                         servo.go_forward();
                         sync_needed = true;
+                    }
+                    ControlEvent::OpenLocation => {
+                        window.focus_urlbar();
                     }
                     ControlEvent::ZoomIn => {
                         // FIXME

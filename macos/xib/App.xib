@@ -57,9 +57,9 @@
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <menu key="submenu" title="File" id="bib-Uj-vzu">
                         <items>
-                            <menuItem title="Open Location" keyEquivalent="o" id="IAo-SY-fd9">
+                            <menuItem title="Open Location" keyEquivalent="l" id="IAo-SY-fd9">
                                 <connections>
-                                    <action selector="openDocument:" target="-1" id="bVn-NM-KNZ"/>
+                                    <action selector="openLocation:" target="-1" id="DSy-m5-hEC"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="m54-Is-iLE"/>
