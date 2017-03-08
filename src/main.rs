@@ -34,7 +34,7 @@ fn main() {
     let (window, view) = app.create_window(&ctrls).unwrap();
 
     let url = args().nth(1).unwrap_or("http://servo.org".to_owned());
-    Servo::configure(&url);
+    Servo::configure(&url).unwrap();
     let servo = {
         let geometry = view.get_geometry();
         let riser = window.create_eventloop_riser();

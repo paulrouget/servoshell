@@ -3,8 +3,14 @@ use cocoa::foundation::*;
 use objc::runtime::Object;
 use std::os::raw::c_void;
 use std::collections::HashMap;
+use platform;
 
-pub fn load_nib(path: &str) -> Result<Vec<id>, &'static str> {
+pub fn load_nib(filename: &str) -> Result<Vec<id>, &'static str> {
+
+    let path = platform::get_resources_path().unwrap();
+    let path = path.join("nibs").join(filename);
+    let path = path.to_str().unwrap();
+
     unsafe {
         let filename = NSString::alloc(nil).init_str(path);
         let nsdata: id = msg_send![class("NSData"), dataWithContentsOfFile: filename];

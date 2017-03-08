@@ -3,6 +3,7 @@ extern crate servo;
 use self::servo::config::servo_version;
 use self::servo::servo_config::opts;
 use self::servo::servo_config::prefs::{PrefValue, PREFS};
+use self::servo::servo_config::resource_files::set_resources_path;
 use self::servo::compositing::windowing::{WindowMethods, WindowEvent, WindowNavigateMsg};
 use self::servo::compositing::compositor_thread::{self, CompositorProxy, CompositorReceiver};
 use self::servo::msg::constellation_msg::{self, Key};
@@ -17,6 +18,7 @@ use self::servo::servo_url::ServoUrl;
 use self::servo::net_traits::net_error_list::NetError;
 use self::servo::webrender_traits;
 use self::servo::style_traits::cursor::Cursor as ServoCursor;
+use platform;
 
 use view::{DrawableGeometry, TouchPhase};
 use platform::EventLoopRiser;
@@ -59,7 +61,12 @@ pub struct Servo {
 
 impl Servo {
 
-    pub fn configure(url: &str) {
+    pub fn configure(url: &str) -> Result<(), &'static str> {
+
+        let path = platform::get_resources_path().unwrap().join("servo_resources");
+        let path = path.to_str().unwrap().to_string();
+        set_resources_path(Some(path));
+
         let url = ServoUrl::parse(url).ok().unwrap(); // FIXME. What if fail?
         let mut opts = opts::default_opts();
         opts.headless = false;
@@ -67,6 +74,8 @@ impl Servo {
         opts::set_defaults(opts);
         // FIXME: Pipeline creation fails is layout_threads pref not set
         PREFS.set("layout.threads", PrefValue::Number(1.0));
+
+        Ok(())
     }
 
     pub fn version(&self) -> String {
