@@ -31,6 +31,7 @@ use servo::{Servo, FollowLinkPolicy};
 
 fn main() {
 
+    // FIXME: can we use NSLog instead of a file?
     let log_file = File::create("/tmp/servoshell.log").unwrap();
     let log_config = Config {
         time: None,
@@ -38,10 +39,16 @@ fn main() {
         target: Some(LogLevel::Info),
         location: Some(LogLevel::Info),
     };
-    let _ = CombinedLogger::init(vec![
-        TermLogger::new(LogLevelFilter::Info, log_config).unwrap(),
-        WriteLogger::new(LogLevelFilter::Info, log_config, log_file)
-    ]);
+
+    let _ = match TermLogger::new(LogLevelFilter::Info, log_config) {
+        Some(logger) => CombinedLogger::init(vec![
+            logger,
+            WriteLogger::new(LogLevelFilter::Info, log_config, log_file)
+        ]),
+        None => WriteLogger::init(LogLevelFilter::Info, log_config, log_file)
+    };
+
+    info!("starting");
 
     platform::init();
 
