@@ -5,8 +5,34 @@ use objc::declare::ClassDecl;
 use objc::runtime::{Class, Object, Sel};
 use std::os::raw::c_void;
 use super::utils;
-
 use window::WindowEvent;
+use std::collections::HashMap;
+use commands::{CommandState, WindowCommand};
+
+// FIXME: this is ugly. Also, we are duplicating the list
+// of Selector (see the add_method list)
+fn action_to_command(action: Sel) -> Option<WindowCommand> {
+    if action == sel!(shellReload:) {
+        Some(WindowCommand::Reload)
+    } else if action == sel!(shellStop:) {
+        Some(WindowCommand::Stop)
+    } else if action == sel!(shellNavigateBack:) {
+        Some(WindowCommand::NavigateBack)
+    } else if action == sel!(shellNavigateForward:) {
+        Some(WindowCommand::NavigateForward)
+    } else if action == sel!(shellOpenLocation:) {
+        Some(WindowCommand::OpenLocation)
+    } else if action == sel!(shellZoomIn:) {
+        Some(WindowCommand::ZoomIn)
+    } else if action == sel!(shellZoomOut:) {
+        Some(WindowCommand::ZoomOut)
+    } else if action == sel!(shellZoomToActualSize:) {
+        Some(WindowCommand::ZoomToActualSize)
+    } else {
+        None
+    }
+}
+
 
 pub fn register() {
 
@@ -58,8 +84,9 @@ pub fn register() {
         let superclass = Class::get("NSObject").unwrap();
         let mut class = ClassDecl::new("NSShellWindowDelegate", superclass).unwrap();
         class.add_ivar::<*mut c_void>("event_queue");
+        class.add_ivar::<*mut c_void>("command_states");
 
-        // FIXME: Don't use strings. And maybe use a map to avoid the duplicate code with add_method. See controls.
+        // FIXME: Don't use strings. And maybe use a map to avoid the duplicate code with add_method.
         extern fn record_notification(this: &Object, _sel: Sel, notification: id) {
             let event = unsafe {
                 let name: id = msg_send![notification, name];
@@ -78,11 +105,45 @@ pub fn register() {
             utils::get_event_queue(this).push(event.unwrap());
         }
 
+        extern fn validate_ui(this: &Object, _sel: Sel, item: id) -> BOOL {
+            let map: &mut HashMap<WindowCommand, CommandState> = utils::get_command_states(this);
+            let action: Sel = unsafe {msg_send![item, action]};
+            match action_to_command(action) {
+                Some(event) => {
+                    match map.get(&event) {
+                        Some(&CommandState::Enabled) => YES,
+                        Some(&CommandState::Disabled) => NO,
+                        None => NO,
+                    }
+                },
+                None => panic!("Unexpected action to validate"),
+            }
+        }
+
+        extern fn record_command(this: &Object, _sel: Sel, item: id) {
+            let action: Sel = unsafe {msg_send![item, action]};
+            match action_to_command(action) {
+                Some(cmd) => utils::get_event_queue(this).push(WindowEvent::DoCommand(cmd)),
+                None => panic!("Unexpected action to record"),
+            }
+        }
+
         unsafe {
             class.add_method(sel!(windowDidResize:), record_notification as extern fn(&Object, Sel, id));
             class.add_method(sel!(windowDidEnterFullScreen:), record_notification as extern fn(&Object, Sel, id));
             class.add_method(sel!(windowDidExitFullScreen:), record_notification as extern fn(&Object, Sel, id));
             class.add_method(sel!(windowWillClose:), record_notification as extern fn(&Object, Sel, id));
+
+            class.add_method(sel!(shellStop:), record_command as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellReload:), record_command as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellOpenLocation:), record_command as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellZoomIn:), record_command as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellZoomOut:), record_command as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellZoomToActualSize:), record_command as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellNavigateBack:), record_command as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellNavigateForward:), record_command as extern fn(&Object, Sel, id));
+
+            class.add_method(sel!(validateUserInterfaceItem:), validate_ui as extern fn(&Object, Sel, id) -> BOOL);
         }
 
         class.register();
@@ -95,17 +156,19 @@ pub struct Window {
 }
 
 impl Window {
-    pub fn new(nswindow: id, nsresponder: &Object) -> Window {
+    pub fn new(nswindow: id) -> Window {
+
+        let command_states: HashMap<WindowCommand, CommandState> = HashMap::new();
+        let command_states_ptr = Box::into_raw(Box::new(command_states));
 
         unsafe {
             // FIXME: release and set delegate to nil
-            let event_queue_ptr: *mut c_void = *(&*nswindow).get_ivar("event_queue");
             let delegate: id = msg_send![class("NSShellWindowDelegate"), alloc];
+            let event_queue_ptr: *mut c_void = *(&*nswindow).get_ivar("event_queue");
             (*delegate).set_ivar("event_queue", event_queue_ptr);
+            (*delegate).set_ivar("command_states", command_states_ptr as *mut c_void);
 
-            msg_send![nsresponder, retain];
             msg_send![nswindow, setDelegate:delegate];
-            msg_send![nswindow, makeFirstResponder:nsresponder];
         }
 
         Window {
@@ -116,6 +179,15 @@ impl Window {
     pub fn get_events(&self) -> Vec<WindowEvent> {
         let nsobject = unsafe { &*self.nswindow};
         utils::get_event_queue(nsobject).drain(..).collect()
+    }
+
+    pub fn set_command_state(&self, cmd: WindowCommand, state: CommandState) {
+        let nsobject = unsafe {
+            let delegate: id = msg_send![self.nswindow, delegate];
+            &*delegate
+        };
+        let command_states = utils::get_command_states(nsobject);
+        command_states.insert(cmd, state);
     }
 
     pub fn set_url(&self, url: &str) {

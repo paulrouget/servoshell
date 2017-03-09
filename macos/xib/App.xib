@@ -59,7 +59,7 @@
                         <items>
                             <menuItem title="Open Location" keyEquivalent="l" id="IAo-SY-fd9">
                                 <connections>
-                                    <action selector="openLocation:" target="-1" id="DSy-m5-hEC"/>
+                                    <action selector="shellOpenLocation:" target="-1" id="DSy-m5-hEC"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="m54-Is-iLE"/>
@@ -334,28 +334,52 @@
                             <menuItem isSeparatorItem="YES" id="tMp-fO-sHT"/>
                             <menuItem title="Stop" keyEquivalent="." id="FwD-VH-WuJ">
                                 <connections>
-                                    <action selector="stop:" target="-1" id="r6f-kd-ar8"/>
+                                    <action selector="shellStop:" target="-1" id="r6f-kd-ar8"/>
                                 </connections>
                             </menuItem>
                             <menuItem title="Reload" keyEquivalent="r" id="wXj-hv-cs1">
                                 <connections>
-                                    <action selector="reload:" target="-1" id="glo-Mm-g2U"/>
+                                    <action selector="shellReload:" target="-1" id="glo-Mm-g2U"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="ATf-5w-ZaX"/>
                             <menuItem title="Actual Size" keyEquivalent="s" id="PuN-AR-sUs">
                                 <connections>
-                                    <action selector="zoomImageToActualSize:" target="-1" id="Agh-J2-2qs"/>
+                                    <action selector="shellZoomToActualSize:" target="-1" id="Agh-J2-2qs"/>
                                 </connections>
                             </menuItem>
                             <menuItem title="Zoom In" keyEquivalent="=" id="Eh4-UM-9O2">
                                 <connections>
-                                    <action selector="zoomIn:" target="-1" id="aSq-27-HXv"/>
+                                    <action selector="shellZoomIn:" target="-1" id="aSq-27-HXv"/>
                                 </connections>
                             </menuItem>
                             <menuItem title="Zoom Out" keyEquivalent="-" id="etw-Jj-dRL">
                                 <connections>
-                                    <action selector="zoomOut:" target="-1" id="0b4-ms-Iwo"/>
+                                    <action selector="shellZoomOut:" target="-1" id="0b4-ms-Iwo"/>
+                                </connections>
+                            </menuItem>
+                        </items>
+                    </menu>
+                </menuItem>
+                <menuItem title="History" id="TaV-69-54W">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <menu key="submenu" title="History" id="Ydd-iV-zEk">
+                        <items>
+                            <menuItem title="Back" keyEquivalent="[" id="dh1-BQ-rhQ">
+                                <connections>
+                                    <action selector="shellNavigateBack:" target="-1" id="kDk-ZR-2SD"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Forward" keyEquivalent="]" id="gSu-cW-jMy">
+                                <connections>
+                                    <action selector="shellNavigateForward:" target="-1" id="g1t-e0-MUk"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="IsS-tX-iWZ"/>
+                            <menuItem title="Clear History" id="x1b-cA-cZy">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="shellClearHistory:" target="-1" id="B1f-cy-Pu8"/>
                                 </connections>
                             </menuItem>
                         </items>

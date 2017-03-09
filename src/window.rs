@@ -1,4 +1,5 @@
 pub use platform::Window;
+use commands::WindowCommand;
 
 #[derive(Clone, Debug)]
 pub enum WindowEvent {
@@ -7,5 +8,5 @@ pub enum WindowEvent {
     DidEnterFullScreen,
     DidExitFullScreen,
     WillClose,
+    DoCommand(WindowCommand),
 }
-

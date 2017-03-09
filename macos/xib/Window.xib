@@ -30,7 +30,7 @@
                             </buttonCell>
                         </button>
                         <connections>
-                            <action selector="reload:" target="-1" id="uV6-ep-cg0"/>
+                            <action selector="shellReload:" target="-1" id="uV6-ep-cg0"/>
                         </connections>
                     </toolbarItem>
                     <toolbarItem implicitItemIdentifier="57F0C50E-F2E9-4394-89CE-EFD26C815591" explicitItemIdentifier="stop" label="Stop" paletteLabel="Stop" image="NSStopProgressTemplate" id="Ryh-a2-Juw" customClass="NSValidableToolbarItem">
@@ -46,7 +46,7 @@
                             </buttonCell>
                         </button>
                         <connections>
-                            <action selector="stop:" target="-1" id="QAU-TI-xpV"/>
+                            <action selector="shellStop:" target="-1" id="QAU-TI-xpV"/>
                         </connections>
                     </toolbarItem>
                     <toolbarItem implicitItemIdentifier="40D4646D-659B-407C-8FBB-432B18EF0288" explicitItemIdentifier="history" label="History" paletteLabel="History" id="eQy-xS-rWz">

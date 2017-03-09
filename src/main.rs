@@ -12,22 +12,22 @@ extern crate cocoa;
 extern crate objc_foundation;
 
 mod app;
-mod controls;
 mod window;
 mod view;
 mod servo;
 mod platform;
+mod commands;
 
 use app::AppEvent;
 use window::WindowEvent;
 use view::ViewEvent;
 use servo::ServoEvent;
-use controls::ControlEvent;
 use simplelog::{CombinedLogger, Config, LogLevel, LogLevelFilter, TermLogger, WriteLogger};
 use std::fs::File;
 use std::env::args;
 use app::App;
 use servo::{Servo, FollowLinkPolicy};
+use commands::{AppCommand, WindowCommand, CommandState};
 
 fn main() {
 
@@ -52,8 +52,8 @@ fn main() {
 
     platform::init();
 
-    let (app, ctrls) = App::load().unwrap();
-    let (window, view) = app.create_window(&ctrls).unwrap();
+    let app = App::load().unwrap();
+    let (window, view) = app.create_window().unwrap();
 
     // Skip first argument (executable), and find the first
     // argument that doesn't start with `-`
@@ -71,7 +71,8 @@ fn main() {
 
     info!("Servo version: {}", servo.version());
 
-    ctrls.set_command_state(ControlEvent::OpenLocation, true);
+    window.set_command_state(WindowCommand::OpenLocation, CommandState::Enabled);
+    app.set_command_state(AppCommand::ClearHistory, CommandState::Enabled);
 
     app.run(|| {
 
@@ -79,13 +80,11 @@ fn main() {
         loop {
 
             let app_events = app.get_events();
-            let ctrls_events = ctrls.get_events();
             let win_events = window.get_events();
             let view_events = view.get_events();
             let servo_events = servo.get_events();
 
             if app_events.is_empty() &&
-               ctrls_events.is_empty() &&
                win_events.is_empty() &&
                view_events.is_empty() &&
                servo_events.is_empty() {
@@ -109,37 +108,12 @@ fn main() {
                         view.update_drawable();
                         sync_needed = true;
                     }
-                }
-            }
-
-            for event in ctrls_events {
-                match event {
-                    ControlEvent::Stop => {
-                        // FIXME
-                    }
-                    ControlEvent::Reload => {
-                        servo.reload();
-                        sync_needed = true;
-                    }
-                    ControlEvent::GoBack => {
-                        servo.go_back();
-                        sync_needed = true;
-                    }
-                    ControlEvent::GoForward => {
-                        servo.go_forward();
-                        sync_needed = true;
-                    }
-                    ControlEvent::OpenLocation => {
-                        window.focus_urlbar();
-                    }
-                    ControlEvent::ZoomIn => {
-                        // FIXME
-                    }
-                    ControlEvent::ZoomOut => {
-                        // FIXME
-                    }
-                    ControlEvent::ZoomToActualSize => {
-                        // FIXME
+                    AppEvent::DoCommand(cmd) => {
+                        match cmd {
+                            AppCommand::ClearHistory => {
+                                // FIXME
+                            }
+                        }
                     }
                 }
             }
@@ -162,6 +136,37 @@ fn main() {
                     }
                     WindowEvent::WillClose => {
                         // FIXME
+                    }
+                    WindowEvent::DoCommand(cmd) => {
+                        match cmd {
+                            WindowCommand::Stop => {
+                                // FIXME
+                            }
+                            WindowCommand::Reload => {
+                                servo.reload();
+                                sync_needed = true;
+                            }
+                            WindowCommand::NavigateBack => {
+                                servo.go_back();
+                                sync_needed = true;
+                            }
+                            WindowCommand::NavigateForward => {
+                                servo.go_forward();
+                                sync_needed = true;
+                            }
+                            WindowCommand::OpenLocation => {
+                                window.focus_urlbar();
+                            }
+                            WindowCommand::ZoomIn => {
+                                // FIXME
+                            }
+                            WindowCommand::ZoomOut => {
+                                // FIXME
+                            }
+                            WindowCommand::ZoomToActualSize => {
+                                // FIXME
+                            }
+                        }
                     }
                 }
             }
@@ -210,12 +215,12 @@ fn main() {
                         // FIXME
                     }
                     ServoEvent::LoadStart(..) => {
-                        ctrls.set_command_state(ControlEvent::Reload, false);
-                        ctrls.set_command_state(ControlEvent::Stop, true);
+                        window.set_command_state(WindowCommand::Reload, CommandState::Disabled);
+                        window.set_command_state(WindowCommand::Stop, CommandState::Enabled);
                     }
                     ServoEvent::LoadEnd(..) => {
-                        ctrls.set_command_state(ControlEvent::Reload, true);
-                        ctrls.set_command_state(ControlEvent::Stop, false);
+                        window.set_command_state(WindowCommand::Reload, CommandState::Enabled);
+                        window.set_command_state(WindowCommand::Stop, CommandState::Disabled);
                     }
                     ServoEvent::LoadError(..) => {
                         // FIXME

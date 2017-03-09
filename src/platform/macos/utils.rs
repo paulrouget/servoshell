@@ -64,6 +64,7 @@ pub fn get_ivar<'a, T>(obj: &'a Object, var: &'static str) -> &'a mut T {
 }
 
 // FIXME: Is there a better way?
+#[allow(dead_code)]
 pub fn get_classname(id: id) -> String {
     unsafe {
         let name: id = msg_send![id, className];

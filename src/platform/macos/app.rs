@@ -7,14 +7,26 @@ use std::os::raw::c_void;
 use super::view;
 use super::window;
 use super::utils;
-use super::controls;
-
 use app::AppEvent;
+use std::collections::HashMap;
+use commands::{CommandState, AppCommand};
+
+// FIXME: this is ugly. Also, we are duplicating the list
+// of Selector (see the add_method list)
+fn action_to_command(action: Sel) -> Option<AppCommand> {
+    if action == sel!(shellClearHistory:) {
+        Some(AppCommand::ClearHistory)
+    } else {
+        None
+    }
+}
+
 
 pub fn register() {
-    let superclass = Class::get("NSObject").unwrap();
+    let superclass = Class::get("NSResponder").unwrap();
     let mut class = ClassDecl::new("NSShellApplicationDelegate", superclass).unwrap();
     class.add_ivar::<*mut c_void>("event_queue");
+    class.add_ivar::<*mut c_void>("command_states");
 
     extern fn did_finish_launching(this: &Object, _sel: Sel, _notification: id) {
         utils::get_event_queue(this).push(AppEvent::DidFinishLaunching)
@@ -28,10 +40,38 @@ pub fn register() {
         utils::get_event_queue(this).push(AppEvent::WillTerminate)
     }
 
+    extern fn validate_ui(this: &Object, _sel: Sel, item: id) -> BOOL {
+        let map: &mut HashMap<AppCommand, CommandState> = utils::get_command_states(this);
+        let action: Sel = unsafe {msg_send![item, action]};
+        match action_to_command(action) {
+            Some(event) => {
+                match map.get(&event) {
+                    Some(&CommandState::Enabled) => YES,
+                    Some(&CommandState::Disabled) => NO,
+                    None => NO,
+                }
+            },
+            None => panic!("Unexpected action to validate"),
+        }
+    }
+
+    extern fn record_command(this: &Object, _sel: Sel, item: id) {
+        let action: Sel = unsafe {msg_send![item, action]};
+        match action_to_command(action) {
+            Some(cmd) => utils::get_event_queue(this).push(AppEvent::DoCommand(cmd)),
+            None => panic!("Unexpected action to record"),
+        }
+    }
+
+
     unsafe {
         class.add_method(sel!(applicationDidFinishLaunching:), did_finish_launching as extern fn(&Object, Sel, id));
         class.add_method(sel!(applicationDidChangeScreenParameter:), did_change_screen_parameter as extern fn(&Object, Sel, id));
         class.add_method(sel!(applicationWillTerminate:), will_terminate as extern fn(&Object, Sel, id));
+
+        class.add_method(sel!(shellClearHistory:), record_command as extern fn(&Object, Sel, id));
+
+        class.add_method(sel!(validateUserInterfaceItem:), validate_ui as extern fn(&Object, Sel, id) -> BOOL);
     }
 
     class.register();
@@ -44,7 +84,7 @@ pub struct App {
 
 impl App {
 
-    pub fn load() -> Result<(App, controls::Controls), &'static str> {
+    pub fn load() -> Result<App, &'static str> {
 
         let instances = match utils::load_nib("App.nib") {
             Ok(instances) => instances,
@@ -69,16 +109,20 @@ impl App {
         // FIXME: release and set delegate to nil
         let event_queue: Vec<AppEvent> = Vec::new();
         let event_queue_ptr = Box::into_raw(Box::new(event_queue));
+
+        let command_states: HashMap<AppCommand, CommandState> = HashMap::new();
+        let command_states_ptr = Box::into_raw(Box::new(command_states));
+
         unsafe {
             let delegate: id = msg_send![class("NSShellApplicationDelegate"), alloc];
             (*delegate).set_ivar("event_queue", event_queue_ptr as *mut c_void);
+            (*delegate).set_ivar("command_states", command_states_ptr as *mut c_void);
             msg_send![nsapp, setDelegate:delegate];
         }
 
         let app = App {nsapp: nsapp};
-        let controls = controls::Controls::new();
 
-        Ok((app, controls))
+        Ok(app)
     }
 
     pub fn get_events(&self) -> Vec<AppEvent> {
@@ -87,6 +131,15 @@ impl App {
             &*delegate
         };
         utils::get_event_queue(nsobject).drain(..).collect()
+    }
+
+    pub fn set_command_state(&self, cmd: AppCommand, state: CommandState) {
+        let nsobject = unsafe {
+            let delegate: id = msg_send![self.nsapp, delegate];
+            &*delegate
+        };
+        let command_states = utils::get_command_states(nsobject);
+        command_states.insert(cmd, state);
     }
 
     // Equivalent of NSApp.run()
@@ -132,7 +185,7 @@ impl App {
         }
     }
 
-    pub fn create_window(&self, controls: &controls::Controls) -> Result<(window::Window, view::View), &'static str> {
+    pub fn create_window(&self) -> Result<(window::Window, view::View), &'static str> {
         let nswindow = match App::create_native_window() {
             Ok(w) => w,
             Err(msg) => return Err(msg),
@@ -141,8 +194,7 @@ impl App {
             Ok(v) => v,
             Err(msg) => return Err(msg),
         };
-        let nsresponder = controls.get_nsresponder();
-        Ok((window::Window::new(nswindow, nsresponder), view::View::new(nsview)))
+        Ok((window::Window::new(nswindow), view::View::new(nsview)))
     }
 
     fn create_native_window() -> Result<id, &'static str> {
