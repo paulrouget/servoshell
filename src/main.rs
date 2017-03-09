@@ -70,6 +70,7 @@ fn main() {
     window.set_command_state(WindowCommand::OpenLocation, CommandState::Enabled);
     window.set_command_state(WindowCommand::ZoomIn, CommandState::Enabled);
     window.set_command_state(WindowCommand::ZoomOut, CommandState::Enabled);
+    window.set_command_state(WindowCommand::ShowOptions, CommandState::Enabled);
     window.set_command_state(WindowCommand::ZoomToActualSize, CommandState::Disabled);
     window.set_command_state(WindowCommand::ToggleSidebar, CommandState::Enabled);
     app.set_command_state(AppCommand::ClearHistory, CommandState::Enabled);
@@ -188,6 +189,9 @@ fn main() {
                                 zoom = 1.0;
                                 servo.reset_zoom();
                                 window.set_command_state(WindowCommand::ZoomToActualSize, CommandState::Disabled);
+                            }
+                            WindowCommand::ShowOptions => {
+                                window.show_options();
                             }
                             WindowCommand::Load(request) => {
                                 let url = ServoUrl::parse(&request).or_else(|error| {

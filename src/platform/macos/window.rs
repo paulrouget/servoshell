@@ -36,6 +36,8 @@ fn action_to_command(action: Sel) -> Option<WindowCommand> {
         Some(WindowCommand::OpenInDefaultBrowser)
     } else if action == sel!(shellToggleSidebar:) {
         Some(WindowCommand::ToggleSidebar)
+    } else if action == sel!(shellShowOptions:) {
+        Some(WindowCommand::ShowOptions)
     } else {
         None
     }
@@ -191,6 +193,7 @@ pub fn register() {
             class.add_method(sel!(shellNavigateForward:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellOpenInDefaultBrowser:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellToggleSidebar:), record_command as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellShowOptions:), record_command as extern fn(&Object, Sel, id));
 
             class.add_method(sel!(shellSubmitUserInput:), submit_user_input as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellNavigate:), navigate as extern fn(&Object, Sel, id));
@@ -207,10 +210,11 @@ pub fn register() {
 
 pub struct Window {
     nswindow: id,
+    nspopover: id,
 }
 
 impl Window {
-    pub fn new(nswindow: id) -> Window {
+    pub fn new(nswindow: id, nspopover: id) -> Window {
 
         let command_states: HashMap<WindowCommand, CommandState> = HashMap::new();
         let command_states_ptr = Box::into_raw(Box::new(command_states));
@@ -226,6 +230,8 @@ impl Window {
 
             msg_send![nswindow, setDelegate:delegate];
 
+            msg_send![nspopover, setBehavior:1]; // NSPopoverBehaviorTransient
+
             nswindow.setTitleVisibility_(NSWindowTitleVisibility::NSWindowTitleHidden);
             let mask = nswindow.styleMask() as NSUInteger | NSWindowMask::NSFullSizeContentViewWindowMask as NSUInteger;
             nswindow.setStyleMask_(mask);
@@ -235,6 +241,7 @@ impl Window {
 
         Window {
             nswindow: nswindow,
+            nspopover: nspopover,
         }
     }
 
@@ -309,6 +316,15 @@ impl Window {
             let item = self.get_toolbar_item("urlbar").unwrap();
             let urlbar: id = msg_send![item, view];
             msg_send![urlbar, becomeFirstResponder];
+        }
+    }
+
+    pub fn show_options(&self) {
+        unsafe {
+            let item = self.get_toolbar_item("options").unwrap();
+            let button: id = msg_send![item, view];
+            let bounds = NSView::bounds(button);
+            msg_send![self.nspopover, showRelativeToRect:bounds ofView:button preferredEdge:3];
         }
     }
 

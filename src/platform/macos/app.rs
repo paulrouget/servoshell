@@ -185,29 +185,43 @@ impl App {
     }
 
     pub fn create_window(&self) -> Result<window::Window, &'static str> {
-        let nswindow = match App::create_native_window() {
+        let (nswindow, nspopover) = match App::create_native_window() {
             Ok(w) => w,
             Err(msg) => return Err(msg),
         };
 
-        Ok(window::Window::new(nswindow))
+        Ok(window::Window::new(nswindow, nspopover))
     }
 
-    fn create_native_window() -> Result<id, &'static str> {
+    fn create_native_window() -> Result<(id, id), &'static str> {
         let instances = match utils::load_nib("Window.nib") {
             Ok(instances) => instances,
             Err(msg) => return Err(msg),
         };
 
-        let nswindow = instances.into_iter().find(|i| {
-            utils::id_is_instance_of(*i, "NSShellWindow")
-        });
+        let mut nspopover: Option<id> = None;
+        let mut nswindow: Option<id> = None;
+        for i in instances {
+            let class = utils::get_classname(i);
+            info!("Found class: {}", class);
+            if utils::id_is_instance_of(i, "NSShellWindow") {
+                nswindow = Some(i);
+            }
+            if utils::id_is_instance_of(i, "NSPopover") {
+                nspopover = Some(i);
+            }
+        }
 
         let nswindow = match nswindow {
-            None => return Err("Couldn't not find NSWindow instance in nib file"),
+            None => return Err("Couldn't not find NSShellWindow instance in nib file"),
             Some(id) => id,
         };
 
-        Ok(nswindow)
+        let nspopover = match nspopover {
+            None => return Err("Couldn't not find NSPopover instance in nib file"),
+            Some(id) => id,
+        };
+
+        Ok((nswindow, nspopover))
     }
 }

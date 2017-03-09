@@ -17,6 +17,7 @@ pub enum WindowCommand {
     ZoomOut,
     ZoomToActualSize,
     ToggleSidebar,
+    ShowOptions,
     Load(String),
 }
 

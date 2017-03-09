@@ -204,6 +204,22 @@
                         </connections>
                     </toolbarItem>
                     <toolbarItem implicitItemIdentifier="NSToolbarFlexibleSpaceItem" id="b3I-M0-yFF"/>
+                    <toolbarItem implicitItemIdentifier="F1ACFA55-310D-45C6-AAB0-65F41A4C4EF0" explicitItemIdentifier="options" label="Options" paletteLabel="Options" image="NSActionTemplate" id="588-1C-kbe" customClass="NSValidableToolbarItem">
+                        <nil key="toolTip"/>
+                        <size key="minSize" width="36" height="28"/>
+                        <size key="maxSize" width="40" height="28"/>
+                        <button key="view" toolTip="Options" verticalHuggingPriority="750" id="Uqd-md-bbc">
+                            <rect key="frame" x="7" y="14" width="36" height="28"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="NSActionTemplate" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="mpP-Md-cRS">
+                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                        </button>
+                        <connections>
+                            <action selector="shellShowOptions:" target="-1" id="t6k-Hd-czG"/>
+                        </connections>
+                    </toolbarItem>
                 </allowedToolbarItems>
                 <defaultToolbarItems>
                     <toolbarItem reference="eQy-xS-rWz"/>
@@ -214,11 +230,46 @@
                     <toolbarItem reference="Ryh-a2-Juw"/>
                     <toolbarItem reference="nLf-0M-uSd"/>
                     <toolbarItem reference="Va7-c8-Chm"/>
+                    <toolbarItem reference="588-1C-kbe"/>
                 </defaultToolbarItems>
             </toolbar>
         </window>
+        <viewController id="8l9-S4-ely" userLabel="Popover View Controller">
+            <connections>
+                <outlet property="view" destination="5SJ-N2-gZR" id="QPQ-5q-UKH"/>
+            </connections>
+        </viewController>
+        <popover id="Fwc-jq-IY3">
+            <connections>
+                <outlet property="contentViewController" destination="8l9-S4-ely" id="c68-HD-cOd"/>
+            </connections>
+        </popover>
+        <customView id="5SJ-N2-gZR" userLabel="Options">
+            <rect key="frame" x="0.0" y="0.0" width="279" height="226"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+            <subviews>
+                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="heO-PY-kv7">
+                    <rect key="frame" x="18" y="190" width="93" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Dark theme" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="kKj-Kl-gmN">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                </button>
+                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="xIq-d1-UEL">
+                    <rect key="frame" x="18" y="170" width="118" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Restrict domain" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="C1U-fN-Ynb">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                </button>
+            </subviews>
+            <point key="canvasLocation" x="504" y="245"/>
+        </customView>
     </objects>
     <resources>
+        <image name="NSActionTemplate" width="14" height="14"/>
         <image name="NSGoLeftTemplate" width="9" height="12"/>
         <image name="NSGoRightTemplate" width="9" height="12"/>
         <image name="NSRefreshTemplate" width="11" height="15"/>
