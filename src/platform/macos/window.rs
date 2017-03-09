@@ -109,8 +109,14 @@ pub fn register() {
         }
 
         extern fn validate_ui(this: &Object, _sel: Sel, item: id) -> BOOL {
+            unsafe {
+                let action: Sel = msg_send![item, action];
+                msg_send![this, validateAction:action]
+            }
+        }
+
+        extern fn validate_action(this: &Object, _sel: Sel, action: Sel) -> BOOL {
             let map: &mut HashMap<WindowCommand, CommandState> = utils::get_command_states(this);
-            let action: Sel = unsafe {msg_send![item, action]};
             match action_to_command(action) {
                 Some(event) => {
                     match map.get(&event) {
@@ -141,6 +147,16 @@ pub fn register() {
             utils::get_event_queue(this).push(WindowEvent::DoCommand(cmd));
         }
 
+        extern fn navigate(this: &Object, _sel: Sel, item: id) {
+            let idx: NSInteger = unsafe { msg_send![item, selectedSegment] };
+            let cmd = if idx == 0 {
+                WindowCommand::NavigateBack
+            } else {
+                WindowCommand::NavigateForward
+            };
+            utils::get_event_queue(this).push(WindowEvent::DoCommand(cmd));
+        }
+
         unsafe {
             class.add_method(sel!(windowDidResize:), record_notification as extern fn(&Object, Sel, id));
             class.add_method(sel!(windowDidEnterFullScreen:), record_notification as extern fn(&Object, Sel, id));
@@ -157,7 +173,9 @@ pub fn register() {
             class.add_method(sel!(shellNavigateForward:), record_command as extern fn(&Object, Sel, id));
 
             class.add_method(sel!(shellSubmitUserInput:), submit_user_input as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellNavigate:), navigate as extern fn(&Object, Sel, id));
 
+            class.add_method(sel!(validateAction:), validate_action as extern fn(&Object, Sel, Sel) -> BOOL);
             class.add_method(sel!(validateUserInterfaceItem:), validate_ui as extern fn(&Object, Sel, id) -> BOOL);
         }
 
