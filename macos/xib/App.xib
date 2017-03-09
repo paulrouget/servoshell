@@ -343,7 +343,7 @@
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="ATf-5w-ZaX"/>
-                            <menuItem title="Actual Size" keyEquivalent="s" id="PuN-AR-sUs">
+                            <menuItem title="Actual Size" keyEquivalent="0" id="PuN-AR-sUs">
                                 <connections>
                                     <action selector="shellZoomToActualSize:" target="-1" id="Agh-J2-2qs"/>
                                 </connections>
