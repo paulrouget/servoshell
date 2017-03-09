@@ -9,7 +9,7 @@
         <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" releasedWhenClosed="NO" animationBehavior="default" id="vcB-Pn-Wg9" customClass="NSShellWindow">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" unifiedTitleAndToolbar="YES" fullSizeContentView="YES"/>
             <rect key="contentRect" x="196" y="240" width="600" height="300"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1280" height="800"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1280" height="777"/>
             <view key="contentView" wantsLayer="YES" id="aec-nG-MTq" customClass="NSServoView">
                 <rect key="frame" x="0.0" y="0.0" width="600" height="300"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -21,7 +21,7 @@
                         <nil key="toolTip"/>
                         <size key="minSize" width="36" height="28"/>
                         <size key="maxSize" width="40" height="28"/>
-                        <button key="view" verticalHuggingPriority="750" id="koT-VX-Img">
+                        <button key="view" toolTip="Reload This Page" verticalHuggingPriority="750" id="koT-VX-Img">
                             <rect key="frame" x="4" y="14" width="36" height="28"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="NSRefreshTemplate" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="dlf-ii-2rc">
@@ -53,7 +53,7 @@
                         <nil key="toolTip"/>
                         <size key="minSize" width="67" height="25"/>
                         <size key="maxSize" width="69" height="28"/>
-                        <segmentedControl key="view" verticalHuggingPriority="750" id="dir-AS-5Cf">
+                        <segmentedControl key="view" toolTip="Go Back/Forward" verticalHuggingPriority="750" id="dir-AS-5Cf">
                             <rect key="frame" x="0.0" y="14" width="67" height="28"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <segmentedCell key="cell" borderStyle="border" alignment="left" style="texturedSquare" trackingMode="momentary" id="0rj-D1-yTm">
@@ -72,7 +72,7 @@
                         <nil key="toolTip"/>
                         <size key="minSize" width="36" height="28"/>
                         <size key="maxSize" width="40" height="28"/>
-                        <button key="view" verticalHuggingPriority="750" id="JeK-cS-AiF">
+                        <button key="view" toolTip="Open This Page In Default Web Browser" verticalHuggingPriority="750" id="JeK-cS-AiF">
                             <rect key="frame" x="50" y="14" width="36" height="28"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="NSShareTemplate" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="uMS-WD-0CA">
@@ -88,7 +88,7 @@
                         <nil key="toolTip"/>
                         <size key="minSize" width="67" height="25"/>
                         <size key="maxSize" width="97" height="28"/>
-                        <segmentedControl key="view" verticalHuggingPriority="750" id="Qpf-nX-gHV">
+                        <segmentedControl key="view" toolTip="Zoom This Page" verticalHuggingPriority="750" id="Qpf-nX-gHV">
                             <rect key="frame" x="0.0" y="14" width="97" height="28"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <segmentedCell key="cell" borderStyle="border" alignment="left" style="texturedSquare" trackingMode="momentary" id="CyU-pL-eza">
