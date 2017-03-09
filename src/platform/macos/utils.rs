@@ -3,7 +3,9 @@ use cocoa::foundation::*;
 use objc::runtime::Object;
 use std::os::raw::c_void;
 use std::collections::HashMap;
+use std::ffi::CStr;
 use platform;
+use libc;
 
 pub fn load_nib(filename: &str) -> Result<Vec<id>, &'static str> {
 
@@ -58,5 +60,14 @@ pub fn get_ivar<'a, T>(obj: &'a Object, var: &'static str) -> &'a mut T {
     unsafe {
         let ivar: *mut c_void = *obj.get_ivar(var);
         &mut *(ivar as *mut T)
+    }
+}
+
+// FIXME: Is there a better way?
+pub fn get_classname(id: id) -> String {
+    unsafe {
+        let name: id = msg_send![id, className];
+        let name: *const libc::c_char = msg_send![name, UTF8String];
+        CStr::from_ptr(name).to_string_lossy().into_owned()
     }
 }
