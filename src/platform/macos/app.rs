@@ -212,13 +212,6 @@ impl App {
             Some(id) => id,
         };
 
-        unsafe {
-            nswindow.setTitleVisibility_(NSWindowTitleVisibility::NSWindowTitleHidden);
-            let mask = nswindow.styleMask() as NSUInteger |
-                       NSWindowMask::NSFullSizeContentViewWindowMask as NSUInteger;
-            nswindow.setStyleMask_(mask);
-        }
-
         Ok(nswindow)
     }
 

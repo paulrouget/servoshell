@@ -183,6 +183,12 @@ impl Window {
             (*delegate).set_ivar("command_states", command_states_ptr as *mut c_void);
 
             msg_send![nswindow, setDelegate:delegate];
+
+            nswindow.setTitleVisibility_(NSWindowTitleVisibility::NSWindowTitleHidden);
+            let mask = nswindow.styleMask() as NSUInteger | NSWindowMask::NSFullSizeContentViewWindowMask as NSUInteger;
+            nswindow.setStyleMask_(mask);
+            nswindow.setAcceptsMouseMovedEvents_(YES);
+
         }
 
         Window {

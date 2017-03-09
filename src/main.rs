@@ -204,6 +204,14 @@ fn main() {
                         servo.perform_scroll(0, 0, x, y, phase);
                         sync_needed = true;
                     }
+                    ViewEvent::MouseMoved(x, y) => {
+                        let geometry = view.get_geometry();
+                        let (top, _, _, left) = geometry.margins;
+                        let top = top as f32 * geometry.hidpi_factor;
+                        let left = left as f32 * geometry.hidpi_factor;
+                        servo.perform_mouse_move(x - left as i32, y - top as i32);
+                        sync_needed = true;
+                    }
                 }
             }
 

@@ -19,7 +19,7 @@ pub enum ViewEvent {
 
     MouseWheel(MouseScrollDelta, TouchPhase),
     // MouseInput(ElementState, MouseButton),
-    // MouseMoved(i32, i32),
+    MouseMoved(i32, i32),
 }
 
 #[derive(Debug, Clone)]

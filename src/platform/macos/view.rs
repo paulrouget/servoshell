@@ -19,10 +19,6 @@ use std::str::FromStr;
 use view::{ViewEvent, TouchPhase, MouseScrollDelta};
 use super::utils;
 
-enum NSViewEvent {
-    NSEvent(id),
-}
-
 pub fn register() {
     let superclass = Class::get("NSView").unwrap();
     let mut class = ClassDecl::new("NSServoView", superclass).unwrap();
@@ -31,16 +27,20 @@ pub fn register() {
 
     extern fn store_nsevent(this: &Object, _sel: Sel, event: id) {
         unsafe { msg_send![event, retain] }
-        utils::get_event_queue(this).push(NSViewEvent::NSEvent(event));
+        utils::get_event_queue(this).push(event);
     }
 
     extern fn awake_from_nib(this: &mut Object, _sel: Sel) {
         // FIXME: is that the best way to create a raw pointer?
-        let event_queue: Vec<NSViewEvent> = Vec::new();
+        let event_queue: Vec<id> = Vec::new();
         let event_queue_ptr = Box::into_raw(Box::new(event_queue));
         unsafe {
             this.set_ivar("event_queue", event_queue_ptr as *mut c_void);
         }
+    }
+
+    extern fn accept_first_responder(_this: &Object, _sel: Sel) -> BOOL {
+        YES
     }
 
     unsafe {
@@ -48,6 +48,9 @@ pub fn register() {
         class.add_method(sel!(mouseDown:), store_nsevent as extern fn(&Object, Sel, id));
         class.add_method(sel!(mouseUp:), store_nsevent as extern fn(&Object, Sel, id));
         class.add_method(sel!(mouseMoved:), store_nsevent as extern fn(&Object, Sel, id));
+
+        class.add_method(sel!(acceptsFirstResponder), accept_first_responder as extern fn(&Object, Sel) -> BOOL);
+
         class.add_method(sel!(awakeFromNib), awake_from_nib as extern fn(&mut Object, Sel));
     }
 
@@ -131,37 +134,42 @@ impl View {
         }
     }
 
-    fn nsevent_to_viewevent(&self, event: NSViewEvent) -> Option<ViewEvent> {
-        match event {
-            NSViewEvent::NSEvent(nsevent) => {
-                unsafe {
-                    let event_type = nsevent.eventType();
-                    match event_type {
-                        NSScrollWheel => {
-                            // Stolen from winit
-                            use self::MouseScrollDelta::{LineDelta, PixelDelta};
-                            let nswindow: id = nsevent.window();
-                            let hidpi_factor: CGFloat = msg_send![nswindow, backingScaleFactor];
-                            let hidpi_factor = hidpi_factor as f32;
-                            let delta = if nsevent.hasPreciseScrollingDeltas() == YES {
-                                PixelDelta(hidpi_factor * nsevent.scrollingDeltaX() as f32,
-                                hidpi_factor * nsevent.scrollingDeltaY() as f32)
-                            } else {
-                                LineDelta(hidpi_factor * nsevent.scrollingDeltaX() as f32,
-                                hidpi_factor * nsevent.scrollingDeltaY() as f32)
-                            };
-                            let phase = match nsevent.phase() {
-                                appkit::NSEventPhaseMayBegin | appkit::NSEventPhaseBegan => TouchPhase::Started,
-                                appkit::NSEventPhaseEnded => TouchPhase::Ended,
-                                _ => TouchPhase::Moved,
-                            };
-                            Some(ViewEvent::MouseWheel(delta, phase))
-                        },
-                        _ => {
-                            None
-                        }
-                    }
+    fn nsevent_to_viewevent(&self, nsevent: id) -> Option<ViewEvent> {
+        unsafe {
+            let event_type = nsevent.eventType();
+            match event_type {
+                NSScrollWheel => {
+                    // Stolen from winit
+                    use self::MouseScrollDelta::{LineDelta, PixelDelta};
+                    let nswindow: id = nsevent.window();
+                    let hidpi_factor: CGFloat = msg_send![nswindow, backingScaleFactor];
+                    let hidpi_factor = hidpi_factor as f32;
+                    let delta = if nsevent.hasPreciseScrollingDeltas() == YES {
+                        PixelDelta(hidpi_factor * nsevent.scrollingDeltaX() as f32,
+                        hidpi_factor * nsevent.scrollingDeltaY() as f32)
+                    } else {
+                        LineDelta(hidpi_factor * nsevent.scrollingDeltaX() as f32,
+                        hidpi_factor * nsevent.scrollingDeltaY() as f32)
+                    };
+                    let phase = match nsevent.phase() {
+                        appkit::NSEventPhaseMayBegin | appkit::NSEventPhaseBegan => TouchPhase::Started,
+                        appkit::NSEventPhaseEnded => TouchPhase::Ended,
+                        _ => TouchPhase::Moved,
+                    };
+                    Some(ViewEvent::MouseWheel(delta, phase))
+                },
+                NSMouseMoved => {
+                    let nswindow = nsevent.window();
+                    let window_point = nsevent.locationInWindow();
+                    let view_point = self.nsview.convertPoint_fromView_(window_point, nil);
+                    let frame = NSView::frame(self.nsview);
+                    let hidpi_factor: CGFloat = msg_send![nswindow, backingScaleFactor];
+                    let hidpi_factor = hidpi_factor as f32;
+                    let x = (hidpi_factor * view_point.x as f32) as i32;
+                    let y = (hidpi_factor * (frame.size.height - view_point.y) as f32) as i32;
+                    Some(ViewEvent::MouseMoved(x, y))
                 }
+                _ => None
             }
         }
     }

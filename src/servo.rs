@@ -147,10 +147,10 @@ impl Servo {
         self.events_for_servo.borrow_mut().push(event);
     }
 
-    // pub fn perform_mouse_move(&self, x: i32, y: i32) {
-    //     let event = WindowEvent::MouseWindowMoveEventClass(TypedPoint2D::new(x as f32, y as f32));
-    //     self.events_for_servo.borrow_mut().push(event);
-    // }
+    pub fn perform_mouse_move(&self, x: i32, y: i32) {
+        let event = WindowEvent::MouseWindowMoveEventClass(TypedPoint2D::new(x as f32, y as f32));
+        self.events_for_servo.borrow_mut().push(event);
+    }
 
     pub fn perform_scroll(&self, x: i32, y: i32, dx: f32, dy: f32, phase: TouchPhase) {
         let scroll_location = webrender_traits::ScrollLocation::Delta(TypedPoint2D::new(dx, dy));
