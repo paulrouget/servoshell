@@ -74,6 +74,9 @@ fn main() {
     info!("Servo version: {}", servo.version());
 
     window.set_command_state(WindowCommand::OpenLocation, CommandState::Enabled);
+    window.set_command_state(WindowCommand::ZoomIn, CommandState::Enabled);
+    window.set_command_state(WindowCommand::ZoomOut, CommandState::Enabled);
+    window.set_command_state(WindowCommand::ZoomToActualSize, CommandState::Enabled);
     app.set_command_state(AppCommand::ClearHistory, CommandState::Enabled);
 
     let mut last_mouse_point = (0, 0);
@@ -164,13 +167,16 @@ fn main() {
                                 window.focus_urlbar();
                             }
                             WindowCommand::ZoomIn => {
-                                // FIXME
+                                servo.zoom(1.1);
+                                sync_needed = true;
                             }
                             WindowCommand::ZoomOut => {
-                                // FIXME
+                                servo.zoom(1.0 / 1.1);
+                                sync_needed = true;
                             }
                             WindowCommand::ZoomToActualSize => {
-                                // FIXME
+                                servo.reset_zoom();
+                                sync_needed = true;
                             }
                             WindowCommand::Load(request) => {
                                 let url = ServoUrl::parse(&request).or_else(|error| {
