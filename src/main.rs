@@ -249,13 +249,39 @@ fn main() {
                     ServoEvent::StatusChanged(..) => {
                         // FIXME
                     }
-                    ServoEvent::LoadStart(..) => {
+                    ServoEvent::LoadStart(can_go_back, can_go_forward) => {
                         window.set_command_state(WindowCommand::Reload, CommandState::Disabled);
                         window.set_command_state(WindowCommand::Stop, CommandState::Enabled);
+
+                        // FIXME: See https://github.com/servo/servo/issues/15643
+                        window.set_command_state(WindowCommand::NavigateBack, if can_go_back {
+                            CommandState::Enabled
+                        } else {
+                            CommandState::Disabled
+                        });
+                        window.set_command_state(WindowCommand::NavigateForward, if can_go_forward {
+                            CommandState::Enabled
+                        } else {
+                            CommandState::Disabled
+                        });
                     }
-                    ServoEvent::LoadEnd(..) => {
+                    ServoEvent::LoadEnd(can_go_back, can_go_forward, root) => {
                         window.set_command_state(WindowCommand::Reload, CommandState::Enabled);
                         window.set_command_state(WindowCommand::Stop, CommandState::Disabled);
+
+                        if root {
+                            // FIXME: See https://github.com/servo/servo/issues/15643
+                            window.set_command_state(WindowCommand::NavigateBack, if can_go_back {
+                                CommandState::Enabled
+                            } else {
+                                CommandState::Disabled
+                            });
+                            window.set_command_state(WindowCommand::NavigateForward, if can_go_forward {
+                                CommandState::Enabled
+                            } else {
+                                CommandState::Disabled
+                            });
+                        }
                     }
                     ServoEvent::LoadError(..) => {
                         // FIXME
