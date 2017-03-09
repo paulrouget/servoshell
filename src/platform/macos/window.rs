@@ -3,11 +3,13 @@ use cocoa::foundation::*;
 use cocoa::base::*;
 use objc::declare::ClassDecl;
 use objc::runtime::{Class, Object, Sel};
+use std::ffi::CStr;
 use std::os::raw::c_void;
 use super::utils;
 use window::WindowEvent;
 use std::collections::HashMap;
 use commands::{CommandState, WindowCommand};
+use libc;
 
 // FIXME: this is ugly. Also, we are duplicating the list
 // of Selector (see the add_method list)
@@ -128,6 +130,16 @@ pub fn register() {
             }
         }
 
+        extern fn submit_user_input(this: &Object, _sel: Sel, item: id) {
+            let text = unsafe {
+                let text: id = msg_send![item, stringValue];
+                let text: *const libc::c_char = msg_send![text, UTF8String];
+                CStr::from_ptr(text).to_string_lossy().into_owned()
+            };
+            let cmd = WindowCommand::Load(text);
+            utils::get_event_queue(this).push(WindowEvent::DoCommand(cmd));
+        }
+
         unsafe {
             class.add_method(sel!(windowDidResize:), record_notification as extern fn(&Object, Sel, id));
             class.add_method(sel!(windowDidEnterFullScreen:), record_notification as extern fn(&Object, Sel, id));
@@ -142,6 +154,8 @@ pub fn register() {
             class.add_method(sel!(shellZoomToActualSize:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellNavigateBack:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellNavigateForward:), record_command as extern fn(&Object, Sel, id));
+
+            class.add_method(sel!(shellSubmitUserInput:), submit_user_input as extern fn(&Object, Sel, id));
 
             class.add_method(sel!(validateUserInterfaceItem:), validate_ui as extern fn(&Object, Sel, id) -> BOOL);
         }

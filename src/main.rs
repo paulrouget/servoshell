@@ -10,6 +10,7 @@ extern crate simplelog;
 extern crate libc;
 extern crate cocoa;
 extern crate objc_foundation;
+extern crate open;
 
 mod app;
 mod window;
@@ -26,7 +27,7 @@ use simplelog::{CombinedLogger, Config, LogLevel, LogLevelFilter, TermLogger, Wr
 use std::fs::File;
 use std::env::args;
 use app::App;
-use servo::{Servo, FollowLinkPolicy};
+use servo::{Servo, ServoUrl, FollowLinkPolicy};
 use commands::{AppCommand, WindowCommand, CommandState};
 
 fn main() {
@@ -65,7 +66,8 @@ fn main() {
     let servo = {
         let geometry = view.get_geometry();
         let riser = window.create_eventloop_riser();
-        let policy = FollowLinkPolicy::FollowOriginalDomain;
+        // let policy = FollowLinkPolicy::FollowOriginalDomain;
+        let policy = FollowLinkPolicy::FollowAnyLink;
         Servo::new(geometry, riser, &url, policy)
     };
 
@@ -166,6 +168,25 @@ fn main() {
                             WindowCommand::ZoomToActualSize => {
                                 // FIXME
                             }
+                            WindowCommand::Load(request) => {
+                                let url = ServoUrl::parse(&request).or_else(|error| {
+                                    // FIXME: weak
+                                    if request.ends_with(".com") || request.ends_with(".org") || request.ends_with(".net") {
+                                        ServoUrl::parse(&format!("http://{}", request))
+                                    } else {
+                                        Err(error)
+                                    }
+                                }).or_else(|_| {
+                                    ServoUrl::parse(&format!("https://duckduckgo.com/html/?q={}", request))
+                                });
+                                match url {
+                                    Ok(url) => {
+                                        sync_needed = true;
+                                        servo.load_url(url)
+                                    },
+                                    Err(err) => warn!("Can't parse url: {}", err),
+                                }
+                            }
                         }
                     }
                 }
@@ -208,8 +229,9 @@ fn main() {
                         window.set_title(&title.unwrap_or("No Title".to_owned()));
 
                     }
-                    ServoEvent::UnhandledURL(..) => {
-                        // FIXME
+                    ServoEvent::UnhandledURL(url) => {
+                        open::that(url.as_str()).ok();
+
                     }
                     ServoEvent::StatusChanged(..) => {
                         // FIXME

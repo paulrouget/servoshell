@@ -98,6 +98,9 @@
                                 </allowedInputSourceLocales>
                             </textFieldCell>
                         </textField>
+                        <connections>
+                            <action selector="shellSubmitUserInput:" target="-1" id="L1L-8m-Caw"/>
+                        </connections>
                     </toolbarItem>
                     <toolbarItem implicitItemIdentifier="NSToolbarFlexibleSpaceItem" id="b3I-M0-yFF"/>
                 </allowedToolbarItems>

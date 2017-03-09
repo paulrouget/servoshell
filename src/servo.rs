@@ -14,11 +14,12 @@ use self::servo::euclid::point::TypedPoint2D;
 use self::servo::euclid::rect::TypedRect;
 use self::servo::euclid::size::TypedSize2D;
 use self::servo::script_traits::{DevicePixel, TouchEventType};
-use self::servo::servo_url::ServoUrl;
 use self::servo::net_traits::net_error_list::NetError;
 use self::servo::webrender_traits;
 use self::servo::style_traits::cursor::Cursor as ServoCursor;
 use platform;
+
+pub use self::servo::servo_url::ServoUrl;
 
 use view::{DrawableGeometry, TouchPhase};
 use platform::EventLoopRiser;
@@ -97,7 +98,7 @@ impl Servo {
 
         let url = ServoUrl::parse(url).ok().unwrap(); // FIXME. What if fail?
 
-        let allowed_domain = match (follow_link_policy, url.domain()) {
+        let restrict_domain = match (follow_link_policy, url.domain()) {
             (FollowLinkPolicy::FollowOriginalDomain, Some(domain)) => {
                 Some(domain.clone().to_owned())
             }
@@ -108,7 +109,7 @@ impl Servo {
             event_queue: RefCell::new(Vec::new()),
             geometry: Cell::new(geometry),
             riser: riser,
-            allowed_domain: allowed_domain,
+            restrict_domain: restrict_domain,
         });
 
         let mut servo = servo::Browser::new(callbacks.clone());
@@ -138,6 +139,11 @@ impl Servo {
 
     pub fn go_forward(&self) {
         let event = WindowEvent::Navigation(WindowNavigateMsg::Forward);
+        self.events_for_servo.borrow_mut().push(event);
+    }
+
+    pub fn load_url(&self, url: ServoUrl) {
+        let event = WindowEvent::LoadUrl(url.to_string());
         self.events_for_servo.borrow_mut().push(event);
     }
 
@@ -220,7 +226,7 @@ struct ServoCallbacks {
     event_queue: RefCell<Vec<ServoEvent>>,
     geometry: Cell<DrawableGeometry>,
     riser: EventLoopRiser,
-    allowed_domain: Option<String>,
+    restrict_domain: Option<String>,
 }
 
 impl ServoCallbacks {
@@ -248,10 +254,10 @@ impl WindowMethods for ServoCallbacks {
     }
 
     fn allow_navigation(&self, url: ServoUrl) -> bool {
-        let allow = self.allowed_domain
-            .as_ref()
-            .map(|domain| url.domain().unwrap() == domain)
-            .unwrap_or(false);
+        let allow = match self.restrict_domain.as_ref() {
+            None => true,
+            Some(domain) => domain == url.domain().unwrap()
+        };
         if !allow {
             self.event_queue.borrow_mut().push(ServoEvent::UnhandledURL(url));
         }

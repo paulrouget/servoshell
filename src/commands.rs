@@ -15,6 +15,7 @@ pub enum WindowCommand {
     ZoomIn,
     ZoomOut,
     ZoomToActualSize,
+    Load(String),
 }
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
