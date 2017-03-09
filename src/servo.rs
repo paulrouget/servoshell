@@ -235,12 +235,14 @@ impl Servo {
         self.events_for_servo.borrow_mut().push(WindowEvent::ResetZoom);
     }
 
-    pub fn sync(&self) {
+    pub fn sync(&self, force: bool) {
         // FIXME: ports/glutin/window.rs uses mem::replace. Should we too?
         // See: https://doc.rust-lang.org/core/mem/fn.replace.html
-        let mut events = self.events_for_servo.borrow_mut();
-        let clone = events.drain(..).collect();
-        self.servo_browser.borrow_mut().handle_events(clone);
+        if !self.events_for_servo.borrow().is_empty() || force {
+            let mut events = self.events_for_servo.borrow_mut();
+            let clone = events.drain(..).collect();
+            self.servo_browser.borrow_mut().handle_events(clone);
+        }
     }
 }
 

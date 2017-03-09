@@ -101,7 +101,7 @@ fn main() {
             }
 
             // FIXME: it's really annoying we need this
-            let mut sync_needed = false;
+            let mut force_sync = false;
 
             for event in app_events {
                 match event {
@@ -115,7 +115,6 @@ fn main() {
                         // FIXME: does this work?
                         servo.update_geometry(view.get_geometry());
                         view.update_drawable();
-                        sync_needed = true;
                     }
                     AppEvent::DoCommand(cmd) => {
                         match cmd {
@@ -130,12 +129,11 @@ fn main() {
             for event in win_events {
                 match event {
                     WindowEvent::EventLoopRised => {
-                        sync_needed = true;
+                        force_sync = true;
                     }
                     WindowEvent::GeometryDidChange => {
                         servo.update_geometry(view.get_geometry());
                         view.update_drawable();
-                        sync_needed = true;
                     }
                     WindowEvent::DidEnterFullScreen => {
                         // FIXME
@@ -153,30 +151,24 @@ fn main() {
                             }
                             WindowCommand::Reload => {
                                 servo.reload();
-                                sync_needed = true;
                             }
                             WindowCommand::NavigateBack => {
                                 servo.go_back();
-                                sync_needed = true;
                             }
                             WindowCommand::NavigateForward => {
                                 servo.go_forward();
-                                sync_needed = true;
                             }
                             WindowCommand::OpenLocation => {
                                 window.focus_urlbar();
                             }
                             WindowCommand::ZoomIn => {
                                 servo.zoom(1.1);
-                                sync_needed = true;
                             }
                             WindowCommand::ZoomOut => {
                                 servo.zoom(1.0 / 1.1);
-                                sync_needed = true;
                             }
                             WindowCommand::ZoomToActualSize => {
                                 servo.reset_zoom();
-                                sync_needed = true;
                             }
                             WindowCommand::Load(request) => {
                                 let url = ServoUrl::parse(&request).or_else(|error| {
@@ -191,7 +183,6 @@ fn main() {
                                 });
                                 match url {
                                     Ok(url) => {
-                                        sync_needed = true;
                                         servo.load_url(url)
                                     },
                                     Err(err) => warn!("Can't parse url: {}", err),
@@ -212,18 +203,15 @@ fn main() {
                             _ => (0.0, 0.0),
                         };
                         servo.perform_scroll(0, 0, x, y, phase);
-                        sync_needed = true;
                     }
                     ViewEvent::MouseMoved(x, y) => {
                         last_mouse_point = (x, y);
                         servo.perform_mouse_move(x, y);
-                        sync_needed = true;
                     }
                     ViewEvent::MouseInput(state, button) => {
                         let (x, y) = last_mouse_point;
                         let (org_x, org_y) = last_mouse_down_point;
                         servo.perform_click(x, y, org_x, org_y, state, button, last_mouse_down_button);
-                        sync_needed = true;
                         last_mouse_down_point = (x, y);
                         if state == view::ElementState::Pressed {
                             last_mouse_down_button = Some(button);
@@ -287,9 +275,7 @@ fn main() {
                 }
             }
 
-            if sync_needed {
-                servo.sync();
-            }
+            servo.sync(force_sync);
         }
     });
 
