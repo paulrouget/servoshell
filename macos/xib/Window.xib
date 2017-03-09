@@ -8,10 +8,10 @@
         <customObject id="-2" userLabel="File's Owner"/>
         <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" releasedWhenClosed="NO" animationBehavior="default" id="vcB-Pn-Wg9" customClass="NSShellWindow">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" unifiedTitleAndToolbar="YES" fullSizeContentView="YES"/>
-            <rect key="contentRect" x="196" y="240" width="600" height="300"/>
+            <rect key="contentRect" x="196" y="240" width="800" height="600"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1280" height="777"/>
             <view key="contentView" wantsLayer="YES" id="aec-nG-MTq" customClass="NSServoView">
-                <rect key="frame" x="0.0" y="0.0" width="600" height="300"/>
+                <rect key="frame" x="0.0" y="0.0" width="800" height="600"/>
                 <autoresizingMask key="autoresizingMask"/>
             </view>
             <toolbar key="toolbar" implicitIdentifier="4E0C930B-D6E3-4B1A-BD8F-6F6D77EABB92" autosavesConfiguration="NO" displayMode="iconOnly" sizeMode="regular" id="ann-49-zau">
@@ -107,7 +107,7 @@
                     <toolbarItem implicitItemIdentifier="0422B209-DEF8-4C42-9DF6-35B0D943E9EF" explicitItemIdentifier="urlbar" label="Urlbar" paletteLabel="Urlbar" id="8V0-nG-RgZ">
                         <nil key="toolTip"/>
                         <size key="minSize" width="96" height="22"/>
-                        <size key="maxSize" width="400" height="22"/>
+                        <size key="maxSize" width="1000" height="22"/>
                         <textField key="view" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="NO" id="UNa-Ji-ihW">
                             <rect key="frame" x="0.0" y="14" width="96" height="22"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
@@ -128,10 +128,11 @@
                 </allowedToolbarItems>
                 <defaultToolbarItems>
                     <toolbarItem reference="eQy-xS-rWz"/>
+                    <toolbarItem reference="HZ7-iT-z1G"/>
                     <toolbarItem reference="8V0-nG-RgZ"/>
+                    <toolbarItem reference="HZ7-iT-z1G"/>
                     <toolbarItem reference="syX-Rt-Bai"/>
                     <toolbarItem reference="Ryh-a2-Juw"/>
-                    <toolbarItem reference="kmH-9p-CDH"/>
                     <toolbarItem reference="nLf-0M-uSd"/>
                 </defaultToolbarItems>
             </toolbar>
