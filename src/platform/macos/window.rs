@@ -157,6 +157,18 @@ pub fn register() {
             utils::get_event_queue(this).push(WindowEvent::DoCommand(cmd));
         }
 
+        extern fn zoom(this: &Object, _sel: Sel, item: id) {
+            let idx: NSInteger = unsafe { msg_send![item, selectedSegment] };
+            let cmd = if idx == 0 {
+                WindowCommand::ZoomOut
+            } else  if idx == 1 {
+                WindowCommand::ZoomToActualSize
+            } else {
+                WindowCommand::ZoomIn
+            };
+            utils::get_event_queue(this).push(WindowEvent::DoCommand(cmd));
+        }
+
         unsafe {
             class.add_method(sel!(windowDidResize:), record_notification as extern fn(&Object, Sel, id));
             class.add_method(sel!(windowDidEnterFullScreen:), record_notification as extern fn(&Object, Sel, id));
@@ -174,6 +186,7 @@ pub fn register() {
 
             class.add_method(sel!(shellSubmitUserInput:), submit_user_input as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellNavigate:), navigate as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellZoom:), zoom as extern fn(&Object, Sel, id));
 
             class.add_method(sel!(validateAction:), validate_action as extern fn(&Object, Sel, Sel) -> BOOL);
             class.add_method(sel!(validateUserInterfaceItem:), validate_ui as extern fn(&Object, Sel, id) -> BOOL);

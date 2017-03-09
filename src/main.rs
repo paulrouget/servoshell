@@ -76,12 +76,13 @@ fn main() {
     window.set_command_state(WindowCommand::OpenLocation, CommandState::Enabled);
     window.set_command_state(WindowCommand::ZoomIn, CommandState::Enabled);
     window.set_command_state(WindowCommand::ZoomOut, CommandState::Enabled);
-    window.set_command_state(WindowCommand::ZoomToActualSize, CommandState::Enabled);
+    window.set_command_state(WindowCommand::ZoomToActualSize, CommandState::Disabled);
     app.set_command_state(AppCommand::ClearHistory, CommandState::Enabled);
 
     let mut last_mouse_point = (0, 0);
     let mut last_mouse_down_point = (0, 0);
     let mut last_mouse_down_button: Option<view::MouseButton> = None;
+    let mut zoom = 1.0;
 
     app.run(|| {
 
@@ -162,13 +163,29 @@ fn main() {
                                 window.focus_urlbar();
                             }
                             WindowCommand::ZoomIn => {
-                                servo.zoom(1.1);
+                                zoom = zoom * 1.1;
+                                servo.zoom(zoom);
+                                let reset_zoom = if zoom == 1.0 {
+                                    CommandState::Disabled
+                                } else {
+                                    CommandState::Enabled
+                                };
+                                window.set_command_state(WindowCommand::ZoomToActualSize, reset_zoom);
                             }
                             WindowCommand::ZoomOut => {
-                                servo.zoom(1.0 / 1.1);
+                                zoom = zoom / 1.1;
+                                servo.zoom(zoom);
+                                let reset_zoom = if zoom == 1.0 {
+                                    CommandState::Disabled
+                                } else {
+                                    CommandState::Enabled
+                                };
+                                window.set_command_state(WindowCommand::ZoomToActualSize, reset_zoom);
                             }
                             WindowCommand::ZoomToActualSize => {
+                                zoom = 1.0;
                                 servo.reset_zoom();
+                                window.set_command_state(WindowCommand::ZoomToActualSize, CommandState::Disabled);
                             }
                             WindowCommand::Load(request) => {
                                 let url = ServoUrl::parse(&request).or_else(|error| {

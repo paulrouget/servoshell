@@ -43,7 +43,7 @@ pub fn register() {
 
     }
 
-    /* NSValidableToolbarItem */ {
+    /* NSHistoryToolbarItem */ {
 
         let superclass = Class::get("NSToolbarItem").unwrap();
         let mut class = ClassDecl::new("NSHistoryToolbarItem", superclass).unwrap();
@@ -63,6 +63,38 @@ pub fn register() {
 
                 view.setEnabled_forSegment_(enabled0, 0);
                 view.setEnabled_forSegment_(enabled1, 1);
+            }
+        }
+        unsafe {
+            class.add_method(sel!(validate), validate as extern fn(&Object, Sel));
+        }
+        class.register();
+    }
+
+    /* NSZoomToolbarItem */ {
+
+        let superclass = Class::get("NSToolbarItem").unwrap();
+        let mut class = ClassDecl::new("NSZoomToolbarItem", superclass).unwrap();
+
+        extern fn validate(this: &Object, _sel: Sel) {
+            unsafe {
+                let action0 = sel!(shellZoomOut:);
+                let action1 = sel!(shellZoomToActualSize:);
+                let action2 = sel!(shellZoomIn:);
+
+                let responder0: id = msg_send![NSApp(), targetForAction:action0];
+                let responder1: id = msg_send![NSApp(), targetForAction:action1];
+                let responder2: id = msg_send![NSApp(), targetForAction:action2];
+
+                let enabled0: BOOL = msg_send![responder0, validateAction:action0];
+                let enabled1: BOOL = msg_send![responder1, validateAction:action1];
+                let enabled2: BOOL = msg_send![responder2, validateAction:action2];
+
+                let view: id = msg_send![this, view];
+
+                view.setEnabled_forSegment_(enabled0, 0);
+                view.setEnabled_forSegment_(enabled1, 1);
+                view.setEnabled_forSegment_(enabled2, 2);
             }
         }
 

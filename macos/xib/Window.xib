@@ -68,7 +68,7 @@
                             <action selector="shellNavigate:" target="-1" id="dqU-O5-AQz"/>
                         </connections>
                     </toolbarItem>
-                    <toolbarItem implicitItemIdentifier="C96D596F-2F1D-4593-B61F-B3E9AEAF72FC" explicitItemIdentifier="zoom" label="Zoom" paletteLabel="Zoom" id="nLf-0M-uSd">
+                    <toolbarItem implicitItemIdentifier="C96D596F-2F1D-4593-B61F-B3E9AEAF72FC" explicitItemIdentifier="zoom" label="Zoom" paletteLabel="Zoom" id="nLf-0M-uSd" customClass="NSZoomToolbarItem">
                         <nil key="toolTip"/>
                         <size key="minSize" width="67" height="25"/>
                         <size key="maxSize" width="97" height="28"/>
@@ -84,6 +84,9 @@
                                 </segments>
                             </segmentedCell>
                         </segmentedControl>
+                        <connections>
+                            <action selector="shellZoom:" target="-1" id="lkj-7b-JJ8"/>
+                        </connections>
                     </toolbarItem>
                     <toolbarItem implicitItemIdentifier="0422B209-DEF8-4C42-9DF6-35B0D943E9EF" explicitItemIdentifier="urlbar" label="Urlbar" paletteLabel="Urlbar" id="8V0-nG-RgZ">
                         <nil key="toolTip"/>
