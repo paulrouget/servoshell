@@ -14,4 +14,4 @@ Some test to run manually until we have a testing system in place.
 - hovering a link show the url in the bottombar
 - hovering a link update cursor
 - showing the tabbar and toolbar update the dimension of the view
-- fullscreen from servo exit/enter
+- fullscreen *from* servo exit/enter
