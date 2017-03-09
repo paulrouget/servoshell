@@ -225,7 +225,7 @@ impl View {
             symbol as *const c_void
         });
 
-        gleam::gl::clear_color(1.0, 0.0, 0.0, 1.0);
+        gleam::gl::clear_color(1.0, 1.0, 1.0, 1.0);
         gleam::gl::clear(gleam::gl::COLOR_BUFFER_BIT);
         gleam::gl::finish();
 
