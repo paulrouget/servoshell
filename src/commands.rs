@@ -12,6 +12,7 @@ pub enum WindowCommand {
     NavigateBack,
     NavigateForward,
     OpenLocation,
+    OpenInDefaultBrowser,
     ZoomIn,
     ZoomOut,
     ZoomToActualSize,

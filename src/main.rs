@@ -23,7 +23,7 @@ use app::AppEvent;
 use window::WindowEvent;
 use view::ViewEvent;
 use servo::ServoEvent;
-use simplelog::{CombinedLogger, Config, LogLevel, LogLevelFilter, TermLogger, WriteLogger};
+use simplelog::{Config, LogLevel, LogLevelFilter, WriteLogger};
 use std::fs::File;
 use std::env::args;
 use app::App;
@@ -40,14 +40,7 @@ fn main() {
         target: Some(LogLevel::Info),
         location: Some(LogLevel::Info),
     };
-
-    let _ = match TermLogger::new(LogLevelFilter::Info, log_config) {
-        Some(logger) => CombinedLogger::init(vec![
-            logger,
-            WriteLogger::new(LogLevelFilter::Info, log_config, log_file)
-        ]),
-        None => WriteLogger::init(LogLevelFilter::Info, log_config, log_file)
-    };
+    let _ = WriteLogger::init(LogLevelFilter::Info, log_config, log_file);
 
     info!("starting");
 
@@ -83,6 +76,7 @@ fn main() {
     let mut last_mouse_down_point = (0, 0);
     let mut last_mouse_down_button: Option<view::MouseButton> = None;
     let mut zoom = 1.0;
+    let mut current_url: Option<String> = None;
 
     app.run(|| {
 
@@ -161,6 +155,9 @@ fn main() {
                             }
                             WindowCommand::OpenLocation => {
                                 window.focus_urlbar();
+                            }
+                            WindowCommand::OpenInDefaultBrowser => {
+                                open::that(current_url.clone().unwrap()).ok();
                             }
                             WindowCommand::ZoomIn => {
                                 zoom = zoom * 1.1;
@@ -305,6 +302,8 @@ fn main() {
                     }
                     ServoEvent::HeadParsed(url) => {
                         window.set_url(url.as_str());
+                        current_url = Some(url.into_string());
+                        window.set_command_state(WindowCommand::OpenInDefaultBrowser, CommandState::Enabled);
                     }
                     ServoEvent::CursorChanged(cursor) => {
                         window.set_cursor(cursor);

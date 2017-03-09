@@ -68,6 +68,22 @@
                             <action selector="shellNavigate:" target="-1" id="dqU-O5-AQz"/>
                         </connections>
                     </toolbarItem>
+                    <toolbarItem implicitItemIdentifier="3626E7B5-A14D-4238-A8CA-1CFB22AAE94C" explicitItemIdentifier="openInDefaultBrowser" label="Open In Default Browser" paletteLabel="Open In Default Browser" image="NSShareTemplate" id="kmH-9p-CDH" customClass="NSValidableToolbarItem">
+                        <nil key="toolTip"/>
+                        <size key="minSize" width="36" height="28"/>
+                        <size key="maxSize" width="40" height="28"/>
+                        <button key="view" verticalHuggingPriority="750" id="JeK-cS-AiF">
+                            <rect key="frame" x="50" y="14" width="36" height="28"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="NSShareTemplate" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="uMS-WD-0CA">
+                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                        </button>
+                        <connections>
+                            <action selector="shellOpenInDefaultBrowser:" target="-1" id="lNJ-UJ-ZId"/>
+                        </connections>
+                    </toolbarItem>
                     <toolbarItem implicitItemIdentifier="C96D596F-2F1D-4593-B61F-B3E9AEAF72FC" explicitItemIdentifier="zoom" label="Zoom" paletteLabel="Zoom" id="nLf-0M-uSd" customClass="NSZoomToolbarItem">
                         <nil key="toolTip"/>
                         <size key="minSize" width="67" height="25"/>
@@ -112,12 +128,11 @@
                 </allowedToolbarItems>
                 <defaultToolbarItems>
                     <toolbarItem reference="eQy-xS-rWz"/>
-                    <toolbarItem reference="b3I-M0-yFF"/>
                     <toolbarItem reference="8V0-nG-RgZ"/>
                     <toolbarItem reference="syX-Rt-Bai"/>
                     <toolbarItem reference="Ryh-a2-Juw"/>
+                    <toolbarItem reference="kmH-9p-CDH"/>
                     <toolbarItem reference="nLf-0M-uSd"/>
-                    <toolbarItem reference="b3I-M0-yFF"/>
                 </defaultToolbarItems>
             </toolbar>
             <point key="canvasLocation" x="94" y="320"/>
@@ -129,6 +144,7 @@
         <image name="NSGoLeftTemplate" width="9" height="12"/>
         <image name="NSGoRightTemplate" width="9" height="12"/>
         <image name="NSRefreshTemplate" width="11" height="15"/>
+        <image name="NSShareTemplate" width="11" height="16"/>
         <image name="NSStopProgressTemplate" width="11" height="11"/>
     </resources>
 </document>

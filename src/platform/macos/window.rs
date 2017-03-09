@@ -31,6 +31,8 @@ fn action_to_command(action: Sel) -> Option<WindowCommand> {
         Some(WindowCommand::ZoomOut)
     } else if action == sel!(shellZoomToActualSize:) {
         Some(WindowCommand::ZoomToActualSize)
+    } else if action == sel!(shellOpenInDefaultBrowser:) {
+        Some(WindowCommand::OpenInDefaultBrowser)
     } else {
         None
     }
@@ -183,6 +185,7 @@ pub fn register() {
             class.add_method(sel!(shellZoomToActualSize:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellNavigateBack:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellNavigateForward:), record_command as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellOpenInDefaultBrowser:), record_command as extern fn(&Object, Sel, id));
 
             class.add_method(sel!(shellSubmitUserInput:), submit_user_input as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellNavigate:), navigate as extern fn(&Object, Sel, id));
