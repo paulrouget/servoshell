@@ -269,8 +269,8 @@ fn main() {
                     ServoEvent::HeadParsed(url) => {
                         window.set_url(url.as_str());
                     }
-                    ServoEvent::CursorChanged(..) => {
-                        // FIXME
+                    ServoEvent::CursorChanged(cursor) => {
+                        window.set_cursor(cursor);
                     }
                     ServoEvent::FaviconChanged(..) => {
                         // FIXME

@@ -10,6 +10,7 @@ use window::WindowEvent;
 use std::collections::HashMap;
 use commands::{CommandState, WindowCommand};
 use libc;
+use servo::ServoCursor;
 
 // FIXME: this is ugly. Also, we are duplicating the list
 // of Selector (see the add_method list)
@@ -257,6 +258,54 @@ impl Window {
         };
         EventLoopRiser {
             window_number: window_number,
+        }
+    }
+
+    // From winit
+    pub fn set_cursor(&self, cursor: ServoCursor) {
+        let cursor_name = match cursor {
+            ServoCursor::Default => "arrowCursor",
+            ServoCursor::Pointer => "pointingHandCursor",
+            ServoCursor::ContextMenu => "contextualMenuCursor",
+            ServoCursor::Crosshair => "crosshairCursor",
+            ServoCursor::Text => "IBeamCursor",
+            ServoCursor::VerticalText => "IBeamCursorForVerticalLayout",
+            ServoCursor::Alias => "dragLinkCursor",
+            ServoCursor::Copy => "dragCopyCursor",
+            ServoCursor::NoDrop => "operationNotAllowedCursor",
+            ServoCursor::NotAllowed => "operationNotAllowedCursor",
+            ServoCursor::Grab => "closedHandCursor",
+            ServoCursor::Grabbing => "closedHandCursor",
+            ServoCursor::EResize => "resizeRightCursor",
+            ServoCursor::NResize => "resizeUpCursor",
+            ServoCursor::SResize => "resizeDownCursor",
+            ServoCursor::WResize => "resizeLeftCursor",
+            ServoCursor::EwResize => "resizeLeftRightCursor",
+            ServoCursor::NsResize => "resizeUpDownCursor",
+            ServoCursor::ColResize => "resizeLeftRightCursor",
+            ServoCursor::RowResize => "resizeUpDownCursor",
+            ServoCursor::None |
+            ServoCursor::Cell |
+            ServoCursor::Move |
+            ServoCursor::NeResize |
+            ServoCursor::NwResize |
+            ServoCursor::SeResize |
+            ServoCursor::SwResize |
+            ServoCursor::NeswResize |
+            ServoCursor::NwseResize |
+            ServoCursor::AllScroll |
+            ServoCursor::ZoomIn |
+            ServoCursor::ZoomOut |
+            ServoCursor::Wait |
+            ServoCursor::Progress |
+            ServoCursor::Help => "arrowServoCursor"
+        };
+        let sel = Sel::register(cursor_name);
+        let cls = Class::get("NSCursor").unwrap();
+        unsafe {
+            use objc::Message;
+            let cursor: id = cls.send_message(sel, ()).unwrap();
+            let _: () = msg_send![cursor, set];
         }
     }
 }

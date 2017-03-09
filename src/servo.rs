@@ -16,9 +16,9 @@ use self::servo::euclid::size::TypedSize2D;
 use self::servo::script_traits::{DevicePixel, MouseButton, TouchEventType};
 use self::servo::net_traits::net_error_list::NetError;
 use self::servo::webrender_traits;
-use self::servo::style_traits::cursor::Cursor as ServoCursor;
 use platform;
 
+pub use self::servo::style_traits::cursor::Cursor as ServoCursor;
 pub use self::servo::servo_url::ServoUrl;
 
 use view;
