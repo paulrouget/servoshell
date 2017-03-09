@@ -16,7 +16,7 @@ use self::core_foundation::string::CFString;
 use self::core_foundation::bundle::{CFBundleGetBundleWithIdentifier, CFBundleGetFunctionPointerForName};
 use std::os::raw::c_void;
 use std::str::FromStr;
-use view::{ViewEvent, TouchPhase, MouseScrollDelta};
+use view::{ElementState, MouseButton, ViewEvent, TouchPhase, MouseScrollDelta};
 use super::utils;
 
 pub fn register() {
@@ -169,6 +169,14 @@ impl View {
                     let y = (hidpi_factor * (frame.size.height - view_point.y) as f32) as i32;
                     Some(ViewEvent::MouseMoved(x, y))
                 }
+
+                NSLeftMouseDown => { Some(ViewEvent::MouseInput(ElementState::Pressed, MouseButton::Left)) },
+                NSLeftMouseUp => { Some(ViewEvent::MouseInput(ElementState::Released, MouseButton::Left)) },
+                NSRightMouseDown => { Some(ViewEvent::MouseInput(ElementState::Pressed, MouseButton::Right)) },
+                NSRightMouseUp => { Some(ViewEvent::MouseInput(ElementState::Released, MouseButton::Right)) },
+                NSOtherMouseDown => { Some(ViewEvent::MouseInput(ElementState::Pressed, MouseButton::Middle)) },
+                NSOtherMouseUp => { Some(ViewEvent::MouseInput(ElementState::Released, MouseButton::Middle)) },
+
                 _ => None
             }
         }

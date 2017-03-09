@@ -143,7 +143,7 @@ impl App {
     }
 
     // Equivalent of NSApp.run()
-    pub fn run<F>(&self, callback: F) where F: Fn() {
+    pub fn run<F>(&self, mut callback: F) where F: FnMut() {
 
         unsafe { msg_send![self.nsapp, finishLaunching] };
 

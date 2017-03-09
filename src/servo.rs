@@ -4,7 +4,7 @@ use self::servo::config::servo_version;
 use self::servo::servo_config::opts;
 use self::servo::servo_config::prefs::{PrefValue, PREFS};
 use self::servo::servo_config::resource_files::set_resources_path;
-use self::servo::compositing::windowing::{WindowMethods, WindowEvent, WindowNavigateMsg};
+use self::servo::compositing::windowing::{MouseWindowEvent, WindowMethods, WindowEvent, WindowNavigateMsg};
 use self::servo::compositing::compositor_thread::{self, CompositorProxy, CompositorReceiver};
 use self::servo::msg::constellation_msg::{self, Key};
 use self::servo::servo_geometry::DeviceIndependentPixel;
@@ -13,7 +13,7 @@ use self::servo::euclid::scale_factor::ScaleFactor;
 use self::servo::euclid::point::TypedPoint2D;
 use self::servo::euclid::rect::TypedRect;
 use self::servo::euclid::size::TypedSize2D;
-use self::servo::script_traits::{DevicePixel, TouchEventType};
+use self::servo::script_traits::{DevicePixel, MouseButton, TouchEventType};
 use self::servo::net_traits::net_error_list::NetError;
 use self::servo::webrender_traits;
 use self::servo::style_traits::cursor::Cursor as ServoCursor;
@@ -21,7 +21,8 @@ use platform;
 
 pub use self::servo::servo_url::ServoUrl;
 
-use view::{DrawableGeometry, TouchPhase};
+use view;
+use view::DrawableGeometry;
 use platform::EventLoopRiser;
 
 use std::sync::mpsc;
@@ -147,71 +148,83 @@ impl Servo {
         self.events_for_servo.borrow_mut().push(event);
     }
 
+    fn substract_margins(&self, x: i32, y: i32) -> (i32, i32) {
+        let geometry = self.callbacks.geometry.get();
+        let (top, _, _, left) = geometry.margins;
+        let top = top as f32 * geometry.hidpi_factor;
+        let left = left as f32 * geometry.hidpi_factor;
+        let x = x - left as i32;
+        let y = y - top as i32;
+        (x, y)
+    }
+
     pub fn perform_mouse_move(&self, x: i32, y: i32) {
+        let (x, y) = self.substract_margins(x, y);
         let event = WindowEvent::MouseWindowMoveEventClass(TypedPoint2D::new(x as f32, y as f32));
         self.events_for_servo.borrow_mut().push(event);
     }
 
-    pub fn perform_scroll(&self, x: i32, y: i32, dx: f32, dy: f32, phase: TouchPhase) {
+    pub fn perform_scroll(&self, x: i32, y: i32, dx: f32, dy: f32, phase: view::TouchPhase) {
+        let (x, y) = self.substract_margins(x, y);
         let scroll_location = webrender_traits::ScrollLocation::Delta(TypedPoint2D::new(dx, dy));
         let phase = match phase {
-            TouchPhase::Started => TouchEventType::Down,
-            TouchPhase::Moved => TouchEventType::Move,
-            TouchPhase::Ended => TouchEventType::Up,
+            view::TouchPhase::Started => TouchEventType::Down,
+            view::TouchPhase::Moved => TouchEventType::Move,
+            view::TouchPhase::Ended => TouchEventType::Up,
         };
         let event = WindowEvent::Scroll(scroll_location, TypedPoint2D::new(x, y), phase);
         self.events_for_servo.borrow_mut().push(event);
     }
 
     pub fn update_geometry(&self, geometry: DrawableGeometry) {
-        self.callbacks.update_geometry(geometry);
+        self.callbacks.geometry.set(geometry);
         let event = WindowEvent::Resize(self.callbacks.framebuffer_size());
         self.events_for_servo.borrow_mut().push(event);
     }
 
-    // pub fn perform_click(&self,
-    //              x: i32,
-    //              y: i32,
-    //              org_x: i32,
-    //              org_y: i32,
-    //              element_state: WindowElementState,
-    //              mouse_button: WindowMouseButton,
-    //              mouse_down_button: Option<WindowMouseButton>) {
-    //     use self::servo::script_traits::MouseButton;
-    //     let max_pixel_dist = 10f64;
-    //     let event = match element_state {
-    //         WindowElementState::Pressed => {
-    //             MouseWindowEvent::MouseDown(MouseButton::Left,
-    //                                         TypedPoint2D::new(x as f32, y as f32))
-    //         }
-    //         WindowElementState::Released => {
-    //             let mouse_up_event = MouseWindowEvent::MouseUp(MouseButton::Left,
-    //                                                            TypedPoint2D::new(x as f32,
-    //                                                                              y as f32));
-    //             match mouse_down_button {
-    //                 None => mouse_up_event,
-    //                 Some(but) if mouse_button == but => {
-    //                     // Same button
-    //                     let pixel_dist = Point2D::new(org_x, org_y) - Point2D::new(x, y);
-    //                     let pixel_dist =
-    //                         ((pixel_dist.x * pixel_dist.x + pixel_dist.y * pixel_dist.y) as f64)
-    //                             .sqrt();
-    //                     if pixel_dist < max_pixel_dist {
-    //                         self.events_for_servo
-    //                             .borrow_mut()
-    //                             .push(WindowEvent::MouseWindowEventClass(mouse_up_event));
-    //                         MouseWindowEvent::Click(MouseButton::Left,
-    //                                                 TypedPoint2D::new(x as f32, y as f32))
-    //                     } else {
-    //                         mouse_up_event
-    //                     }
-    //                 }
-    //                 Some(_) => mouse_up_event,
-    //             }
-    //         }
-    //     };
-    //     self.events_for_servo.borrow_mut().push(WindowEvent::MouseWindowEventClass(event));
-    // }
+    pub fn perform_click(&self,
+                 x: i32,
+                 y: i32,
+                 org_x: i32,
+                 org_y: i32,
+                 element_state: view::ElementState,
+                 mouse_button: view::MouseButton,
+                 mouse_down_button: Option<view::MouseButton>) {
+        let (x, y) = self.substract_margins(x, y);
+        let (org_x, org_y) = self.substract_margins(org_x, org_y);
+        let max_pixel_dist = 10f64;
+        let button = match mouse_button {
+            view::MouseButton::Left => MouseButton::Left,
+            view::MouseButton::Right => MouseButton::Right,
+            view::MouseButton::Middle => MouseButton::Middle,
+        };
+        let event = match element_state {
+            view::ElementState::Pressed => {
+                MouseWindowEvent::MouseDown(button, TypedPoint2D::new(x as f32, y as f32))
+            }
+            view::ElementState::Released => {
+                let mouse_up_event = MouseWindowEvent::MouseUp(button, TypedPoint2D::new(x as f32, y as f32));
+                match mouse_down_button {
+                    None => mouse_up_event,
+                    Some(but) if mouse_button == but => {
+                        // Same button
+                        let pixel_dist = Point2D::new(org_x, org_y) - Point2D::new(x, y);
+                        let pixel_dist =
+                            ((pixel_dist.x * pixel_dist.x + pixel_dist.y * pixel_dist.y) as f64)
+                                .sqrt();
+                        if pixel_dist < max_pixel_dist {
+                            self.events_for_servo.borrow_mut().push(WindowEvent::MouseWindowEventClass(mouse_up_event));
+                            MouseWindowEvent::Click(button, TypedPoint2D::new(x as f32, y as f32))
+                        } else {
+                            mouse_up_event
+                        }
+                    }
+                    Some(_) => mouse_up_event,
+                }
+            }
+        };
+        self.events_for_servo.borrow_mut().push(WindowEvent::MouseWindowEventClass(event));
+    }
 
     pub fn sync(&self) {
         // FIXME: ports/glutin/window.rs uses mem::replace. Should we too?
@@ -223,8 +236,8 @@ impl Servo {
 }
 
 struct ServoCallbacks {
+    pub geometry: Cell<DrawableGeometry>,
     event_queue: RefCell<Vec<ServoEvent>>,
-    geometry: Cell<DrawableGeometry>,
     riser: EventLoopRiser,
     restrict_domain: Option<String>,
 }
@@ -236,10 +249,6 @@ impl ServoCallbacks {
         let mut events = self.event_queue.borrow_mut();
         let copy = events.drain(..).collect();
         copy
-    }
-
-    fn update_geometry(&self, geometry: DrawableGeometry) {
-        self.geometry.set(geometry);
     }
 }
 

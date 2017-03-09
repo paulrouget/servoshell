@@ -14,11 +14,12 @@ pub struct DrawableGeometry {
 pub enum ViewEvent {
 
     // FIXME: this event comes from the window at the moment.
-    // Maybe this should come from the view
+    // Maybe this should come from the view.
+    // Also, it should be trigger ig there a sidebar for example.
     // GeometryDidChange,
 
     MouseWheel(MouseScrollDelta, TouchPhase),
-    // MouseInput(ElementState, MouseButton),
+    MouseInput(ElementState, MouseButton),
     MouseMoved(i32, i32),
 }
 
@@ -30,17 +31,18 @@ pub enum TouchPhase {
     // FIXME: Cancelled
 }
 
-// #[derive(Debug, Clone)]
-// pub enum ElementState {
-//     Pressed,
-//     Released,
-// }
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ElementState {
+    Pressed,
+    Released,
+}
 
-// #[derive(Debug, Clone)]
-// pub enum MouseButton {
-//     Left,
-//     Right,
-// }
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MouseButton {
+    Left,
+    Right,
+    Middle,
+}
 
 #[derive(Debug, Clone)]
 pub enum MouseScrollDelta {

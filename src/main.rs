@@ -76,6 +76,10 @@ fn main() {
     window.set_command_state(WindowCommand::OpenLocation, CommandState::Enabled);
     app.set_command_state(AppCommand::ClearHistory, CommandState::Enabled);
 
+    let mut last_mouse_point = (0, 0);
+    let mut last_mouse_down_point = (0, 0);
+    let mut last_mouse_down_button: Option<view::MouseButton> = None;
+
     app.run(|| {
 
         // Loop until no events are available anymore.
@@ -205,12 +209,19 @@ fn main() {
                         sync_needed = true;
                     }
                     ViewEvent::MouseMoved(x, y) => {
-                        let geometry = view.get_geometry();
-                        let (top, _, _, left) = geometry.margins;
-                        let top = top as f32 * geometry.hidpi_factor;
-                        let left = left as f32 * geometry.hidpi_factor;
-                        servo.perform_mouse_move(x - left as i32, y - top as i32);
+                        last_mouse_point = (x, y);
+                        servo.perform_mouse_move(x, y);
                         sync_needed = true;
+                    }
+                    ViewEvent::MouseInput(state, button) => {
+                        let (x, y) = last_mouse_point;
+                        let (org_x, org_y) = last_mouse_down_point;
+                        servo.perform_click(x, y, org_x, org_y, state, button, last_mouse_down_button);
+                        sync_needed = true;
+                        last_mouse_down_point = (x, y);
+                        if state == view::ElementState::Pressed {
+                            last_mouse_down_button = Some(button);
+                        }
                     }
                 }
             }
