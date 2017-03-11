@@ -15,3 +15,6 @@ Some test to run manually until we have a testing system in place.
 - hovering a link update cursor
 - showing the tabbar and toolbar update the dimension of the view
 - fullscreen *from* servo exit/enter
+- popover
+- customize toolbar
+- toolbar buttons get greyed out
