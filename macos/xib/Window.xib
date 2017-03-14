@@ -28,7 +28,7 @@
                                     <customView translatesAutoresizingMaskIntoConstraints="NO" id="nXU-ZC-HDO">
                                         <rect key="frame" x="0.0" y="0.0" width="184" height="600"/>
                                         <subviews>
-                                            <visualEffectView appearanceType="vibrantLight" blendingMode="behindWindow" material="light" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="UCo-hK-kyC">
+                                            <visualEffectView blendingMode="behindWindow" material="appearanceBased" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="UCo-hK-kyC">
                                                 <rect key="frame" x="0.0" y="0.0" width="184" height="600"/>
                                             </visualEffectView>
                                         </subviews>

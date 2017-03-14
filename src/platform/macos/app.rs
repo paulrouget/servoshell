@@ -8,6 +8,7 @@ use super::window;
 use super::utils;
 use app::{AppEvent, AppCommand};
 use state::AppState;
+use super::get_state;
 
 pub fn register() {
     let superclass = Class::get("NSResponder").unwrap();
@@ -120,6 +121,27 @@ impl App {
     pub fn state_changed(&self) {
         // Only the menu will be affected, and they are automatically
         // updated via validate_ui
+    }
+
+    pub fn update_theme(&self) {
+        let dark = get_state().dark_theme;
+        unsafe {
+            let windows: id = msg_send![self.nsapp, windows];
+            let count: NSInteger = msg_send![windows, count];
+            for i in 0..count {
+                let nswindow: id = msg_send![windows, objectAtIndex:i];
+                let toolbar: id = msg_send![nswindow, toolbar];
+                if dark {
+                    nswindow.setAppearance_(NSAppearance::named_(nil, NSAppearanceNameVibrantDark));
+                    msg_send![toolbar, setShowsBaselineSeparator:NO];
+                    // msg_send![nswindow, setTitlebarAppearsTransparent:YES];
+                } else {
+                    nswindow.setAppearance_(NSAppearance::named_(nil, NSAppearanceNameVibrantLight));
+                    msg_send![toolbar, setShowsBaselineSeparator:YES];
+                    msg_send![nswindow, setTitlebarAppearsTransparent:NO];
+                }
+            }
+        }
     }
 
     pub fn get_events(&self) -> Vec<AppEvent> {

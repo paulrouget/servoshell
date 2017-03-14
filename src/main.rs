@@ -114,7 +114,9 @@ fn main() {
                                 // FIXME
                             }
                             AppCommand::ToggleOptionDarkTheme => {
-                                // FIXME
+                                ui_invalidated = true;
+                                get_state().dark_theme = !get_state().dark_theme;
+                                app.update_theme();
                             }
                         }
                     }
