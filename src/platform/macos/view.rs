@@ -75,7 +75,7 @@ pub fn register() {
 
         };
 
-        if event.is_some() {
+        if let Some(event) = event {
             utils::get_event_queue(this).push(event);
         }
     }
