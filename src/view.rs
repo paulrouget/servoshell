@@ -12,12 +12,7 @@ pub struct DrawableGeometry {
 
 #[derive(Debug, Clone)]
 pub enum ViewEvent {
-
-    // FIXME: this event comes from the window at the moment.
-    // Maybe this should come from the view.
-    // Also, it should be trigger ig there a sidebar for example.
-    // GeometryDidChange,
-
+    GeometryDidChange,
     MouseWheel(MouseScrollDelta, TouchPhase),
     MouseInput(ElementState, MouseButton),
     MouseMoved(i32, i32),

@@ -25,14 +25,64 @@ pub fn register() {
 
     class.add_ivar::<*mut c_void>("event_queue");
 
-    extern fn store_nsevent(this: &Object, _sel: Sel, event: id) {
-        unsafe { msg_send![event, retain] }
-        utils::get_event_queue(this).push(event);
+    extern fn store_nsevent(this: &Object, _sel: Sel, nsevent: id) {
+        let event = {
+            unsafe {
+                let event_type = nsevent.eventType();
+                match event_type {
+                    NSScrollWheel => {
+                        // Stolen from winit
+                        use self::MouseScrollDelta::{LineDelta, PixelDelta};
+                        let nswindow: id = nsevent.window();
+                        let hidpi_factor: CGFloat = msg_send![nswindow, backingScaleFactor];
+                        let hidpi_factor = hidpi_factor as f32;
+                        let delta = if nsevent.hasPreciseScrollingDeltas() == YES {
+                            PixelDelta(hidpi_factor * nsevent.scrollingDeltaX() as f32,
+                            hidpi_factor * nsevent.scrollingDeltaY() as f32)
+                        } else {
+                            LineDelta(hidpi_factor * nsevent.scrollingDeltaX() as f32,
+                            hidpi_factor * nsevent.scrollingDeltaY() as f32)
+                        };
+                        let phase = match nsevent.phase() {
+                            appkit::NSEventPhaseMayBegin | appkit::NSEventPhaseBegan => TouchPhase::Started,
+                            appkit::NSEventPhaseEnded => TouchPhase::Ended,
+                            _ => TouchPhase::Moved,
+                        };
+                        Some(ViewEvent::MouseWheel(delta, phase))
+                    },
+                    NSMouseMoved => {
+                        let nswindow = nsevent.window();
+                        let window_point = nsevent.locationInWindow();
+                        let view_point: NSPoint = msg_send![this, convertPoint:window_point fromView:nil];
+                        let frame: NSRect = msg_send![this, frame];
+                        let hidpi_factor: CGFloat = msg_send![nswindow, backingScaleFactor];
+                        let hidpi_factor = hidpi_factor as f32;
+                        let x = (hidpi_factor * view_point.x as f32) as i32;
+                        let y = (hidpi_factor * (frame.size.height - view_point.y) as f32) as i32;
+                        Some(ViewEvent::MouseMoved(x, y))
+                    }
+
+                    NSLeftMouseDown => { Some(ViewEvent::MouseInput(ElementState::Pressed, MouseButton::Left)) },
+                    NSLeftMouseUp => { Some(ViewEvent::MouseInput(ElementState::Released, MouseButton::Left)) },
+                    NSRightMouseDown => { Some(ViewEvent::MouseInput(ElementState::Pressed, MouseButton::Right)) },
+                    NSRightMouseUp => { Some(ViewEvent::MouseInput(ElementState::Released, MouseButton::Right)) },
+                    NSOtherMouseDown => { Some(ViewEvent::MouseInput(ElementState::Pressed, MouseButton::Middle)) },
+                    NSOtherMouseUp => { Some(ViewEvent::MouseInput(ElementState::Released, MouseButton::Middle)) },
+
+                    _ => None
+                }
+            }
+
+        };
+
+        if event.is_some() {
+            utils::get_event_queue(this).push(event);
+        }
     }
 
     extern fn awake_from_nib(this: &mut Object, _sel: Sel) {
         // FIXME: is that the best way to create a raw pointer?
-        let event_queue: Vec<id> = Vec::new();
+        let event_queue: Vec<ViewEvent> = Vec::new();
         let event_queue_ptr = Box::into_raw(Box::new(event_queue));
         unsafe {
             this.set_ivar("event_queue", event_queue_ptr as *mut c_void);
@@ -43,6 +93,10 @@ pub fn register() {
         YES
     }
 
+    extern fn did_resize(this: &Object, _sel: Sel) {
+        utils::get_event_queue(this).push(ViewEvent::GeometryDidChange);
+    }
+
     unsafe {
         class.add_method(sel!(scrollWheel:), store_nsevent as extern fn(&Object, Sel, id));
         class.add_method(sel!(mouseDown:), store_nsevent as extern fn(&Object, Sel, id));
@@ -50,6 +104,8 @@ pub fn register() {
         class.add_method(sel!(mouseMoved:), store_nsevent as extern fn(&Object, Sel, id));
 
         class.add_method(sel!(acceptsFirstResponder), accept_first_responder as extern fn(&Object, Sel) -> BOOL);
+
+        class.add_method(sel!(viewDidEndLiveResize), did_resize as extern fn(&Object, Sel));
 
         class.add_method(sel!(awakeFromNib), awake_from_nib as extern fn(&mut Object, Sel));
     }
@@ -108,16 +164,7 @@ impl View {
 
     pub fn get_events(&self) -> Vec<ViewEvent> {
         let nsobject = unsafe { &*self.nsview};
-        let event_queue = utils::get_event_queue(nsobject);
-        // FIXME: make sure event_queue is empty
-        let events = event_queue.drain(..).map(|e| {
-            self.nsevent_to_viewevent(e)
-        }).filter(|e| {
-            e.is_some()
-        }).map(|e| {
-            e.unwrap()
-        }).collect();
-        events
+        utils::get_event_queue(nsobject).drain(..).collect()
     }
 
     pub fn enter_fullscreen(&self) {
@@ -129,54 +176,6 @@ impl View {
     pub fn exit_fullscreen(&self) {
         unsafe {
             msg_send![self.nsview, exitFullScreenModeWithOptions:nil];
-        }
-    }
-
-    fn nsevent_to_viewevent(&self, nsevent: id) -> Option<ViewEvent> {
-        unsafe {
-            let event_type = nsevent.eventType();
-            match event_type {
-                NSScrollWheel => {
-                    // Stolen from winit
-                    use self::MouseScrollDelta::{LineDelta, PixelDelta};
-                    let nswindow: id = nsevent.window();
-                    let hidpi_factor: CGFloat = msg_send![nswindow, backingScaleFactor];
-                    let hidpi_factor = hidpi_factor as f32;
-                    let delta = if nsevent.hasPreciseScrollingDeltas() == YES {
-                        PixelDelta(hidpi_factor * nsevent.scrollingDeltaX() as f32,
-                        hidpi_factor * nsevent.scrollingDeltaY() as f32)
-                    } else {
-                        LineDelta(hidpi_factor * nsevent.scrollingDeltaX() as f32,
-                        hidpi_factor * nsevent.scrollingDeltaY() as f32)
-                    };
-                    let phase = match nsevent.phase() {
-                        appkit::NSEventPhaseMayBegin | appkit::NSEventPhaseBegan => TouchPhase::Started,
-                        appkit::NSEventPhaseEnded => TouchPhase::Ended,
-                        _ => TouchPhase::Moved,
-                    };
-                    Some(ViewEvent::MouseWheel(delta, phase))
-                },
-                NSMouseMoved => {
-                    let nswindow = nsevent.window();
-                    let window_point = nsevent.locationInWindow();
-                    let view_point = self.nsview.convertPoint_fromView_(window_point, nil);
-                    let frame = NSView::frame(self.nsview);
-                    let hidpi_factor: CGFloat = msg_send![nswindow, backingScaleFactor];
-                    let hidpi_factor = hidpi_factor as f32;
-                    let x = (hidpi_factor * view_point.x as f32) as i32;
-                    let y = (hidpi_factor * (frame.size.height - view_point.y) as f32) as i32;
-                    Some(ViewEvent::MouseMoved(x, y))
-                }
-
-                NSLeftMouseDown => { Some(ViewEvent::MouseInput(ElementState::Pressed, MouseButton::Left)) },
-                NSLeftMouseUp => { Some(ViewEvent::MouseInput(ElementState::Released, MouseButton::Left)) },
-                NSRightMouseDown => { Some(ViewEvent::MouseInput(ElementState::Pressed, MouseButton::Right)) },
-                NSRightMouseUp => { Some(ViewEvent::MouseInput(ElementState::Released, MouseButton::Right)) },
-                NSOtherMouseDown => { Some(ViewEvent::MouseInput(ElementState::Pressed, MouseButton::Middle)) },
-                NSOtherMouseUp => { Some(ViewEvent::MouseInput(ElementState::Released, MouseButton::Middle)) },
-
-                _ => None
-            }
         }
     }
 

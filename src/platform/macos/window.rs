@@ -96,9 +96,7 @@ pub fn register() {
         extern fn record_notification(this: &Object, _sel: Sel, notification: id) {
             let event = unsafe {
                 let name: id = msg_send![notification, name];
-                if NSString::isEqualToString(name, "NSWindowDidResizeNotification") {
-                    Some(WindowEvent::GeometryDidChange)
-                } else if NSString::isEqualToString(name, "NSWindowDidEnterFullScreenNotification") {
+                if NSString::isEqualToString(name, "NSWindowDidEnterFullScreenNotification") {
                     Some(WindowEvent::DidEnterFullScreen)
                 } else if NSString::isEqualToString(name, "NSWindowDidExitFullScreenNotification") {
                     Some(WindowEvent::DidExitFullScreen)
@@ -173,7 +171,10 @@ pub fn register() {
         }
 
         unsafe {
-            class.add_method(sel!(windowDidResize:), record_notification as extern fn(&Object, Sel, id));
+            // We don't need to record the windowDidResize notification as the view does record the
+            // viewDidEndLiveResize notification.
+            // class.add_method(sel!(windowDidResize:), record_notification as extern fn(&Object, Sel, id));
+
             class.add_method(sel!(windowDidEnterFullScreen:), record_notification as extern fn(&Object, Sel, id));
             class.add_method(sel!(windowDidExitFullScreen:), record_notification as extern fn(&Object, Sel, id));
             class.add_method(sel!(windowWillClose:), record_notification as extern fn(&Object, Sel, id));

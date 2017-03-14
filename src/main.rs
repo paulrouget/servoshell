@@ -210,6 +210,10 @@ fn main() {
 
             for event in view_events {
                 match event {
+                    ViewEvent::GeometryDidChange => {
+                        servo.update_geometry(view.get_geometry());
+                        view.update_drawable();
+                    }
                     ViewEvent::MouseWheel(delta, phase) => {
                         let (x, y) = match delta {
                             view::MouseScrollDelta::PixelDelta(x, y) => {
