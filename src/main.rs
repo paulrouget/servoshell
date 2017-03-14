@@ -71,6 +71,7 @@ fn main() {
     window.set_command_state(WindowCommand::ZoomIn, CommandState::Enabled);
     window.set_command_state(WindowCommand::ZoomOut, CommandState::Enabled);
     window.set_command_state(WindowCommand::ZoomToActualSize, CommandState::Disabled);
+    window.set_command_state(WindowCommand::ToggleSidebar, CommandState::Enabled);
     app.set_command_state(AppCommand::ClearHistory, CommandState::Enabled);
 
     let mut last_mouse_point = (0, 0);
@@ -159,6 +160,9 @@ fn main() {
                             }
                             WindowCommand::OpenInDefaultBrowser => {
                                 open::that(current_url.clone().unwrap()).ok();
+                            }
+                            WindowCommand::ToggleSidebar => {
+                                window.toggle_sidebar();
                             }
                             WindowCommand::ZoomIn => {
                                 zoom = zoom * 1.1;

@@ -34,6 +34,8 @@ fn action_to_command(action: Sel) -> Option<WindowCommand> {
         Some(WindowCommand::ZoomToActualSize)
     } else if action == sel!(shellOpenInDefaultBrowser:) {
         Some(WindowCommand::OpenInDefaultBrowser)
+    } else if action == sel!(shellToggleSidebar:) {
+        Some(WindowCommand::ToggleSidebar)
     } else {
         None
     }
@@ -188,6 +190,7 @@ pub fn register() {
             class.add_method(sel!(shellNavigateBack:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellNavigateForward:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellOpenInDefaultBrowser:), record_command as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellToggleSidebar:), record_command as extern fn(&Object, Sel, id));
 
             class.add_method(sel!(shellSubmitUserInput:), submit_user_input as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellNavigate:), navigate as extern fn(&Object, Sel, id));
@@ -255,6 +258,26 @@ impl Window {
             servo_view
         };
         Ok(View::new(nsview))
+    }
+
+    pub fn toggle_sidebar(&self) {
+        // FIXME: This is too basic. If we want animations and proper sidebar support,
+        // we need to have access to "animator()" which, afaiu, comes only
+        // from a NSSplitViewController. We want to be able to use this:
+        // https://developer.apple.com/reference/appkit/nssplitviewcontroller/1388905-togglesidebar
+        unsafe {
+            let contentview: id = msg_send![self.nswindow, contentView];
+            let views: id = msg_send![contentview, subviews];
+            let splitview: id = msg_send![views, objectAtIndex:0];
+            let views: id = msg_send![splitview, subviews];
+            let view_left: id = msg_send![views, objectAtIndex:0];
+            let hidden: BOOL = msg_send![view_left, isHidden];
+            if hidden == YES {
+                msg_send![view_left, setHidden:NO];
+            } else {
+                msg_send![view_left, setHidden:YES];
+            }
+        }
     }
 
     pub fn get_events(&self) -> Vec<WindowEvent> {

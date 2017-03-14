@@ -20,7 +20,7 @@
                     <splitView arrangesAllSubviews="NO" dividerStyle="thin" vertical="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gKh-eK-Mgj">
                         <rect key="frame" x="0.0" y="0.0" width="800" height="600"/>
                         <subviews>
-                            <customView id="oV7-2n-kKj">
+                            <customView id="oV7-2n-kKj" userLabel="Sidebar">
                                 <rect key="frame" x="0.0" y="0.0" width="184" height="600"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <subviews>
@@ -41,12 +41,14 @@
                                 </subviews>
                                 <constraints>
                                     <constraint firstAttribute="trailing" secondItem="nXU-ZC-HDO" secondAttribute="trailing" id="1DB-R6-WvR"/>
+                                    <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="120" id="TRH-tb-vYA"/>
+                                    <constraint firstAttribute="width" relation="lessThanOrEqual" constant="300" id="ig2-nF-VSl"/>
                                     <constraint firstItem="nXU-ZC-HDO" firstAttribute="leading" secondItem="oV7-2n-kKj" secondAttribute="leading" id="pnS-gg-HAU"/>
                                     <constraint firstAttribute="bottom" secondItem="nXU-ZC-HDO" secondAttribute="bottom" id="rQ0-jQ-vD7"/>
                                     <constraint firstItem="nXU-ZC-HDO" firstAttribute="top" secondItem="oV7-2n-kKj" secondAttribute="top" id="zBQ-PJ-kUY"/>
                                 </constraints>
                             </customView>
-                            <customView id="N8b-Tc-LeP">
+                            <customView id="N8b-Tc-LeP" userLabel="Content">
                                 <rect key="frame" x="185" y="0.0" width="615" height="600"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <subviews>
@@ -108,6 +110,22 @@
                         </button>
                         <connections>
                             <action selector="shellStop:" target="-1" id="QAU-TI-xpV"/>
+                        </connections>
+                    </toolbarItem>
+                    <toolbarItem implicitItemIdentifier="F7EB5E31-33B9-42FB-8247-21F4A80B42BF" label="Sidebar" paletteLabel="Sidebar" image="NSSidebarTemplate" id="Va7-c8-Chm" customClass="NSValidableToolbarItem">
+                        <nil key="toolTip"/>
+                        <size key="minSize" width="36" height="28"/>
+                        <size key="maxSize" width="40" height="28"/>
+                        <button key="view" verticalHuggingPriority="750" id="cBY-tX-rNh">
+                            <rect key="frame" x="6" y="14" width="36" height="28"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="NSSidebarTemplate" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="2vP-4b-H2i">
+                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                        </button>
+                        <connections>
+                            <action selector="shellToggleSidebar:" target="-1" id="LrC-G3-IB0"/>
                         </connections>
                     </toolbarItem>
                     <toolbarItem implicitItemIdentifier="40D4646D-659B-407C-8FBB-432B18EF0288" explicitItemIdentifier="history" label="History" paletteLabel="History" id="eQy-xS-rWz" customClass="NSHistoryToolbarItem">
@@ -195,6 +213,7 @@
                     <toolbarItem reference="syX-Rt-Bai"/>
                     <toolbarItem reference="Ryh-a2-Juw"/>
                     <toolbarItem reference="nLf-0M-uSd"/>
+                    <toolbarItem reference="Va7-c8-Chm"/>
                 </defaultToolbarItems>
             </toolbar>
         </window>
@@ -204,6 +223,7 @@
         <image name="NSGoRightTemplate" width="9" height="12"/>
         <image name="NSRefreshTemplate" width="11" height="15"/>
         <image name="NSShareTemplate" width="11" height="16"/>
+        <image name="NSSidebarTemplate" width="15" height="12"/>
         <image name="NSStopProgressTemplate" width="11" height="11"/>
     </resources>
 </document>
