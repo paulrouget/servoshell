@@ -16,6 +16,7 @@ use self::servo::euclid::size::TypedSize2D;
 use self::servo::script_traits::{DevicePixel, MouseButton, TouchEventType};
 use self::servo::net_traits::net_error_list::NetError;
 use self::servo::webrender_traits;
+use state::BrowserState;
 use platform;
 
 pub use self::servo::style_traits::cursor::Cursor as ServoCursor;
@@ -121,6 +122,31 @@ impl Servo {
             events_for_servo: RefCell::new(Vec::new()),
             servo_browser: RefCell::new(servo),
             callbacks: callbacks,
+        }
+    }
+
+    pub fn get_init_state() -> BrowserState {
+        BrowserState {
+            last_mouse_point: (0, 0),
+            last_mouse_down_point: (0, 0),
+            last_mouse_down_button: None,
+            zoom: 1.0,
+            url: None,
+            user_input: None,
+            can_go_back: false,
+            can_go_forward: false,
+            is_loading: false,
+            domain_locked: false,
+            show_fragment_borders: false,
+            parallel_display_list_building: false,
+            show_parallel_layout: false,
+            convert_mouse_to_touch: false,
+            show_compositor_borders: false,
+            show_parallel_paint: false,
+            paint_flashing: false,
+            show_webrender_stats: false,
+            multisample_antialiasing: false,
+            show_tiles_borders: false,
         }
     }
 

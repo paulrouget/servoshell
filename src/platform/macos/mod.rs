@@ -1,12 +1,16 @@
 mod utils;
 mod app;
 mod window;
-mod toolbar;
 mod view;
 
 use std::env;
 use std::sync::{Once, ONCE_INIT};
 use std::path::PathBuf;
+use state::AppState;
+
+use cocoa::base::*;
+use cocoa::appkit::*;
+use std::os::raw::c_void;
 
 pub use self::app::App;
 pub use self::window::Window;
@@ -18,10 +22,17 @@ static INIT: Once = ONCE_INIT;
 pub fn init() {
     INIT.call_once(|| {
         app::register();
-        toolbar::register();
         view::register();
         window::register();
     });
+}
+
+pub fn get_state<'a>() -> &'a mut AppState {
+    unsafe {
+        let delegate: id = msg_send![NSApp(), delegate];
+        let ivar: *mut c_void = *(&*delegate).get_ivar("state");
+        &mut *(ivar as *mut AppState)
+    }
 }
 
 // Where to find servo_resources/ and nibs/

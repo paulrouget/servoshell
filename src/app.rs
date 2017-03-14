@@ -1,5 +1,4 @@
 pub use platform::App;
-use commands::AppCommand;
 
 #[derive(Clone, Debug)]
 pub enum AppEvent {
@@ -7,4 +6,10 @@ pub enum AppEvent {
     WillTerminate,
     DidChangeScreenParameters,
     DoCommand(AppCommand),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum AppCommand {
+    ClearHistory,
+    ToggleOptionDarkTheme,
 }

@@ -2,7 +2,6 @@ use cocoa::base::*;
 use cocoa::foundation::*;
 use objc::runtime::Object;
 use std::os::raw::c_void;
-use std::collections::HashMap;
 use std::ffi::CStr;
 use platform;
 use libc;
@@ -50,10 +49,6 @@ pub fn id_is_instance_of(id: id, classname: &'static str) -> bool {
 
 pub fn get_event_queue<T>(obj: &Object) -> &mut Vec<T> {
     get_ivar(obj, "event_queue")
-}
-
-pub fn get_command_states<A, B>(obj: &Object) -> &mut HashMap<A, B> {
-    get_ivar(obj, "command_states")
 }
 
 pub fn get_ivar<'a, T>(obj: &'a Object, var: &'static str) -> &'a mut T {

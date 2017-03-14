@@ -17,18 +17,18 @@ mod window;
 mod view;
 mod servo;
 mod platform;
-mod commands;
+mod state;
 
-use app::AppEvent;
-use window::WindowEvent;
+use app::{App, AppEvent, AppCommand};
+use window::{Window, WindowEvent, WindowCommand};
 use view::ViewEvent;
 use servo::ServoEvent;
 use simplelog::{Config, LogLevel, LogLevelFilter, WriteLogger};
 use std::fs::File;
 use std::env::args;
-use app::App;
 use servo::{Servo, ServoUrl, FollowLinkPolicy};
-use commands::{AppCommand, WindowCommand, CommandState};
+
+use platform::get_state;
 
 fn main() {
 
@@ -48,6 +48,10 @@ fn main() {
 
     let app = App::load().unwrap();
     let window = app.create_window().unwrap();
+
+    get_state().current_window_index = Some(0);
+    get_state().window_states.push(Window::get_init_state());
+
     let view = window.create_view().unwrap();
 
     // Skip first argument (executable), and find the first
@@ -65,21 +69,10 @@ fn main() {
         Servo::new(geometry, riser, &url, policy)
     };
 
+    get_state().window_states[0].current_browser_index = Some(0);
+    get_state().window_states[0].browser_states.push(Servo::get_init_state());
+
     info!("Servo version: {}", servo.version());
-
-    window.set_command_state(WindowCommand::OpenLocation, CommandState::Enabled);
-    window.set_command_state(WindowCommand::ZoomIn, CommandState::Enabled);
-    window.set_command_state(WindowCommand::ZoomOut, CommandState::Enabled);
-    window.set_command_state(WindowCommand::ShowOptions, CommandState::Enabled);
-    window.set_command_state(WindowCommand::ZoomToActualSize, CommandState::Disabled);
-    window.set_command_state(WindowCommand::ToggleSidebar, CommandState::Enabled);
-    app.set_command_state(AppCommand::ClearHistory, CommandState::Enabled);
-
-    let mut last_mouse_point = (0, 0);
-    let mut last_mouse_down_point = (0, 0);
-    let mut last_mouse_down_button: Option<view::MouseButton> = None;
-    let mut zoom = 1.0;
-    let mut current_url: Option<String> = None;
 
     app.run(|| {
 
@@ -117,6 +110,9 @@ fn main() {
                     AppEvent::DoCommand(cmd) => {
                         match cmd {
                             AppCommand::ClearHistory => {
+                                // FIXME
+                            }
+                            AppCommand::ToggleOptionDarkTheme => {
                                 // FIXME
                             }
                         }
@@ -160,40 +156,32 @@ fn main() {
                                 window.focus_urlbar();
                             }
                             WindowCommand::OpenInDefaultBrowser => {
-                                open::that(current_url.clone().unwrap()).ok();
+                                if let Some(ref url) = get_state().window_states[0].browser_states[0].url {
+                                    open::that(url.clone()).ok();
+                                }
                             }
                             WindowCommand::ToggleSidebar => {
                                 window.toggle_sidebar();
                             }
                             WindowCommand::ZoomIn => {
-                                zoom = zoom * 1.1;
+                                get_state().window_states[0].browser_states[0].zoom *= 1.1;
+                                let zoom = get_state().window_states[0].browser_states[0].zoom;
                                 servo.zoom(zoom);
-                                let reset_zoom = if zoom == 1.0 {
-                                    CommandState::Disabled
-                                } else {
-                                    CommandState::Enabled
-                                };
-                                window.set_command_state(WindowCommand::ZoomToActualSize, reset_zoom);
                             }
                             WindowCommand::ZoomOut => {
-                                zoom = zoom / 1.1;
+                                get_state().window_states[0].browser_states[0].zoom /= 1.1;
+                                let zoom = get_state().window_states[0].browser_states[0].zoom;
                                 servo.zoom(zoom);
-                                let reset_zoom = if zoom == 1.0 {
-                                    CommandState::Disabled
-                                } else {
-                                    CommandState::Enabled
-                                };
-                                window.set_command_state(WindowCommand::ZoomToActualSize, reset_zoom);
                             }
                             WindowCommand::ZoomToActualSize => {
-                                zoom = 1.0;
+                                get_state().window_states[0].browser_states[0].zoom = 1.0;
                                 servo.reset_zoom();
-                                window.set_command_state(WindowCommand::ZoomToActualSize, CommandState::Disabled);
                             }
                             WindowCommand::ShowOptions => {
                                 window.show_options();
                             }
                             WindowCommand::Load(request) => {
+                                get_state().window_states[0].browser_states[0].user_input = Some(request.clone());
                                 let url = ServoUrl::parse(&request).or_else(|error| {
                                     // FIXME: weak
                                     if request.ends_with(".com") || request.ends_with(".org") || request.ends_with(".net") {
@@ -211,6 +199,31 @@ fn main() {
                                     Err(err) => warn!("Can't parse url: {}", err),
                                 }
                             }
+                            WindowCommand::ToggleOptionShowLogs => {
+                                get_state().window_states[0].logs_visible = !get_state().window_states[0].logs_visible;
+                            },
+                            WindowCommand::ToggleOptionLockDomain => {
+                            },
+                            WindowCommand::ToggleOptionFragmentBorders => {
+                            },
+                            WindowCommand::ToggleOptionParallelDisplayListBuidling => {
+                            },
+                            WindowCommand::ToggleOptionShowParallelLayout => {
+                            },
+                            WindowCommand::ToggleOptionConvertMouseToTouch => {
+                            },
+                            WindowCommand::ToggleOptionCompositorBorders => {
+                            },
+                            WindowCommand::ToggleOptionShowParallelPaint => {
+                            },
+                            WindowCommand::ToggleOptionPaintFlashing => {
+                            },
+                            WindowCommand::ToggleOptionWebRenderStats => {
+                            },
+                            WindowCommand::ToggleOptionMultisampleAntialiasing => {
+                            },
+                            WindowCommand::ToggleOptionTileBorders => {
+                            },
                         }
                     }
                 }
@@ -232,16 +245,17 @@ fn main() {
                         servo.perform_scroll(0, 0, x, y, phase);
                     }
                     ViewEvent::MouseMoved(x, y) => {
-                        last_mouse_point = (x, y);
+                        get_state().window_states[0].browser_states[0].last_mouse_point = (x, y);
                         servo.perform_mouse_move(x, y);
                     }
                     ViewEvent::MouseInput(state, button) => {
-                        let (x, y) = last_mouse_point;
-                        let (org_x, org_y) = last_mouse_down_point;
+                        let (x, y) = get_state().window_states[0].browser_states[0].last_mouse_point;
+                        let (org_x, org_y) = get_state().window_states[0].browser_states[0].last_mouse_down_point;
+                        let last_mouse_down_button = get_state().window_states[0].browser_states[0].last_mouse_down_button;
                         servo.perform_click(x, y, org_x, org_y, state, button, last_mouse_down_button);
-                        last_mouse_down_point = (x, y);
+                        get_state().window_states[0].browser_states[0].last_mouse_down_point = (x, y);
                         if state == view::ElementState::Pressed {
-                            last_mouse_down_button = Some(button);
+                            get_state().window_states[0].browser_states[0].last_mouse_down_button = Some(button);
                         }
                     }
                 }
@@ -277,37 +291,17 @@ fn main() {
                         // FIXME
                     }
                     ServoEvent::LoadStart(can_go_back, can_go_forward) => {
-                        window.set_command_state(WindowCommand::Reload, CommandState::Disabled);
-                        window.set_command_state(WindowCommand::Stop, CommandState::Enabled);
-
                         // FIXME: See https://github.com/servo/servo/issues/15643
-                        window.set_command_state(WindowCommand::NavigateBack, if can_go_back {
-                            CommandState::Enabled
-                        } else {
-                            CommandState::Disabled
-                        });
-                        window.set_command_state(WindowCommand::NavigateForward, if can_go_forward {
-                            CommandState::Enabled
-                        } else {
-                            CommandState::Disabled
-                        });
+                        get_state().window_states[0].browser_states[0].is_loading = true;
+                        get_state().window_states[0].browser_states[0].can_go_back = can_go_back;
+                        get_state().window_states[0].browser_states[0].can_go_forward = can_go_forward;
                     }
                     ServoEvent::LoadEnd(can_go_back, can_go_forward, root) => {
-                        window.set_command_state(WindowCommand::Reload, CommandState::Enabled);
-                        window.set_command_state(WindowCommand::Stop, CommandState::Disabled);
-
+                        // FIXME: See https://github.com/servo/servo/issues/15643
+                        get_state().window_states[0].browser_states[0].is_loading = false;
                         if root {
-                            // FIXME: See https://github.com/servo/servo/issues/15643
-                            window.set_command_state(WindowCommand::NavigateBack, if can_go_back {
-                                CommandState::Enabled
-                            } else {
-                                CommandState::Disabled
-                            });
-                            window.set_command_state(WindowCommand::NavigateForward, if can_go_forward {
-                                CommandState::Enabled
-                            } else {
-                                CommandState::Disabled
-                            });
+                            get_state().window_states[0].browser_states[0].can_go_back = can_go_back;
+                            get_state().window_states[0].browser_states[0].can_go_forward = can_go_forward;
                         }
                     }
                     ServoEvent::LoadError(..) => {
@@ -315,8 +309,7 @@ fn main() {
                     }
                     ServoEvent::HeadParsed(url) => {
                         window.set_url(url.as_str());
-                        current_url = Some(url.into_string());
-                        window.set_command_state(WindowCommand::OpenInDefaultBrowser, CommandState::Enabled);
+                        get_state().window_states[0].browser_states[0].url = Some(url.into_string());
                     }
                     ServoEvent::CursorChanged(cursor) => {
                         window.set_cursor(cursor);
@@ -329,6 +322,9 @@ fn main() {
                     }
                 }
             }
+
+            app.state_changed();
+            window.state_changed();
 
             servo.sync(force_sync);
         }

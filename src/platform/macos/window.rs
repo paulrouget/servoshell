@@ -6,43 +6,12 @@ use objc::runtime::{Class, Object, Sel};
 use std::ffi::CStr;
 use std::os::raw::c_void;
 use super::utils;
-use window::WindowEvent;
+use window::{WindowEvent, WindowCommand};
 use view::View;
-use std::collections::HashMap;
-use commands::{CommandState, WindowCommand};
 use libc;
 use servo::ServoCursor;
-
-// FIXME: this is ugly. Also, we are duplicating the list
-// of Selector (see the add_method list)
-fn action_to_command(action: Sel) -> Option<WindowCommand> {
-    if action == sel!(shellReload:) {
-        Some(WindowCommand::Reload)
-    } else if action == sel!(shellStop:) {
-        Some(WindowCommand::Stop)
-    } else if action == sel!(shellNavigateBack:) {
-        Some(WindowCommand::NavigateBack)
-    } else if action == sel!(shellNavigateForward:) {
-        Some(WindowCommand::NavigateForward)
-    } else if action == sel!(shellOpenLocation:) {
-        Some(WindowCommand::OpenLocation)
-    } else if action == sel!(shellZoomIn:) {
-        Some(WindowCommand::ZoomIn)
-    } else if action == sel!(shellZoomOut:) {
-        Some(WindowCommand::ZoomOut)
-    } else if action == sel!(shellZoomToActualSize:) {
-        Some(WindowCommand::ZoomToActualSize)
-    } else if action == sel!(shellOpenInDefaultBrowser:) {
-        Some(WindowCommand::OpenInDefaultBrowser)
-    } else if action == sel!(shellToggleSidebar:) {
-        Some(WindowCommand::ToggleSidebar)
-    } else if action == sel!(shellShowOptions:) {
-        Some(WindowCommand::ShowOptions)
-    } else {
-        None
-    }
-}
-
+use state::WindowState;
+use super::get_state;
 
 pub fn register() {
 
@@ -94,7 +63,6 @@ pub fn register() {
         let superclass = Class::get("NSObject").unwrap();
         let mut class = ClassDecl::new("NSShellWindowDelegate", superclass).unwrap();
         class.add_ivar::<*mut c_void>("event_queue");
-        class.add_ivar::<*mut c_void>("command_states");
 
         // FIXME: Don't use strings. And maybe use a map to avoid the duplicate code with add_method.
         extern fn record_notification(this: &Object, _sel: Sel, notification: id) {
@@ -113,33 +81,124 @@ pub fn register() {
             utils::get_event_queue(this).push(event.unwrap());
         }
 
+        extern fn record_command(this: &Object, _sel: Sel, item: id) {
+            let action: Sel = unsafe {msg_send![item, action]};
+            let cmd = if action == sel!(shellNavigate:) {
+                let idx: NSInteger = unsafe { msg_send![item, selectedSegment] };
+                if idx == 0 {
+                    WindowCommand::NavigateBack
+                } else {
+                    WindowCommand::NavigateForward
+                }
+            } else if action == sel!(shellZoom:) {
+                let idx: NSInteger = unsafe { msg_send![item, selectedSegment] };
+                if idx == 0 {
+                    WindowCommand::ZoomOut
+                } else  if idx == 1 {
+                    WindowCommand::ZoomToActualSize
+                } else {
+                    WindowCommand::ZoomIn
+                }
+            } else if action == sel!(shellStop:) { WindowCommand::Stop }
+            else if action == sel!(shellReload:) { WindowCommand::Reload }
+            else if action == sel!(shellOpenLocation:) { WindowCommand::OpenLocation }
+            else if action == sel!(shellZoomIn:) { WindowCommand::ZoomIn }
+            else if action == sel!(shellZoomOut:) { WindowCommand::ZoomOut }
+            else if action == sel!(shellZoomToActualSize:) { WindowCommand::ZoomToActualSize }
+            else if action == sel!(shellNavigateBack:) { WindowCommand::NavigateBack }
+            else if action == sel!(shellNavigateForward:) { WindowCommand::NavigateForward }
+            else if action == sel!(shellOpenInDefaultBrowser:) { WindowCommand::OpenInDefaultBrowser }
+            else if action == sel!(shellToggleSidebar:) { WindowCommand::ToggleSidebar }
+            else if action == sel!(shellShowOptions:) { WindowCommand::ShowOptions }
+            else if action == sel!(shellToggleOptionShowLogs:) { WindowCommand::ToggleOptionShowLogs }
+            else if action == sel!(shellToggleOptionLockDomain:) { WindowCommand::ToggleOptionLockDomain }
+            else if action == sel!(shellToggleOptionFragmentBorders:) { WindowCommand::ToggleOptionFragmentBorders }
+            else if action == sel!(shellToggleOptionParallelDisplayListBuidling:) { WindowCommand::ToggleOptionParallelDisplayListBuidling }
+            else if action == sel!(shellToggleOptionShowParallelLayout:) { WindowCommand::ToggleOptionShowParallelLayout }
+            else if action == sel!(shellToggleOptionConvertMouseToTouch:) { WindowCommand::ToggleOptionConvertMouseToTouch }
+            else if action == sel!(shellToggleOptionCompositorBorders:) { WindowCommand::ToggleOptionCompositorBorders }
+            else if action == sel!(shellToggleOptionShowParallelPaint:) { WindowCommand::ToggleOptionShowParallelPaint }
+            else if action == sel!(shellToggleOptionPaintFlashing:) { WindowCommand::ToggleOptionPaintFlashing }
+            else if action == sel!(shellToggleOptionWebRenderStats:) { WindowCommand::ToggleOptionWebRenderStats }
+            else if action == sel!(shellToggleOptionMultisampleAntialiasing:) { WindowCommand::ToggleOptionMultisampleAntialiasing }
+            else if action == sel!(shellToggleOptionTileBorders:) { WindowCommand::ToggleOptionTileBorders }
+            else {
+                panic!("Unexpected action to record: {:?}", action)
+            };
+            utils::get_event_queue(this).push(WindowEvent::DoCommand(cmd));
+        }
+
         extern fn validate_ui(this: &Object, _sel: Sel, item: id) -> BOOL {
             unsafe {
-                let action: Sel = msg_send![item, action];
+                let action: id = msg_send![item, action];
                 msg_send![this, validateAction:action]
             }
         }
 
-        extern fn validate_action(this: &Object, _sel: Sel, action: Sel) -> BOOL {
-            let map: &mut HashMap<WindowCommand, CommandState> = utils::get_command_states(this);
-            match action_to_command(action) {
-                Some(event) => {
-                    match map.get(&event) {
-                        Some(&CommandState::Enabled) => YES,
-                        Some(&CommandState::Disabled) => NO,
-                        None => NO,
-                    }
-                },
-                None => panic!("Unexpected action to validate"),
-            }
+        extern fn validate_action(_this: &Object, _sel: Sel, action: Sel) -> BOOL {
+            let ref state = get_state().window_states[0].browser_states[0]; // FIXME
+            let enabled = if action == sel!(shellStop:) {
+                state.is_loading
+            } else if action == sel!(shellReload:) {
+                !state.is_loading
+            } else if action == sel!(shellOpenLocation:) {
+                true
+            } else if action == sel!(shellZoomIn:) {
+                true
+            } else if action == sel!(shellZoomOut:) {
+                true
+            } else if action == sel!(shellZoomToActualSize:) {
+                state.zoom != 1.0
+            } else if action == sel!(shellNavigateBack:) {
+                state.can_go_back
+            } else if action == sel!(shellNavigateForward:) {
+                state.can_go_forward
+            } else if action == sel!(shellOpenInDefaultBrowser:) {
+                state.url.is_some()
+            } else if action == sel!(shellToggleSidebar:) {
+                true
+            } else if action == sel!(shellShowOptions:) {
+                true
+            } else if action == sel!(shellSubmitUserInput:) {
+                true
+            } else {
+                panic!("Unexpected action to validate: {:?}", action);
+            };
+            if enabled {YES} else {NO}
         }
 
-        extern fn record_command(this: &Object, _sel: Sel, item: id) {
-            let action: Sel = unsafe {msg_send![item, action]};
-            match action_to_command(action) {
-                Some(cmd) => utils::get_event_queue(this).push(WindowEvent::DoCommand(cmd)),
-                None => panic!("Unexpected action to record"),
-            }
+        extern fn get_state_for_action(_this: &Object, _sel: Sel, action: Sel) -> NSInteger {
+            let ref state = get_state().window_states[0].browser_states[0]; // FIXME
+            let on = if action == sel!(shellToggleOptionDarkTheme:) {
+                get_state().dark_theme
+            } else if action == sel!(shellToggleOptionShowLogs:) {
+                get_state().window_states[0].logs_visible
+            } else if action == sel!(shellToggleOptionLockDomain:) {
+                state.domain_locked
+            } else if action == sel!(shellToggleOptionFragmentBorders:) {
+                state.show_fragment_borders
+            } else if action == sel!(shellToggleOptionParallelDisplayListBuidling:) {
+                state.parallel_display_list_building
+            } else if action == sel!(shellToggleOptionShowParallelLayout:) {
+                state.show_parallel_layout
+            } else if action == sel!(shellToggleOptionConvertMouseToTouch:) {
+                state.convert_mouse_to_touch
+            } else if action == sel!(shellToggleOptionCompositorBorders:) {
+                state.show_compositor_borders
+            } else if action == sel!(shellToggleOptionShowParallelPaint:) {
+                state.show_parallel_paint
+            } else if action == sel!(shellToggleOptionPaintFlashing:) {
+                state.paint_flashing
+            } else if action == sel!(shellToggleOptionWebRenderStats:) {
+                state.show_webrender_stats
+            } else if action == sel!(shellToggleOptionMultisampleAntialiasing:) {
+                state.multisample_antialiasing
+            } else if action == sel!(shellToggleOptionTileBorders:) {
+                state.show_tiles_borders
+            } else {
+                panic!("Unexpected action to validate: {:?}", action);
+            };
+            if on {1} else {0}
         }
 
         extern fn submit_user_input(this: &Object, _sel: Sel, item: id) {
@@ -149,28 +208,6 @@ pub fn register() {
                 CStr::from_ptr(text).to_string_lossy().into_owned()
             };
             let cmd = WindowCommand::Load(text);
-            utils::get_event_queue(this).push(WindowEvent::DoCommand(cmd));
-        }
-
-        extern fn navigate(this: &Object, _sel: Sel, item: id) {
-            let idx: NSInteger = unsafe { msg_send![item, selectedSegment] };
-            let cmd = if idx == 0 {
-                WindowCommand::NavigateBack
-            } else {
-                WindowCommand::NavigateForward
-            };
-            utils::get_event_queue(this).push(WindowEvent::DoCommand(cmd));
-        }
-
-        extern fn zoom(this: &Object, _sel: Sel, item: id) {
-            let idx: NSInteger = unsafe { msg_send![item, selectedSegment] };
-            let cmd = if idx == 0 {
-                WindowCommand::ZoomOut
-            } else  if idx == 1 {
-                WindowCommand::ZoomToActualSize
-            } else {
-                WindowCommand::ZoomIn
-            };
             utils::get_event_queue(this).push(WindowEvent::DoCommand(cmd));
         }
 
@@ -194,13 +231,26 @@ pub fn register() {
             class.add_method(sel!(shellOpenInDefaultBrowser:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellToggleSidebar:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellShowOptions:), record_command as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellToggleOptionShowLogs:), record_command as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellToggleOptionLockDomain:), record_command as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellToggleOptionFragmentBorders:), record_command as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellToggleOptionParallelDisplayListBuidling:), record_command as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellToggleOptionShowParallelLayout:), record_command as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellToggleOptionConvertMouseToTouch:), record_command as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellToggleOptionCompositorBorders:), record_command as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellToggleOptionShowParallelPaint:), record_command as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellToggleOptionPaintFlashing:), record_command as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellToggleOptionWebRenderStats:), record_command as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellToggleOptionMultisampleAntialiasing:), record_command as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellToggleOptionTileBorders:), record_command as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellZoom:), record_command as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellNavigate:), record_command as extern fn(&Object, Sel, id));
+
+            class.add_method(sel!(validateUserInterfaceItem:), validate_ui as extern fn(&Object, Sel, id) -> BOOL);
+            class.add_method(sel!(validateAction:), validate_action as extern fn(&Object, Sel, Sel) -> BOOL);
+            class.add_method(sel!(getStateForAction:), get_state_for_action as extern fn(&Object, Sel, Sel) -> NSInteger);
 
             class.add_method(sel!(shellSubmitUserInput:), submit_user_input as extern fn(&Object, Sel, id));
-            class.add_method(sel!(shellNavigate:), navigate as extern fn(&Object, Sel, id));
-            class.add_method(sel!(shellZoom:), zoom as extern fn(&Object, Sel, id));
-
-            class.add_method(sel!(validateAction:), validate_action as extern fn(&Object, Sel, Sel) -> BOOL);
-            class.add_method(sel!(validateUserInterfaceItem:), validate_ui as extern fn(&Object, Sel, id) -> BOOL);
         }
 
         class.register();
@@ -216,17 +266,11 @@ pub struct Window {
 impl Window {
     pub fn new(nswindow: id, nspopover: id) -> Window {
 
-        let command_states: HashMap<WindowCommand, CommandState> = HashMap::new();
-        let command_states_ptr = Box::into_raw(Box::new(command_states));
-
         unsafe {
             // FIXME: release and set delegate to nil
             let delegate: id = msg_send![class("NSShellWindowDelegate"), alloc];
             let event_queue_ptr: *mut c_void = *(&*nswindow).get_ivar("event_queue");
             (*delegate).set_ivar("event_queue", event_queue_ptr);
-            (*delegate).set_ivar("command_states", command_states_ptr as *mut c_void);
-
-            // nswindow.setAppearance_(NSAppearance::named_(nil, NSAppearanceNameVibrantDark));
 
             msg_send![nswindow, setDelegate:delegate];
 
@@ -242,6 +286,69 @@ impl Window {
         Window {
             nswindow: nswindow,
             nspopover: nspopover,
+        }
+    }
+
+    pub fn state_changed(&self) {
+        // First, update the avaibility of the buttons
+        unsafe {
+            let toolbar: id = msg_send![self.nswindow, toolbar];
+            let items: id = msg_send![toolbar, items];
+            let count: NSInteger = msg_send![items, count];
+            for i in 0..count {
+                let item: id = msg_send![items, objectAtIndex:i];
+                let view: id = msg_send![item, view];
+                if view == nil {
+                    continue;
+                }
+                let action: Sel = msg_send![item, action];
+                let delegate: id = msg_send![self.nswindow, delegate];
+                if action == sel!(shellNavigate:) {
+                    let enabled0: BOOL = msg_send![delegate, validateAction:sel!(shellNavigateBack:)];
+                    let enabled1: BOOL = msg_send![delegate, validateAction:sel!(shellNavigateForward:)];
+                    view.setEnabled_forSegment_(enabled0, 0);
+                    view.setEnabled_forSegment_(enabled1, 1);
+                } else if action == sel!(shellZoom:) {
+                    let enabled0: BOOL = msg_send![delegate, validateAction:sel!(shellZoomOut:)];
+                    let enabled1: BOOL = msg_send![delegate, validateAction:sel!(shellZoomToActualSize:)];
+                    let enabled2: BOOL = msg_send![delegate, validateAction:sel!(shellZoomIn:)];
+                    view.setEnabled_forSegment_(enabled0, 0);
+                    view.setEnabled_forSegment_(enabled1, 1);
+                    view.setEnabled_forSegment_(enabled2, 2);
+                } else {
+                    let enabled: BOOL = msg_send![delegate, validateAction:action];
+                    msg_send![view, setEnabled:enabled];
+                }
+            }
+        }
+
+        // Then, update the state of the popover
+        unsafe {
+            let delegate: id = msg_send![self.nswindow, delegate];
+            let controller: id = msg_send![self.nspopover, contentViewController];
+            let topview: id = msg_send![controller, view];
+            let subviews: id = msg_send![topview, subviews];
+            let stack: id = msg_send![subviews, objectAtIndex:0];
+            let views: id = msg_send![stack, subviews];
+            let count: NSInteger = msg_send![views, count];
+            for i in 0..count {
+                let view: id = msg_send![views, objectAtIndex:i];
+                // FIXME
+                if utils::id_is_instance_of(view, "NSButton") {
+                    let action: Sel = msg_send![view, action];
+                    let state: NSInteger = msg_send![delegate, getStateForAction:action];
+                    msg_send![view, setState:state];
+                }
+            }
+        }
+    }
+
+    pub fn get_init_state() -> WindowState {
+        WindowState {
+            current_browser_index: None,
+            browser_states: Vec::new(),
+            sidebar_is_open: false,
+            logs_visible: false,
         }
     }
 
@@ -290,15 +397,6 @@ impl Window {
     pub fn get_events(&self) -> Vec<WindowEvent> {
         let nsobject = unsafe { &*self.nswindow};
         utils::get_event_queue(nsobject).drain(..).collect()
-    }
-
-    pub fn set_command_state(&self, cmd: WindowCommand, state: CommandState) {
-        let nsobject = unsafe {
-            let delegate: id = msg_send![self.nswindow, delegate];
-            &*delegate
-        };
-        let command_states = utils::get_command_states(nsobject);
-        command_states.insert(cmd, state);
     }
 
     pub fn set_url(&self, url: &str) {

@@ -81,7 +81,7 @@
             <toolbar key="toolbar" implicitIdentifier="29C381EB-D93D-4732-85FB-A6F47C82B023" autosavesConfiguration="NO" displayMode="iconOnly" sizeMode="regular" id="ann-49-zau">
                 <allowedToolbarItems>
                     <toolbarItem implicitItemIdentifier="NSToolbarSpaceItem" id="HZ7-iT-z1G"/>
-                    <toolbarItem implicitItemIdentifier="D8983A42-BE0A-4879-B0DF-FBA6570FB9FD" explicitItemIdentifier="reload" label="Reload" paletteLabel="Reload" image="NSRefreshTemplate" id="syX-Rt-Bai" customClass="NSValidableToolbarItem">
+                    <toolbarItem implicitItemIdentifier="D8983A42-BE0A-4879-B0DF-FBA6570FB9FD" explicitItemIdentifier="reload" label="Reload" paletteLabel="Reload" image="NSRefreshTemplate" id="syX-Rt-Bai">
                         <nil key="toolTip"/>
                         <size key="minSize" width="36" height="28"/>
                         <size key="maxSize" width="40" height="28"/>
@@ -97,7 +97,7 @@
                             <action selector="shellReload:" target="-1" id="uV6-ep-cg0"/>
                         </connections>
                     </toolbarItem>
-                    <toolbarItem implicitItemIdentifier="57F0C50E-F2E9-4394-89CE-EFD26C815591" explicitItemIdentifier="stop" label="Stop" paletteLabel="Stop" image="NSStopProgressTemplate" id="Ryh-a2-Juw" customClass="NSValidableToolbarItem">
+                    <toolbarItem implicitItemIdentifier="57F0C50E-F2E9-4394-89CE-EFD26C815591" explicitItemIdentifier="stop" label="Stop" paletteLabel="Stop" image="NSStopProgressTemplate" id="Ryh-a2-Juw">
                         <nil key="toolTip"/>
                         <size key="minSize" width="36" height="28"/>
                         <size key="maxSize" width="40" height="28"/>
@@ -113,7 +113,7 @@
                             <action selector="shellStop:" target="-1" id="QAU-TI-xpV"/>
                         </connections>
                     </toolbarItem>
-                    <toolbarItem implicitItemIdentifier="F7EB5E31-33B9-42FB-8247-21F4A80B42BF" label="Sidebar" paletteLabel="Sidebar" image="NSSidebarTemplate" id="Va7-c8-Chm" customClass="NSValidableToolbarItem">
+                    <toolbarItem implicitItemIdentifier="F7EB5E31-33B9-42FB-8247-21F4A80B42BF" label="Sidebar" paletteLabel="Sidebar" image="NSSidebarTemplate" id="Va7-c8-Chm">
                         <nil key="toolTip"/>
                         <size key="minSize" width="36" height="28"/>
                         <size key="maxSize" width="40" height="28"/>
@@ -129,7 +129,7 @@
                             <action selector="shellToggleSidebar:" target="-1" id="LrC-G3-IB0"/>
                         </connections>
                     </toolbarItem>
-                    <toolbarItem implicitItemIdentifier="40D4646D-659B-407C-8FBB-432B18EF0288" explicitItemIdentifier="history" label="History" paletteLabel="History" id="eQy-xS-rWz" customClass="NSHistoryToolbarItem">
+                    <toolbarItem implicitItemIdentifier="40D4646D-659B-407C-8FBB-432B18EF0288" explicitItemIdentifier="history" label="History" paletteLabel="History" id="eQy-xS-rWz">
                         <nil key="toolTip"/>
                         <size key="minSize" width="67" height="25"/>
                         <size key="maxSize" width="69" height="28"/>
@@ -148,7 +148,7 @@
                             <action selector="shellNavigate:" target="-1" id="dqU-O5-AQz"/>
                         </connections>
                     </toolbarItem>
-                    <toolbarItem implicitItemIdentifier="3626E7B5-A14D-4238-A8CA-1CFB22AAE94C" explicitItemIdentifier="openInDefaultBrowser" label="Open In Default Browser" paletteLabel="Open In Default Browser" image="NSShareTemplate" id="kmH-9p-CDH" customClass="NSValidableToolbarItem">
+                    <toolbarItem implicitItemIdentifier="3626E7B5-A14D-4238-A8CA-1CFB22AAE94C" explicitItemIdentifier="openInDefaultBrowser" label="Open In Default Browser" paletteLabel="Open In Default Browser" image="NSShareTemplate" id="kmH-9p-CDH">
                         <nil key="toolTip"/>
                         <size key="minSize" width="36" height="28"/>
                         <size key="maxSize" width="40" height="28"/>
@@ -164,7 +164,7 @@
                             <action selector="shellOpenInDefaultBrowser:" target="-1" id="lNJ-UJ-ZId"/>
                         </connections>
                     </toolbarItem>
-                    <toolbarItem implicitItemIdentifier="C96D596F-2F1D-4593-B61F-B3E9AEAF72FC" explicitItemIdentifier="zoom" label="Zoom" paletteLabel="Zoom" id="nLf-0M-uSd" customClass="NSZoomToolbarItem">
+                    <toolbarItem implicitItemIdentifier="C96D596F-2F1D-4593-B61F-B3E9AEAF72FC" explicitItemIdentifier="zoom" label="Zoom" paletteLabel="Zoom" id="nLf-0M-uSd">
                         <nil key="toolTip"/>
                         <size key="minSize" width="67" height="25"/>
                         <size key="maxSize" width="97" height="28"/>
@@ -205,7 +205,7 @@
                         </connections>
                     </toolbarItem>
                     <toolbarItem implicitItemIdentifier="NSToolbarFlexibleSpaceItem" id="b3I-M0-yFF"/>
-                    <toolbarItem implicitItemIdentifier="F1ACFA55-310D-45C6-AAB0-65F41A4C4EF0" explicitItemIdentifier="options" label="Options" paletteLabel="Options" image="NSActionTemplate" id="588-1C-kbe" customClass="NSValidableToolbarItem">
+                    <toolbarItem implicitItemIdentifier="F1ACFA55-310D-45C6-AAB0-65F41A4C4EF0" explicitItemIdentifier="options" label="Options" paletteLabel="Options" image="NSActionTemplate" id="588-1C-kbe">
                         <nil key="toolTip"/>
                         <size key="minSize" width="36" height="28"/>
                         <size key="maxSize" width="40" height="28"/>
@@ -260,7 +260,7 @@
                                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                             </textFieldCell>
                         </textField>
-                        <button translatesAutoresizingMaskIntoConstraints="NO" id="6HY-aV-xJQ" customClass="NSToggleCommandButton">
+                        <button translatesAutoresizingMaskIntoConstraints="NO" id="6HY-aV-xJQ">
                             <rect key="frame" x="18" y="392" width="93" height="18"/>
                             <buttonCell key="cell" type="check" title="Dark theme" bezelStyle="regularSquare" imagePosition="left" inset="2" id="UZ6-8n-lYN">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -270,7 +270,7 @@
                                 <action selector="shellToggleOptionDarkTheme:" target="-1" id="WFc-TB-A92"/>
                             </connections>
                         </button>
-                        <button translatesAutoresizingMaskIntoConstraints="NO" id="JXI-y9-cQG" customClass="NSToggleCommandButton">
+                        <button translatesAutoresizingMaskIntoConstraints="NO" id="JXI-y9-cQG">
                             <rect key="frame" x="18" y="365" width="85" height="18"/>
                             <buttonCell key="cell" type="check" title="Show logs" bezelStyle="regularSquare" imagePosition="left" inset="2" id="f2z-M6-CRW">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -280,7 +280,7 @@
                                 <action selector="shellToggleOptionShowLogs:" target="-1" id="Zun-fT-bWF"/>
                             </connections>
                         </button>
-                        <button translatesAutoresizingMaskIntoConstraints="NO" id="lDY-NX-uyP" customClass="NSToggleCommandButton">
+                        <button translatesAutoresizingMaskIntoConstraints="NO" id="lDY-NX-uyP">
                             <rect key="frame" x="18" y="338" width="228" height="18"/>
                             <buttonCell key="cell" type="check" title="Lock navigation to current domain" bezelStyle="regularSquare" imagePosition="left" inset="2" id="j7B-Cz-z7P">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -298,7 +298,7 @@
                                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                             </textFieldCell>
                         </textField>
-                        <button translatesAutoresizingMaskIntoConstraints="NO" id="r8m-Vx-tbE" customClass="NSToggleCommandButton">
+                        <button translatesAutoresizingMaskIntoConstraints="NO" id="r8m-Vx-tbE">
                             <rect key="frame" x="18" y="281" width="165" height="18"/>
                             <buttonCell key="cell" type="check" title="Show fragment borders" bezelStyle="regularSquare" imagePosition="left" inset="2" id="3J7-Oz-J59">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -308,7 +308,7 @@
                                 <action selector="shellToggleOptionFragmentBorders:" target="-1" id="sRg-BD-PWI"/>
                             </connections>
                         </button>
-                        <button translatesAutoresizingMaskIntoConstraints="NO" id="hvz-3i-hNx" customClass="NSToggleCommandButton">
+                        <button translatesAutoresizingMaskIntoConstraints="NO" id="hvz-3i-hNx">
                             <rect key="frame" x="18" y="254" width="186" height="18"/>
                             <buttonCell key="cell" type="check" title="Parallel display list building" bezelStyle="regularSquare" imagePosition="left" inset="2" id="64X-rn-SCy">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -318,7 +318,7 @@
                                 <action selector="shellToggleOptionParallelDisplayListBuidling:" target="-1" id="Yxa-s2-VQx"/>
                             </connections>
                         </button>
-                        <button translatesAutoresizingMaskIntoConstraints="NO" id="lOU-He-SCA" customClass="NSToggleCommandButton">
+                        <button translatesAutoresizingMaskIntoConstraints="NO" id="lOU-He-SCA">
                             <rect key="frame" x="18" y="227" width="143" height="18"/>
                             <buttonCell key="cell" type="check" title="Show parallel layout" bezelStyle="regularSquare" imagePosition="left" inset="2" id="gbw-pb-UfK">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -328,7 +328,7 @@
                                 <action selector="shellToggleOptionShowParallelLayout:" target="-1" id="iuP-dI-jOB"/>
                             </connections>
                         </button>
-                        <button translatesAutoresizingMaskIntoConstraints="NO" id="xrf-fB-PbZ" customClass="NSToggleCommandButton">
+                        <button translatesAutoresizingMaskIntoConstraints="NO" id="xrf-fB-PbZ">
                             <rect key="frame" x="18" y="200" width="168" height="18"/>
                             <buttonCell key="cell" type="check" title="Convert mouse to touch" bezelStyle="regularSquare" imagePosition="left" inset="2" id="H9v-38-lXR">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -346,7 +346,7 @@
                                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                             </textFieldCell>
                         </textField>
-                        <button translatesAutoresizingMaskIntoConstraints="NO" id="Fcq-QQ-3hW" customClass="NSToggleCommandButton">
+                        <button translatesAutoresizingMaskIntoConstraints="NO" id="Fcq-QQ-3hW">
                             <rect key="frame" x="18" y="143" width="178" height="18"/>
                             <buttonCell key="cell" type="check" title="Show compositor borders" bezelStyle="regularSquare" imagePosition="left" inset="2" id="fkA-XL-L1v">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -356,7 +356,7 @@
                                 <action selector="shellToggleOptionCompositorBorders:" target="-1" id="SgD-Xh-W45"/>
                             </connections>
                         </button>
-                        <button translatesAutoresizingMaskIntoConstraints="NO" id="Sfr-z0-S6D" customClass="NSToggleCommandButton">
+                        <button translatesAutoresizingMaskIntoConstraints="NO" id="Sfr-z0-S6D">
                             <rect key="frame" x="18" y="116" width="137" height="18"/>
                             <buttonCell key="cell" type="check" title="Show parallel paint" bezelStyle="regularSquare" imagePosition="left" inset="2" id="h2X-Pj-Pmt">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -366,7 +366,7 @@
                                 <action selector="shellToggleOptionShowParallelPaint:" target="-1" id="rmo-wQ-h7B"/>
                             </connections>
                         </button>
-                        <button translatesAutoresizingMaskIntoConstraints="NO" id="IP8-aH-LpP" customClass="NSToggleCommandButton">
+                        <button translatesAutoresizingMaskIntoConstraints="NO" id="IP8-aH-LpP">
                             <rect key="frame" x="18" y="89" width="104" height="18"/>
                             <buttonCell key="cell" type="check" title="Paint flashing" bezelStyle="regularSquare" imagePosition="left" inset="2" id="eYk-h9-qpW">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -376,7 +376,7 @@
                                 <action selector="shellToggleOptionPaintFlashing:" target="-1" id="pVP-Jb-65Y"/>
                             </connections>
                         </button>
-                        <button translatesAutoresizingMaskIntoConstraints="NO" id="KHM-zh-aTM" customClass="NSToggleCommandButton">
+                        <button translatesAutoresizingMaskIntoConstraints="NO" id="KHM-zh-aTM">
                             <rect key="frame" x="18" y="62" width="170" height="18"/>
                             <buttonCell key="cell" type="check" title="Enable WebRender stats" bezelStyle="regularSquare" imagePosition="left" inset="2" id="MSv-ZS-kHH">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -386,7 +386,7 @@
                                 <action selector="shellToggleOptionWebRenderStats:" target="-1" id="APY-OD-KaS"/>
                             </connections>
                         </button>
-                        <button translatesAutoresizingMaskIntoConstraints="NO" id="Cj0-gC-bPy" customClass="NSToggleCommandButton">
+                        <button translatesAutoresizingMaskIntoConstraints="NO" id="Cj0-gC-bPy">
                             <rect key="frame" x="18" y="35" width="195" height="18"/>
                             <buttonCell key="cell" type="check" title="Use multisample antialiasing" bezelStyle="regularSquare" imagePosition="left" inset="2" id="kQc-rC-uuH">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -396,7 +396,7 @@
                                 <action selector="shellToggleOptionMultisampleAntialiasing:" target="-1" id="0Pq-YT-UkD"/>
                             </connections>
                         </button>
-                        <button translatesAutoresizingMaskIntoConstraints="NO" id="Vb7-Zi-4ro" customClass="NSToggleCommandButton">
+                        <button translatesAutoresizingMaskIntoConstraints="NO" id="Vb7-Zi-4ro">
                             <rect key="frame" x="18" y="8" width="201" height="18"/>
                             <buttonCell key="cell" type="check" title="Display webrender tile border" bezelStyle="regularSquare" imagePosition="left" inset="2" id="H9K-oH-mwp">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
