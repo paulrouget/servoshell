@@ -21,7 +21,7 @@
                     <splitView arrangesAllSubviews="NO" dividerStyle="thin" vertical="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gKh-eK-Mgj">
                         <rect key="frame" x="0.0" y="0.0" width="800" height="600"/>
                         <subviews>
-                            <customView id="oV7-2n-kKj" userLabel="Sidebar">
+                            <customView hidden="YES" id="oV7-2n-kKj" userLabel="Sidebar">
                                 <rect key="frame" x="0.0" y="0.0" width="184" height="600"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <subviews>
@@ -50,11 +50,11 @@
                                 </constraints>
                             </customView>
                             <customView id="N8b-Tc-LeP" userLabel="Content">
-                                <rect key="frame" x="185" y="0.0" width="615" height="600"/>
+                                <rect key="frame" x="1" y="0.0" width="799" height="600"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <subviews>
                                     <view wantsLayer="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5UK-PV-Jqx" customClass="NSServoView">
-                                        <rect key="frame" x="0.0" y="0.0" width="615" height="600"/>
+                                        <rect key="frame" x="0.0" y="0.0" width="799" height="600"/>
                                     </view>
                                 </subviews>
                                 <constraints>
