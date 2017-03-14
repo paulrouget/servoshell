@@ -7,6 +7,7 @@ use std::ffi::CStr;
 use std::os::raw::c_void;
 use super::utils;
 use window::WindowEvent;
+use view::View;
 use std::collections::HashMap;
 use commands::{CommandState, WindowCommand};
 use libc;
@@ -217,6 +218,8 @@ impl Window {
             (*delegate).set_ivar("event_queue", event_queue_ptr);
             (*delegate).set_ivar("command_states", command_states_ptr as *mut c_void);
 
+            // nswindow.setAppearance_(NSAppearance::named_(nil, NSAppearanceNameVibrantDark));
+
             msg_send![nswindow, setDelegate:delegate];
 
             nswindow.setTitleVisibility_(NSWindowTitleVisibility::NSWindowTitleHidden);
@@ -229,6 +232,28 @@ impl Window {
         Window {
             nswindow: nswindow,
         }
+    }
+
+    pub fn create_view(&self) -> Result<View, &'static str> {
+        // FIXME /!\
+        // This is ugly. We should dynamically create a NSServoView,
+        // and adds the constraints, instead on relying on IB's instance.
+        let nsview = unsafe {
+            // contentView
+            //   splitview
+            //      view_left
+            //      view_right
+            //          servoview
+            let contentview: id = msg_send![self.nswindow, contentView];
+            let views: id = msg_send![contentview, subviews];
+            let splitview: id = msg_send![views, objectAtIndex:0];
+            let views: id = msg_send![splitview, subviews];
+            let view_right: id = msg_send![views, objectAtIndex:1];
+            let views: id = msg_send![view_right, subviews];
+            let servo_view: id = msg_send![views, objectAtIndex:0];
+            servo_view
+        };
+        Ok(View::new(nsview))
     }
 
     pub fn get_events(&self) -> Vec<WindowEvent> {

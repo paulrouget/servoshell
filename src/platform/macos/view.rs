@@ -89,15 +89,13 @@ impl View {
             let nswindow: id = msg_send![self.nsview, window];
             let frame: NSRect = msg_send![self.nsview, frame];
             let hidpi_factor: CGFloat = msg_send![nswindow, backingScaleFactor];
-
-            // FIXME: this is going to be wrong as soon as the view is not full contentView
             let visible_rect: NSRect = msg_send![nswindow, contentLayoutRect];
 
             // FIXME: coordinates are flipped
             let bottom = visible_rect.origin.y - frame.origin.y;
-            let left = visible_rect.origin.x - frame.origin.x;
-            let right = frame.size.width - left - visible_rect.size.width;
             let top = frame.size.height - bottom - visible_rect.size.height;
+            let left = 0;
+            let right = 0;
 
             DrawableGeometry {
                 view_size: (frame.size.width as u32, frame.size.height as u32),

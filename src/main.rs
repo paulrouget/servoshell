@@ -47,7 +47,8 @@ fn main() {
     platform::init();
 
     let app = App::load().unwrap();
-    let (window, view) = app.create_window().unwrap();
+    let window = app.create_window().unwrap();
+    let view = window.create_view().unwrap();
 
     // Skip first argument (executable), and find the first
     // argument that doesn't start with `-`

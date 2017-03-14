@@ -4,7 +4,6 @@ use cocoa::foundation::*;
 use objc::declare::ClassDecl;
 use objc::runtime::{Class, Object, Sel};
 use std::os::raw::c_void;
-use super::view;
 use super::window;
 use super::utils;
 use app::AppEvent;
@@ -185,16 +184,13 @@ impl App {
         }
     }
 
-    pub fn create_window(&self) -> Result<(window::Window, view::View), &'static str> {
+    pub fn create_window(&self) -> Result<window::Window, &'static str> {
         let nswindow = match App::create_native_window() {
             Ok(w) => w,
             Err(msg) => return Err(msg),
         };
-        let nsview = match App::find_nsservoview(nswindow) {
-            Ok(v) => v,
-            Err(msg) => return Err(msg),
-        };
-        Ok((window::Window::new(nswindow), view::View::new(nsview)))
+
+        Ok(window::Window::new(nswindow))
     }
 
     fn create_native_window() -> Result<id, &'static str> {
@@ -214,16 +210,4 @@ impl App {
 
         Ok(nswindow)
     }
-
-
-
-    fn find_nsservoview(nswindow: id) -> Result<id, &'static str> {
-        // Depends on the Xib.
-        // FIXME: search for identifier instead,
-        // or maybe className
-        Ok(unsafe {
-            msg_send![nswindow, contentView]
-        })
-    }
-
 }
