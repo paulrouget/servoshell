@@ -277,8 +277,6 @@ impl Window {
             msg_send![nspopover, setBehavior:1]; // NSPopoverBehaviorTransient
 
             nswindow.setTitleVisibility_(NSWindowTitleVisibility::NSWindowTitleHidden);
-            let mask = nswindow.styleMask() as NSUInteger | NSWindowMask::NSFullSizeContentViewWindowMask as NSUInteger;
-            nswindow.setStyleMask_(mask);
             nswindow.setAcceptsMouseMovedEvents_(YES);
 
         }
