@@ -93,6 +93,7 @@ fn main() {
 
             // FIXME: it's really annoying we need this
             let mut force_sync = false;
+            let mut ui_invalidated = false;
 
             for event in app_events {
                 match event {
@@ -139,6 +140,7 @@ fn main() {
                         // FIXME
                     }
                     WindowEvent::DoCommand(cmd) => {
+                        let ref mut state = get_state().window_states[0].browser_states[0];
                         match cmd {
                             WindowCommand::Stop => {
                                 // FIXME
@@ -156,7 +158,7 @@ fn main() {
                                 window.focus_urlbar();
                             }
                             WindowCommand::OpenInDefaultBrowser => {
-                                if let Some(ref url) = get_state().window_states[0].browser_states[0].url {
+                                if let Some(ref url) = state.url {
                                     open::that(url.clone()).ok();
                                 }
                             }
@@ -164,24 +166,25 @@ fn main() {
                                 window.toggle_sidebar();
                             }
                             WindowCommand::ZoomIn => {
-                                get_state().window_states[0].browser_states[0].zoom *= 1.1;
-                                let zoom = get_state().window_states[0].browser_states[0].zoom;
-                                servo.zoom(zoom);
+                                ui_invalidated = true;
+                                state.zoom *= 1.1;
+                                servo.zoom(state.zoom);
                             }
                             WindowCommand::ZoomOut => {
-                                get_state().window_states[0].browser_states[0].zoom /= 1.1;
-                                let zoom = get_state().window_states[0].browser_states[0].zoom;
-                                servo.zoom(zoom);
+                                ui_invalidated = true;
+                                state.zoom /= 1.1;
+                                servo.zoom(state.zoom);
                             }
                             WindowCommand::ZoomToActualSize => {
-                                get_state().window_states[0].browser_states[0].zoom = 1.0;
+                                ui_invalidated = true;
+                                state.zoom = 1.0;
                                 servo.reset_zoom();
                             }
                             WindowCommand::ShowOptions => {
                                 window.show_options();
                             }
                             WindowCommand::Load(request) => {
-                                get_state().window_states[0].browser_states[0].user_input = Some(request.clone());
+                                state.user_input = Some(request.clone());
                                 let url = ServoUrl::parse(&request).or_else(|error| {
                                     // FIXME: weak
                                     if request.ends_with(".com") || request.ends_with(".org") || request.ends_with(".net") {
@@ -199,37 +202,25 @@ fn main() {
                                     Err(err) => warn!("Can't parse url: {}", err),
                                 }
                             }
-                            WindowCommand::ToggleOptionShowLogs => {
-                                get_state().window_states[0].logs_visible = !get_state().window_states[0].logs_visible;
-                            },
-                            WindowCommand::ToggleOptionLockDomain => {
-                            },
-                            WindowCommand::ToggleOptionFragmentBorders => {
-                            },
-                            WindowCommand::ToggleOptionParallelDisplayListBuidling => {
-                            },
-                            WindowCommand::ToggleOptionShowParallelLayout => {
-                            },
-                            WindowCommand::ToggleOptionConvertMouseToTouch => {
-                            },
-                            WindowCommand::ToggleOptionCompositorBorders => {
-                            },
-                            WindowCommand::ToggleOptionShowParallelPaint => {
-                            },
-                            WindowCommand::ToggleOptionPaintFlashing => {
-                            },
-                            WindowCommand::ToggleOptionWebRenderStats => {
-                            },
-                            WindowCommand::ToggleOptionMultisampleAntialiasing => {
-                            },
-                            WindowCommand::ToggleOptionTileBorders => {
-                            },
+                            WindowCommand::ToggleOptionShowLogs => { },
+                            WindowCommand::ToggleOptionLockDomain => { },
+                            WindowCommand::ToggleOptionFragmentBorders => { },
+                            WindowCommand::ToggleOptionParallelDisplayListBuidling => { },
+                            WindowCommand::ToggleOptionShowParallelLayout => { },
+                            WindowCommand::ToggleOptionConvertMouseToTouch => { },
+                            WindowCommand::ToggleOptionCompositorBorders => { },
+                            WindowCommand::ToggleOptionShowParallelPaint => { },
+                            WindowCommand::ToggleOptionPaintFlashing => { },
+                            WindowCommand::ToggleOptionWebRenderStats => { },
+                            WindowCommand::ToggleOptionMultisampleAntialiasing => { },
+                            WindowCommand::ToggleOptionTileBorders => { },
                         }
                     }
                 }
             }
 
             for event in view_events {
+                let ref mut state = get_state().window_states[0].browser_states[0];
                 match event {
                     ViewEvent::GeometryDidChange => {
                         servo.update_geometry(view.get_geometry());
@@ -245,23 +236,24 @@ fn main() {
                         servo.perform_scroll(0, 0, x, y, phase);
                     }
                     ViewEvent::MouseMoved(x, y) => {
-                        get_state().window_states[0].browser_states[0].last_mouse_point = (x, y);
+                        state.last_mouse_point = (x, y);
                         servo.perform_mouse_move(x, y);
                     }
-                    ViewEvent::MouseInput(state, button) => {
-                        let (x, y) = get_state().window_states[0].browser_states[0].last_mouse_point;
-                        let (org_x, org_y) = get_state().window_states[0].browser_states[0].last_mouse_down_point;
-                        let last_mouse_down_button = get_state().window_states[0].browser_states[0].last_mouse_down_button;
-                        servo.perform_click(x, y, org_x, org_y, state, button, last_mouse_down_button);
-                        get_state().window_states[0].browser_states[0].last_mouse_down_point = (x, y);
-                        if state == view::ElementState::Pressed {
-                            get_state().window_states[0].browser_states[0].last_mouse_down_button = Some(button);
+                    ViewEvent::MouseInput(element_state, button) => {
+                        let (x, y) = state.last_mouse_point;
+                        let (org_x, org_y) = state.last_mouse_down_point;
+                        let last_mouse_down_button = state.last_mouse_down_button;
+                        servo.perform_click(x, y, org_x, org_y, element_state, button, last_mouse_down_button);
+                        state.last_mouse_down_point = (x, y);
+                        if element_state == view::ElementState::Pressed {
+                            state.last_mouse_down_button = Some(button);
                         }
                     }
                 }
             }
 
             for event in servo_events {
+                let ref mut state = get_state().window_states[0].browser_states[0];
                 match event {
                     ServoEvent::SetWindowInnerSize(..) => {
                         // ignore
@@ -292,24 +284,27 @@ fn main() {
                     }
                     ServoEvent::LoadStart(can_go_back, can_go_forward) => {
                         // FIXME: See https://github.com/servo/servo/issues/15643
-                        get_state().window_states[0].browser_states[0].is_loading = true;
-                        get_state().window_states[0].browser_states[0].can_go_back = can_go_back;
-                        get_state().window_states[0].browser_states[0].can_go_forward = can_go_forward;
+                        ui_invalidated = true;
+                        state.is_loading = true;
+                        state.can_go_back = can_go_back;
+                        state.can_go_forward = can_go_forward;
                     }
                     ServoEvent::LoadEnd(can_go_back, can_go_forward, root) => {
                         // FIXME: See https://github.com/servo/servo/issues/15643
-                        get_state().window_states[0].browser_states[0].is_loading = false;
+                        ui_invalidated = true;
+                        state.is_loading = false;
                         if root {
-                            get_state().window_states[0].browser_states[0].can_go_back = can_go_back;
-                            get_state().window_states[0].browser_states[0].can_go_forward = can_go_forward;
+                            state.can_go_back = can_go_back;
+                            state.can_go_forward = can_go_forward;
                         }
                     }
                     ServoEvent::LoadError(..) => {
                         // FIXME
                     }
                     ServoEvent::HeadParsed(url) => {
+                        ui_invalidated = true;
                         window.set_url(url.as_str());
-                        get_state().window_states[0].browser_states[0].url = Some(url.into_string());
+                        state.url = Some(url.into_string());
                     }
                     ServoEvent::CursorChanged(cursor) => {
                         window.set_cursor(cursor);
@@ -323,8 +318,10 @@ fn main() {
                 }
             }
 
-            app.state_changed();
-            window.state_changed();
+            if ui_invalidated {
+                app.state_changed();
+                window.state_changed();
+            }
 
             servo.sync(force_sync);
         }

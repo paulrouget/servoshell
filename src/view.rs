@@ -23,7 +23,6 @@ pub enum TouchPhase {
     Started,
     Moved,
     Ended,
-    // FIXME: Cancelled
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
