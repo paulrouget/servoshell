@@ -435,7 +435,7 @@
                         </button>
                         <button translatesAutoresizingMaskIntoConstraints="NO" id="Vb7-Zi-4ro">
                             <rect key="frame" x="18" y="18" width="201" height="18"/>
-                            <buttonCell key="cell" type="check" title="Display webrender tile border" bezelStyle="regularSquare" imagePosition="left" inset="2" id="H9K-oH-mwp">
+                            <buttonCell key="cell" type="check" title="Display WebRender tile border" bezelStyle="regularSquare" imagePosition="left" inset="2" id="H9K-oH-mwp">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                 <font key="font" metaFont="system"/>
                             </buttonCell>
