@@ -6,7 +6,6 @@ extern crate objc;
 #[macro_use]
 extern crate log;
 
-extern crate simplelog;
 extern crate libc;
 extern crate cocoa;
 extern crate objc_foundation;
@@ -23,24 +22,12 @@ use app::{App, AppEvent, AppCommand};
 use window::{Window, WindowEvent, WindowCommand};
 use view::ViewEvent;
 use servo::ServoEvent;
-use simplelog::{Config, LogLevel, LogLevelFilter, WriteLogger};
-use std::fs::File;
 use std::env::args;
 use servo::{Servo, ServoUrl};
 
 use platform::get_state;
 
 fn main() {
-
-    // FIXME: can we use NSLog instead of a file?
-    let log_file = File::create("/tmp/servoshell.log").unwrap();
-    let log_config = Config {
-        time: None,
-        level: Some(LogLevel::Info),
-        target: Some(LogLevel::Info),
-        location: Some(LogLevel::Info),
-    };
-    let _ = WriteLogger::init(LogLevelFilter::Info, log_config, log_file);
 
     info!("starting");
 
