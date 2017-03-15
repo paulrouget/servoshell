@@ -130,16 +130,13 @@ impl App {
             let count: NSInteger = msg_send![windows, count];
             for i in 0..count {
                 let nswindow: id = msg_send![windows, objectAtIndex:i];
-                let toolbar: id = msg_send![nswindow, toolbar];
-                if dark {
-                    nswindow.setAppearance_(NSAppearance::named_(nil, NSAppearanceNameVibrantDark));
-                    msg_send![toolbar, setShowsBaselineSeparator:NO];
-                    // msg_send![nswindow, setTitlebarAppearsTransparent:YES];
+                let appearance = if dark {
+                    NSAppearanceNameVibrantDark
                 } else {
-                    nswindow.setAppearance_(NSAppearance::named_(nil, NSAppearanceNameVibrantLight));
-                    msg_send![toolbar, setShowsBaselineSeparator:YES];
-                    msg_send![nswindow, setTitlebarAppearsTransparent:NO];
-                }
+                    NSAppearanceNameVibrantLight
+                };
+                let appearance: id = msg_send![class("NSAppearance"), appearanceNamed:appearance];
+                msg_send![nswindow, setAppearance:appearance];
             }
         }
     }

@@ -319,15 +319,15 @@ impl Window {
                 } else if action == sel!(shellNavigate:) {
                     let enabled0: BOOL = msg_send![delegate, validateAction:sel!(shellNavigateBack:)];
                     let enabled1: BOOL = msg_send![delegate, validateAction:sel!(shellNavigateForward:)];
-                    view.setEnabled_forSegment_(enabled0, 0);
-                    view.setEnabled_forSegment_(enabled1, 1);
+                    msg_send![view, setEnabled:enabled0 forSegment:0];
+                    msg_send![view, setEnabled:enabled1 forSegment:1];
                 } else if action == sel!(shellZoom:) {
                     let enabled0: BOOL = msg_send![delegate, validateAction:sel!(shellZoomOut:)];
                     let enabled1: BOOL = msg_send![delegate, validateAction:sel!(shellZoomToActualSize:)];
                     let enabled2: BOOL = msg_send![delegate, validateAction:sel!(shellZoomIn:)];
-                    view.setEnabled_forSegment_(enabled0, 0);
-                    view.setEnabled_forSegment_(enabled1, 1);
-                    view.setEnabled_forSegment_(enabled2, 2);
+                    msg_send![view, setEnabled:enabled0 forSegment:0];
+                    msg_send![view, setEnabled:enabled1 forSegment:1];
+                    msg_send![view, setEnabled:enabled2 forSegment:2];
                 } else if action == sel!(shellReloadStop:) {
                     let can_reload: BOOL = msg_send![delegate, validateAction:sel!(shellReload:)];
                     let subviews: id = msg_send![view, subviews];

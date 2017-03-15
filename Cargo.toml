@@ -16,8 +16,8 @@ objc = "0.2"
 objc-foundation = "*"
 core-foundation = "0.2.3"
 core-graphics = "0.3"
-cocoa = "0.6"
+cocoa = "0.8"
 libservo = {path = "../servo/components/servo"} # 217d0a6153 + paul/head_parsed_url + paul/follow-link + paul/winParams
 
 [replace]
-"cocoa:0.6.0" = { path = "../cocoa-rs/" } # paulrouget/toolbar
+"cocoa:0.8.0" = { path = "../cocoa-rs/" } # paulrouget/servoshell
