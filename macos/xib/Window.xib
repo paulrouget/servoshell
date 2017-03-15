@@ -13,7 +13,7 @@
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" unifiedTitleAndToolbar="YES" fullSizeContentView="YES"/>
             <windowPositionMask key="initialPositionMask" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="109" y="93" width="800" height="600"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1280" height="777"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1280" height="800"/>
             <view key="contentView" id="DaH-qF-Fmi" userLabel="Content View">
                 <rect key="frame" x="0.0" y="0.0" width="800" height="600"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -227,7 +227,7 @@
                     <toolbarItem implicitItemIdentifier="2B97C7D1-2CD2-4B50-97F2-C5D682965EC7" explicitItemIdentifier="urlbar" label="Custom View" paletteLabel="Custom View" tag="-1" id="cSq-oO-aYU" userLabel="Urlbar">
                         <nil key="toolTip"/>
                         <size key="minSize" width="163" height="32"/>
-                        <size key="maxSize" width="600" height="96"/>
+                        <size key="maxSize" width="200" height="96"/>
                         <customView key="view" identifier="shellUrlbar" id="UYb-tk-Y3b">
                             <rect key="frame" x="0.0" y="14" width="165" height="32"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -306,7 +306,6 @@
                     <toolbarItem reference="lwy-Uc-1yt"/>
                     <toolbarItem reference="cSq-oO-aYU"/>
                     <toolbarItem reference="b3I-M0-yFF"/>
-                    <toolbarItem reference="nLf-0M-uSd"/>
                     <toolbarItem reference="kmH-9p-CDH"/>
                     <toolbarItem reference="Va7-c8-Chm"/>
                     <toolbarItem reference="588-1C-kbe"/>
