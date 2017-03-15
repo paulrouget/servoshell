@@ -99,6 +99,12 @@ pub fn register() {
                 } else {
                     WindowCommand::ZoomIn
                 }
+            } else if action == sel!(shellReloadStop:) {
+                if get_state().window_states[0].browser_states[0].is_loading {
+                    WindowCommand::Stop
+                } else {
+                    WindowCommand::Reload
+                }
             } else if action == sel!(shellStop:) { WindowCommand::Stop }
             else if action == sel!(shellReload:) { WindowCommand::Reload }
             else if action == sel!(shellOpenLocation:) { WindowCommand::OpenLocation }
@@ -196,7 +202,7 @@ pub fn register() {
             } else if action == sel!(shellToggleOptionTileBorders:) {
                 state.show_tiles_borders
             } else {
-                panic!("Unexpected action to validate: {:?}", action);
+                panic!("Unexpected action for getStateForAction: {:?}", action);
             };
             if on {1} else {0}
         }
@@ -313,6 +319,22 @@ impl Window {
                     view.setEnabled_forSegment_(enabled0, 0);
                     view.setEnabled_forSegment_(enabled1, 1);
                     view.setEnabled_forSegment_(enabled2, 2);
+                } else if action == sel!(shellReloadStop:) {
+                    let can_reload: BOOL = msg_send![delegate, validateAction:sel!(shellReload:)];
+                    let subviews: id = msg_send![view, subviews];
+                    let button_reload: id = msg_send![subviews, objectAtIndex:0];
+                    let button_stop: id = msg_send![subviews, objectAtIndex:1];
+                    if can_reload == YES {
+                        msg_send![button_reload, setEnabled:YES];
+                        msg_send![button_reload, setHidden:NO];
+                        msg_send![button_stop, setEnabled:NO];
+                        msg_send![button_stop, setHidden:YES];
+                    } else {
+                        msg_send![button_reload, setEnabled:NO];
+                        msg_send![button_reload, setHidden:YES];
+                        msg_send![button_stop, setEnabled:YES];
+                        msg_send![button_stop, setHidden:NO];
+                    }
                 } else {
                     let enabled: BOOL = msg_send![delegate, validateAction:action];
                     msg_send![view, setEnabled:enabled];
