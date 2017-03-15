@@ -318,7 +318,7 @@
                 <outlet property="view" destination="5SJ-N2-gZR" id="QPQ-5q-UKH"/>
             </connections>
         </viewController>
-        <popover appearance="aqua" id="Fwc-jq-IY3">
+        <popover id="Fwc-jq-IY3">
             <connections>
                 <outlet property="contentViewController" destination="8l9-S4-ely" id="c68-HD-cOd"/>
             </connections>
