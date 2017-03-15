@@ -124,11 +124,7 @@ impl Servo {
             parallel_display_list_building: false,
             show_parallel_layout: false,
             convert_mouse_to_touch: false,
-            show_compositor_borders: false,
-            show_parallel_paint: false,
-            paint_flashing: false,
             show_webrender_stats: false,
-            multisample_antialiasing: false,
             show_tiles_borders: false,
         }
     }

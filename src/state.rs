@@ -28,10 +28,6 @@ pub struct BrowserState {
     pub parallel_display_list_building: bool,
     pub show_parallel_layout: bool,
     pub convert_mouse_to_touch: bool,
-    pub show_compositor_borders: bool,
-    pub show_parallel_paint: bool,
-    pub paint_flashing: bool,
     pub show_webrender_stats: bool,
-    pub multisample_antialiasing: bool,
     pub show_tiles_borders: bool,
 }

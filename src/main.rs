@@ -220,11 +220,7 @@ fn main() {
                             WindowCommand::ToggleOptionParallelDisplayListBuidling => { },
                             WindowCommand::ToggleOptionShowParallelLayout => { },
                             WindowCommand::ToggleOptionConvertMouseToTouch => { },
-                            WindowCommand::ToggleOptionCompositorBorders => { },
-                            WindowCommand::ToggleOptionShowParallelPaint => { },
-                            WindowCommand::ToggleOptionPaintFlashing => { },
                             WindowCommand::ToggleOptionWebRenderStats => { },
-                            WindowCommand::ToggleOptionMultisampleAntialiasing => { },
                             WindowCommand::ToggleOptionTileBorders => { },
                         }
                     }

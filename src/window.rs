@@ -30,10 +30,6 @@ pub enum WindowCommand {
     ToggleOptionParallelDisplayListBuidling,
     ToggleOptionShowParallelLayout,
     ToggleOptionConvertMouseToTouch,
-    ToggleOptionCompositorBorders,
-    ToggleOptionShowParallelPaint,
-    ToggleOptionPaintFlashing,
     ToggleOptionWebRenderStats,
-    ToggleOptionMultisampleAntialiasing,
     ToggleOptionTileBorders,
 }

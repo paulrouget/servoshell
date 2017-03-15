@@ -122,11 +122,7 @@ pub fn register() {
             else if action == sel!(shellToggleOptionParallelDisplayListBuidling:) { WindowCommand::ToggleOptionParallelDisplayListBuidling }
             else if action == sel!(shellToggleOptionShowParallelLayout:) { WindowCommand::ToggleOptionShowParallelLayout }
             else if action == sel!(shellToggleOptionConvertMouseToTouch:) { WindowCommand::ToggleOptionConvertMouseToTouch }
-            else if action == sel!(shellToggleOptionCompositorBorders:) { WindowCommand::ToggleOptionCompositorBorders }
-            else if action == sel!(shellToggleOptionShowParallelPaint:) { WindowCommand::ToggleOptionShowParallelPaint }
-            else if action == sel!(shellToggleOptionPaintFlashing:) { WindowCommand::ToggleOptionPaintFlashing }
             else if action == sel!(shellToggleOptionWebRenderStats:) { WindowCommand::ToggleOptionWebRenderStats }
-            else if action == sel!(shellToggleOptionMultisampleAntialiasing:) { WindowCommand::ToggleOptionMultisampleAntialiasing }
             else if action == sel!(shellToggleOptionTileBorders:) { WindowCommand::ToggleOptionTileBorders }
             else {
                 panic!("Unexpected action to record: {:?}", action)
@@ -189,16 +185,8 @@ pub fn register() {
                 state.show_parallel_layout
             } else if action == sel!(shellToggleOptionConvertMouseToTouch:) {
                 state.convert_mouse_to_touch
-            } else if action == sel!(shellToggleOptionCompositorBorders:) {
-                state.show_compositor_borders
-            } else if action == sel!(shellToggleOptionShowParallelPaint:) {
-                state.show_parallel_paint
-            } else if action == sel!(shellToggleOptionPaintFlashing:) {
-                state.paint_flashing
             } else if action == sel!(shellToggleOptionWebRenderStats:) {
                 state.show_webrender_stats
-            } else if action == sel!(shellToggleOptionMultisampleAntialiasing:) {
-                state.multisample_antialiasing
             } else if action == sel!(shellToggleOptionTileBorders:) {
                 state.show_tiles_borders
             } else {
@@ -243,11 +231,7 @@ pub fn register() {
             class.add_method(sel!(shellToggleOptionParallelDisplayListBuidling:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellToggleOptionShowParallelLayout:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellToggleOptionConvertMouseToTouch:), record_command as extern fn(&Object, Sel, id));
-            class.add_method(sel!(shellToggleOptionCompositorBorders:), record_command as extern fn(&Object, Sel, id));
-            class.add_method(sel!(shellToggleOptionShowParallelPaint:), record_command as extern fn(&Object, Sel, id));
-            class.add_method(sel!(shellToggleOptionPaintFlashing:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellToggleOptionWebRenderStats:), record_command as extern fn(&Object, Sel, id));
-            class.add_method(sel!(shellToggleOptionMultisampleAntialiasing:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellToggleOptionTileBorders:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellZoom:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellNavigate:), record_command as extern fn(&Object, Sel, id));
