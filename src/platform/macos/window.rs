@@ -363,12 +363,10 @@ impl Window {
         }
 
         // Show logs if necessary
-        unsafe {
-            let logs = utils::get_view_by_id(self.nswindow, "shellLogsView").unwrap();
-            let visible = get_state().window_states[0].logs_visible;
-            let hidden = if visible {NO} else {YES};
-            unsafe {msg_send![logs, setHidden:hidden]}
-        }
+        let logs = utils::get_view_by_id(self.nswindow, "shellLogsView").unwrap();
+        let visible = get_state().window_states[0].logs_visible;
+        let hidden = if visible {NO} else {YES};
+        unsafe {msg_send![logs, setHidden:hidden]}
     }
 
     pub fn get_init_state() -> WindowState {
