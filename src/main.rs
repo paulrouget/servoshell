@@ -204,7 +204,10 @@ fn main() {
                                     Err(err) => warn!("Can't parse url: {}", err),
                                 }
                             }
-                            WindowCommand::ToggleOptionShowLogs => { },
+                            WindowCommand::ToggleOptionShowLogs => {
+                                get_state().window_states[0].logs_visible = !get_state().window_states[0].logs_visible;
+                                ui_invalidated = true;
+                            },
                             WindowCommand::ToggleOptionLockDomain => { },
                             WindowCommand::ToggleOptionFragmentBorders => { },
                             WindowCommand::ToggleOptionParallelDisplayListBuidling => { },

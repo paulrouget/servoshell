@@ -361,6 +361,14 @@ impl Window {
                 }
             }
         }
+
+        // Show logs if necessary
+        unsafe {
+            let logs = utils::get_view_by_id(self.nswindow, "shellLogsView").unwrap();
+            let visible = get_state().window_states[0].logs_visible;
+            let hidden = if visible {NO} else {YES};
+            unsafe {msg_send![logs, setHidden:hidden]}
+        }
     }
 
     pub fn get_init_state() -> WindowState {
@@ -373,25 +381,11 @@ impl Window {
     }
 
     pub fn create_view(&self) -> Result<View, &'static str> {
-        // FIXME /!\
-        // This is ugly. We should dynamically create a NSServoView,
+        // FIXME: We should dynamically create a NSServoView,
         // and adds the constraints, instead on relying on IB's instance.
-        let nsview = unsafe {
-            // contentView
-            //   splitview
-            //      view_left
-            //      view_right
-            //          servoview
-            let contentview: id = msg_send![self.nswindow, contentView];
-            let views: id = msg_send![contentview, subviews];
-            let splitview: id = msg_send![views, objectAtIndex:0];
-            let views: id = msg_send![splitview, subviews];
-            let view_right: id = msg_send![views, objectAtIndex:1];
-            let views: id = msg_send![view_right, subviews];
-            let servo_view: id = msg_send![views, objectAtIndex:0];
-            servo_view
-        };
-        Ok(View::new(nsview))
+        utils::get_view_by_id(self.nswindow, "shellServoView")
+            .map(|nsview| View::new(nsview))
+            .ok_or("Can't find NSServoView")
     }
 
     pub fn toggle_sidebar(&self) {
@@ -399,17 +393,13 @@ impl Window {
         // we need to have access to "animator()" which, afaiu, comes only
         // from a NSSplitViewController. We want to be able to use this:
         // https://developer.apple.com/reference/appkit/nssplitviewcontroller/1388905-togglesidebar
+        let sidebar = utils::get_view_by_id(self.nswindow, "shellSidebarView").unwrap();
         unsafe {
-            let contentview: id = msg_send![self.nswindow, contentView];
-            let views: id = msg_send![contentview, subviews];
-            let splitview: id = msg_send![views, objectAtIndex:0];
-            let views: id = msg_send![splitview, subviews];
-            let view_left: id = msg_send![views, objectAtIndex:0];
-            let hidden: BOOL = msg_send![view_left, isHidden];
+            let hidden: BOOL = msg_send![sidebar, isHidden];
             if hidden == YES {
-                msg_send![view_left, setHidden:NO];
+                msg_send![sidebar, setHidden:NO];
             } else {
-                msg_send![view_left, setHidden:YES];
+                msg_send![sidebar, setHidden:YES];
             }
         }
     }

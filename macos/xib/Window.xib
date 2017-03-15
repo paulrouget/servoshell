@@ -14,68 +14,124 @@
             <windowPositionMask key="initialPositionMask" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="109" y="93" width="800" height="600"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1280" height="800"/>
-            <view key="contentView" id="DaH-qF-Fmi">
+            <view key="contentView" id="DaH-qF-Fmi" userLabel="Content View">
                 <rect key="frame" x="0.0" y="0.0" width="800" height="600"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <splitView arrangesAllSubviews="NO" dividerStyle="thin" vertical="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gKh-eK-Mgj">
+                    <splitView identifier="shellLogSplitView" arrangesAllSubviews="NO" dividerStyle="thin" translatesAutoresizingMaskIntoConstraints="NO" id="4zq-V6-bsL" userLabel="Split with logs">
                         <rect key="frame" x="0.0" y="0.0" width="800" height="600"/>
                         <subviews>
-                            <customView hidden="YES" id="oV7-2n-kKj" userLabel="Sidebar">
-                                <rect key="frame" x="0.0" y="0.0" width="184" height="600"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                            <splitView identifier="shellSidebarSplitView" fixedFrame="YES" arrangesAllSubviews="NO" dividerStyle="thin" vertical="YES" id="gKh-eK-Mgj" userLabel="Split with sidebar">
+                                <rect key="frame" x="0.0" y="0.0" width="800" height="599"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <subviews>
-                                    <customView translatesAutoresizingMaskIntoConstraints="NO" id="nXU-ZC-HDO">
+                                    <customView identifier="shellSidebarView" hidden="YES" id="oV7-2n-kKj" userLabel="Sidebar">
                                         <rect key="frame" x="0.0" y="0.0" width="184" height="600"/>
+                                        <autoresizingMask key="autoresizingMask"/>
                                         <subviews>
-                                            <visualEffectView blendingMode="behindWindow" material="appearanceBased" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="UCo-hK-kyC">
+                                            <customView translatesAutoresizingMaskIntoConstraints="NO" id="nXU-ZC-HDO">
                                                 <rect key="frame" x="0.0" y="0.0" width="184" height="600"/>
-                                            </visualEffectView>
+                                                <subviews>
+                                                    <visualEffectView blendingMode="behindWindow" material="appearanceBased" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="UCo-hK-kyC">
+                                                        <rect key="frame" x="0.0" y="0.0" width="184" height="600"/>
+                                                    </visualEffectView>
+                                                </subviews>
+                                                <constraints>
+                                                    <constraint firstAttribute="trailing" secondItem="UCo-hK-kyC" secondAttribute="trailing" id="7io-d2-lQb"/>
+                                                    <constraint firstItem="UCo-hK-kyC" firstAttribute="leading" secondItem="nXU-ZC-HDO" secondAttribute="leading" id="bdB-0j-6mF"/>
+                                                    <constraint firstItem="UCo-hK-kyC" firstAttribute="top" secondItem="nXU-ZC-HDO" secondAttribute="top" id="rqN-4q-uhU"/>
+                                                    <constraint firstAttribute="bottom" secondItem="UCo-hK-kyC" secondAttribute="bottom" id="t7q-Ue-kQC"/>
+                                                </constraints>
+                                            </customView>
                                         </subviews>
                                         <constraints>
-                                            <constraint firstAttribute="trailing" secondItem="UCo-hK-kyC" secondAttribute="trailing" id="7io-d2-lQb"/>
-                                            <constraint firstItem="UCo-hK-kyC" firstAttribute="leading" secondItem="nXU-ZC-HDO" secondAttribute="leading" id="bdB-0j-6mF"/>
-                                            <constraint firstItem="UCo-hK-kyC" firstAttribute="top" secondItem="nXU-ZC-HDO" secondAttribute="top" id="rqN-4q-uhU"/>
-                                            <constraint firstAttribute="bottom" secondItem="UCo-hK-kyC" secondAttribute="bottom" id="t7q-Ue-kQC"/>
+                                            <constraint firstAttribute="trailing" secondItem="nXU-ZC-HDO" secondAttribute="trailing" id="1DB-R6-WvR"/>
+                                            <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="120" id="TRH-tb-vYA"/>
+                                            <constraint firstAttribute="width" relation="lessThanOrEqual" constant="300" id="ig2-nF-VSl"/>
+                                            <constraint firstItem="nXU-ZC-HDO" firstAttribute="leading" secondItem="oV7-2n-kKj" secondAttribute="leading" id="pnS-gg-HAU"/>
+                                            <constraint firstAttribute="bottom" secondItem="nXU-ZC-HDO" secondAttribute="bottom" id="rQ0-jQ-vD7"/>
+                                            <constraint firstItem="nXU-ZC-HDO" firstAttribute="top" secondItem="oV7-2n-kKj" secondAttribute="top" id="zBQ-PJ-kUY"/>
+                                        </constraints>
+                                    </customView>
+                                    <customView identifier="shellContentView" id="N8b-Tc-LeP" userLabel="Content">
+                                        <rect key="frame" x="1" y="0.0" width="799" height="599"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <subviews>
+                                            <view identifier="shellServoView" wantsLayer="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5UK-PV-Jqx" customClass="NSServoView">
+                                                <rect key="frame" x="0.0" y="0.0" width="799" height="599"/>
+                                            </view>
+                                        </subviews>
+                                        <constraints>
+                                            <constraint firstItem="5UK-PV-Jqx" firstAttribute="top" secondItem="N8b-Tc-LeP" secondAttribute="top" id="3dy-xf-utj"/>
+                                            <constraint firstAttribute="bottom" secondItem="5UK-PV-Jqx" secondAttribute="bottom" id="XvF-mS-wzH"/>
+                                            <constraint firstItem="5UK-PV-Jqx" firstAttribute="leading" secondItem="N8b-Tc-LeP" secondAttribute="leading" id="lzi-79-6uh"/>
+                                            <constraint firstAttribute="trailing" secondItem="5UK-PV-Jqx" secondAttribute="trailing" id="yyL-9d-mcx"/>
                                         </constraints>
                                     </customView>
                                 </subviews>
-                                <constraints>
-                                    <constraint firstAttribute="trailing" secondItem="nXU-ZC-HDO" secondAttribute="trailing" id="1DB-R6-WvR"/>
-                                    <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="120" id="TRH-tb-vYA"/>
-                                    <constraint firstAttribute="width" relation="lessThanOrEqual" constant="300" id="ig2-nF-VSl"/>
-                                    <constraint firstItem="nXU-ZC-HDO" firstAttribute="leading" secondItem="oV7-2n-kKj" secondAttribute="leading" id="pnS-gg-HAU"/>
-                                    <constraint firstAttribute="bottom" secondItem="nXU-ZC-HDO" secondAttribute="bottom" id="rQ0-jQ-vD7"/>
-                                    <constraint firstItem="nXU-ZC-HDO" firstAttribute="top" secondItem="oV7-2n-kKj" secondAttribute="top" id="zBQ-PJ-kUY"/>
-                                </constraints>
-                            </customView>
-                            <customView id="N8b-Tc-LeP" userLabel="Content">
-                                <rect key="frame" x="1" y="0.0" width="799" height="600"/>
+                                <holdingPriorities>
+                                    <real value="251"/>
+                                    <real value="250"/>
+                                </holdingPriorities>
+                            </splitView>
+                            <customView identifier="shellLogsView" hidden="YES" id="fwR-ip-99g" userLabel="Logs">
+                                <rect key="frame" x="0.0" y="298" width="800" height="302"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <subviews>
-                                    <view wantsLayer="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5UK-PV-Jqx" customClass="NSServoView">
-                                        <rect key="frame" x="0.0" y="0.0" width="799" height="600"/>
-                                    </view>
+                                    <scrollView horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="wyz-iW-4nd">
+                                        <rect key="frame" x="0.0" y="0.0" width="800" height="302"/>
+                                        <clipView key="contentView" id="4pJ-5G-gZX">
+                                            <rect key="frame" x="1" y="1" width="798" height="300"/>
+                                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                            <subviews>
+                                                <textView editable="NO" importsGraphics="NO" findStyle="panel" allowsCharacterPickerTouchBarItem="NO" allowsNonContiguousLayout="YES" textCompletion="NO" id="Ci5-cW-qng">
+                                                    <rect key="frame" x="0.0" y="0.0" width="798" height="300"/>
+                                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                    <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                                    <size key="minSize" width="798" height="300"/>
+                                                    <size key="maxSize" width="800" height="10000000"/>
+                                                    <attributedString key="textStorage">
+                                                        <fragment content="xxxx">
+                                                            <attributes>
+                                                                <font key="NSFont" size="12" name="Helvetica"/>
+                                                                <paragraphStyle key="NSParagraphStyle" alignment="natural" lineBreakMode="wordWrapping" baseWritingDirection="natural" tighteningFactorForTruncation="0.0"/>
+                                                            </attributes>
+                                                        </fragment>
+                                                    </attributedString>
+                                                    <color key="insertionPointColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                </textView>
+                                            </subviews>
+                                            <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                        </clipView>
+                                        <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" doubleValue="1" horizontal="YES" id="7xP-20-4hI">
+                                            <rect key="frame" x="-100" y="-100" width="87" height="18"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                        </scroller>
+                                        <scroller key="verticalScroller" verticalHuggingPriority="750" doubleValue="1" horizontal="NO" id="JAt-RM-rJZ">
+                                            <rect key="frame" x="783" y="1" width="16" height="300"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                        </scroller>
+                                    </scrollView>
                                 </subviews>
                                 <constraints>
-                                    <constraint firstItem="5UK-PV-Jqx" firstAttribute="top" secondItem="N8b-Tc-LeP" secondAttribute="top" id="3dy-xf-utj"/>
-                                    <constraint firstAttribute="bottom" secondItem="5UK-PV-Jqx" secondAttribute="bottom" id="XvF-mS-wzH"/>
-                                    <constraint firstItem="5UK-PV-Jqx" firstAttribute="leading" secondItem="N8b-Tc-LeP" secondAttribute="leading" id="lzi-79-6uh"/>
-                                    <constraint firstAttribute="trailing" secondItem="5UK-PV-Jqx" secondAttribute="trailing" id="yyL-9d-mcx"/>
+                                    <constraint firstItem="wyz-iW-4nd" firstAttribute="top" secondItem="fwR-ip-99g" secondAttribute="top" id="6KV-hb-33o"/>
+                                    <constraint firstItem="wyz-iW-4nd" firstAttribute="leading" secondItem="fwR-ip-99g" secondAttribute="leading" id="o7f-PB-PyS"/>
+                                    <constraint firstAttribute="trailing" secondItem="wyz-iW-4nd" secondAttribute="trailing" id="pbt-t0-HkF"/>
+                                    <constraint firstAttribute="bottom" secondItem="wyz-iW-4nd" secondAttribute="bottom" id="sm1-pu-Odg"/>
                                 </constraints>
                             </customView>
                         </subviews>
                         <holdingPriorities>
-                            <real value="251"/>
+                            <real value="250"/>
                             <real value="250"/>
                         </holdingPriorities>
                     </splitView>
                 </subviews>
                 <constraints>
-                    <constraint firstAttribute="bottom" secondItem="gKh-eK-Mgj" secondAttribute="bottom" id="6Ze-aq-RXu"/>
-                    <constraint firstItem="gKh-eK-Mgj" firstAttribute="top" secondItem="DaH-qF-Fmi" secondAttribute="top" id="9yn-BI-whh"/>
-                    <constraint firstAttribute="trailing" secondItem="gKh-eK-Mgj" secondAttribute="trailing" id="r1O-5g-Oac"/>
-                    <constraint firstItem="gKh-eK-Mgj" firstAttribute="leading" secondItem="DaH-qF-Fmi" secondAttribute="leading" id="vrp-xN-1By"/>
+                    <constraint firstItem="4zq-V6-bsL" firstAttribute="leading" secondItem="DaH-qF-Fmi" secondAttribute="leading" id="M5h-72-jbE"/>
+                    <constraint firstAttribute="bottom" secondItem="4zq-V6-bsL" secondAttribute="bottom" id="o5s-02-iMP"/>
+                    <constraint firstAttribute="trailing" secondItem="4zq-V6-bsL" secondAttribute="trailing" id="o6a-3N-JqJ"/>
+                    <constraint firstItem="4zq-V6-bsL" firstAttribute="top" secondItem="DaH-qF-Fmi" secondAttribute="top" id="sGc-AW-9Rg"/>
                 </constraints>
             </view>
             <toolbar key="toolbar" implicitIdentifier="29C381EB-D93D-4732-85FB-A6F47C82B023" autosavesConfiguration="NO" displayMode="iconOnly" sizeMode="regular" id="ann-49-zau">
@@ -103,6 +159,7 @@
                         <size key="maxSize" width="40" height="28"/>
                         <customView key="view" id="pc3-go-sT6" userLabel="Reload/Stop" customClass="NSControl">
                             <rect key="frame" x="18" y="14" width="36" height="28"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <subviews>
                                 <button toolTip="Reload" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="IOC-Z6-Gwh">
                                     <rect key="frame" x="0.0" y="0.0" width="36" height="28"/>

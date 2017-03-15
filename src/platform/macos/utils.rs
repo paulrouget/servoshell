@@ -67,3 +67,34 @@ pub fn get_classname(id: id) -> String {
         CStr::from_ptr(name).to_string_lossy().into_owned()
     }
 }
+
+pub fn get_view_by_id(id: id, name: &'static str) -> Option<id> {
+    let nsview: id = if id_is_instance_of(id, "NSWindow") {
+        unsafe { msg_send![id, contentView] }
+    } else {
+        id
+    };
+    get_view(nsview, &|view| {
+        unsafe {
+            let identifier: id = msg_send![view, identifier];
+            NSString::isEqualToString(identifier, name)
+        }
+    })
+}
+
+pub fn get_view<F>(nsview: id, predicate: &F) -> Option<id> where F: Fn(id) -> bool {
+    if predicate(nsview) {
+        return Some(nsview);
+    }
+    unsafe {
+        let subviews: id = msg_send![nsview, subviews];
+        let count: NSInteger = msg_send![subviews, count];
+        for i in 0..count {
+            let view: id = msg_send![subviews, objectAtIndex:i];
+            if let Some(view) = get_view(view, predicate) {
+                return Some(view)
+            }
+        }
+        return None
+    }
+}

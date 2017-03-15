@@ -93,7 +93,10 @@ pub fn register() {
         YES
     }
 
-    extern fn did_resize(this: &Object, _sel: Sel) {
+    extern fn set_frame_size(this: &Object, _sel: Sel, size: NSSize) {
+        unsafe {
+            msg_send![super(this, Class::get("NSView").unwrap()), setFrameSize:size];
+        }
         utils::get_event_queue(this).push(ViewEvent::GeometryDidChange);
     }
 
@@ -105,7 +108,7 @@ pub fn register() {
 
         class.add_method(sel!(acceptsFirstResponder), accept_first_responder as extern fn(&Object, Sel) -> BOOL);
 
-        class.add_method(sel!(viewDidEndLiveResize), did_resize as extern fn(&Object, Sel));
+        class.add_method(sel!(setFrameSize:), set_frame_size as extern fn(&Object, Sel, NSSize));
 
         class.add_method(sel!(awakeFromNib), awake_from_nib as extern fn(&mut Object, Sel));
     }
@@ -155,7 +158,7 @@ impl View {
 
             DrawableGeometry {
                 view_size: (frame.size.width as u32, frame.size.height as u32),
-                margins: (top as u32, right as u32, bottom as u32, left as u32),
+                margins: (0,0,0,0), //FIXME
                 position: (0, 0),
                 hidpi_factor: hidpi_factor as f32,
             }
