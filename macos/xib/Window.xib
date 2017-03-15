@@ -103,7 +103,6 @@
                         <size key="maxSize" width="40" height="28"/>
                         <customView key="view" id="pc3-go-sT6" userLabel="Reload/Stop" customClass="NSControl">
                             <rect key="frame" x="18" y="14" width="36" height="28"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <subviews>
                                 <button toolTip="Reload" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="IOC-Z6-Gwh">
                                     <rect key="frame" x="0.0" y="0.0" width="36" height="28"/>
@@ -233,6 +232,7 @@
                     <toolbarItem reference="b3I-M0-yFF"/>
                     <toolbarItem reference="nLf-0M-uSd"/>
                     <toolbarItem reference="kmH-9p-CDH"/>
+                    <toolbarItem reference="Va7-c8-Chm"/>
                     <toolbarItem reference="588-1C-kbe"/>
                 </defaultToolbarItems>
             </toolbar>
