@@ -306,8 +306,17 @@ impl Window {
                     continue;
                 }
                 let action: Sel = msg_send![item, action];
+                let identifier: id = msg_send![view, identifier];
                 let delegate: id = msg_send![self.nswindow, delegate];
-                if action == sel!(shellNavigate:) {
+                if NSString::isEqualToString(identifier, "shellUrlbar") {
+                    let stopped: BOOL = msg_send![delegate, validateAction:sel!(shellStop:)];
+                    let indicator = utils::get_view_by_id(view, "shellUrlbarThrobber").unwrap();
+                    if stopped == YES {
+                        msg_send![indicator, startAnimation:nil];
+                    } else {
+                        msg_send![indicator, stopAnimation:nil];
+                    }
+                } else if action == sel!(shellNavigate:) {
                     let enabled0: BOOL = msg_send![delegate, validateAction:sel!(shellNavigateBack:)];
                     let enabled1: BOOL = msg_send![delegate, validateAction:sel!(shellNavigateForward:)];
                     view.setEnabled_forSegment_(enabled0, 0);
@@ -409,19 +418,21 @@ impl Window {
 
     pub fn set_url(&self, url: &str) {
         // FIXME: can't get NSWindow::representedURL to work
+        let item = self.get_toolbar_item("urlbar").unwrap();
         unsafe {
-            let item = self.get_toolbar_item("urlbar").unwrap();
-            let urlbar: id = msg_send![item, view];
+            let view = msg_send![item, view];
+            let field = utils::get_view_by_id(view, "shellUrlTextfield").unwrap();
             let string = NSString::alloc(nil).init_str(url);
-            msg_send![urlbar, setStringValue:string];
+            msg_send![field, setStringValue:string];
         }
     }
 
     pub fn focus_urlbar(&self) {
+        let item = self.get_toolbar_item("urlbar").unwrap();
         unsafe {
-            let item = self.get_toolbar_item("urlbar").unwrap();
-            let urlbar: id = msg_send![item, view];
-            msg_send![urlbar, becomeFirstResponder];
+            let view = msg_send![item, view];
+            let field = utils::get_view_by_id(view, "shellUrlTextfield").unwrap();
+            msg_send![field, becomeFirstResponder];
         }
     }
 
