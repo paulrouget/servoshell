@@ -146,19 +146,22 @@ impl View {
     pub fn get_geometry(&self) -> DrawableGeometry {
         unsafe {
             let nswindow: id = msg_send![self.nsview, window];
-            let frame: NSRect = msg_send![self.nsview, frame];
+            let content_view: id = msg_send![nswindow, contentView];
+
             let hidpi_factor: CGFloat = msg_send![nswindow, backingScaleFactor];
+
+            let view_frame: NSRect = msg_send![self.nsview, frame];
+            let content_frame: NSRect = msg_send![content_view, frame];
             let visible_rect: NSRect = msg_send![nswindow, contentLayoutRect];
 
-            // FIXME: coordinates are flipped
-            let bottom = visible_rect.origin.y - frame.origin.y;
-            let top = frame.size.height - bottom - visible_rect.size.height;
+            let bottom = 0;
+            let top = (content_frame.size.height - visible_rect.size.height) as u32;
             let left = 0;
             let right = 0;
 
             DrawableGeometry {
-                view_size: (frame.size.width as u32, frame.size.height as u32),
-                margins: (0,0,0,0), //FIXME
+                view_size: (view_frame.size.width as u32, view_frame.size.height as u32),
+                margins: (top, right, bottom, left),
                 position: (0, 0),
                 hidpi_factor: hidpi_factor as f32,
             }
