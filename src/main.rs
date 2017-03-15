@@ -29,6 +29,8 @@ use platform::get_state;
 
 fn main() {
 
+    let logs = platform::Logger::init();
+
     info!("starting");
 
     platform::init();
@@ -319,6 +321,14 @@ fn main() {
             }
 
             servo.sync(force_sync);
+        }
+
+        // Here, only stuff that we know for sure won't trigger any
+        // new events
+
+        // FIXME: logs will grow until pulled
+        if get_state().window_states[0].logs_visible {
+            window.append_logs(&logs.get_logs());
         }
     });
 

@@ -13,7 +13,7 @@
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" unifiedTitleAndToolbar="YES" fullSizeContentView="YES"/>
             <windowPositionMask key="initialPositionMask" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="109" y="93" width="800" height="600"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1280" height="777"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1280" height="800"/>
             <view key="contentView" id="DaH-qF-Fmi" userLabel="Content View">
                 <rect key="frame" x="0.0" y="0.0" width="800" height="600"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -75,49 +75,42 @@
                                 </holdingPriorities>
                             </splitView>
                             <customView identifier="shellViewLogs" hidden="YES" id="fwR-ip-99g" userLabel="Logs">
-                                <rect key="frame" x="0.0" y="298" width="800" height="302"/>
+                                <rect key="frame" x="0.0" y="399" width="800" height="201"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <subviews>
-                                    <scrollView horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="wyz-iW-4nd">
-                                        <rect key="frame" x="0.0" y="0.0" width="800" height="302"/>
-                                        <clipView key="contentView" id="4pJ-5G-gZX">
-                                            <rect key="frame" x="1" y="1" width="798" height="300"/>
+                                    <scrollView horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" allowsMagnification="YES" horizontalScrollElasticity="none" verticalScrollElasticity="none" findBarPosition="belowContent" translatesAutoresizingMaskIntoConstraints="NO" id="ed4-w7-Pxi">
+                                        <rect key="frame" x="0.0" y="0.0" width="800" height="201"/>
+                                        <clipView key="contentView" copiesOnScroll="NO" id="4jj-1G-ZlS">
+                                            <rect key="frame" x="1" y="1" width="798" height="199"/>
                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                             <subviews>
-                                                <textView editable="NO" importsGraphics="NO" findStyle="panel" allowsCharacterPickerTouchBarItem="NO" allowsNonContiguousLayout="YES" textCompletion="NO" id="Ci5-cW-qng">
-                                                    <rect key="frame" x="0.0" y="0.0" width="798" height="300"/>
-                                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                <textView identifier="shellViewLogsTextView" editable="NO" importsGraphics="NO" horizontallyResizable="YES" baseWritingDirection="leftToRight" findStyle="bar" incrementalSearchingEnabled="YES" allowsCharacterPickerTouchBarItem="NO" usesRuler="YES" textCompletion="NO" id="ya1-Rz-vfb">
+                                                    <rect key="frame" x="0.0" y="0.0" width="10" height="14"/>
+                                                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxX="YES" flexibleMinY="YES" heightSizable="YES" flexibleMaxY="YES"/>
                                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                                                    <size key="minSize" width="798" height="300"/>
-                                                    <size key="maxSize" width="800" height="10000000"/>
-                                                    <attributedString key="textStorage">
-                                                        <fragment content="xxxx">
-                                                            <attributes>
-                                                                <font key="NSFont" size="12" name="Helvetica"/>
-                                                                <paragraphStyle key="NSParagraphStyle" alignment="natural" lineBreakMode="wordWrapping" baseWritingDirection="natural" tighteningFactorForTruncation="0.0"/>
-                                                            </attributes>
-                                                        </fragment>
-                                                    </attributedString>
+                                                    <size key="maxSize" width="10000000" height="10000000"/>
                                                     <color key="insertionPointColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                 </textView>
                                             </subviews>
                                             <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                            <edgeInsets key="contentInsets" left="0.0" right="0.0" top="0.0" bottom="0.0"/>
                                         </clipView>
-                                        <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" doubleValue="1" horizontal="YES" id="7xP-20-4hI">
-                                            <rect key="frame" x="-100" y="-100" width="87" height="18"/>
+                                        <edgeInsets key="contentInsets" left="0.0" right="0.0" top="0.0" bottom="0.0"/>
+                                        <scroller key="horizontalScroller" verticalHuggingPriority="750" doubleValue="1" horizontal="YES" id="EaO-cE-GcQ">
+                                            <rect key="frame" x="1" y="184" width="798" height="16"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                         </scroller>
-                                        <scroller key="verticalScroller" verticalHuggingPriority="750" doubleValue="1" horizontal="NO" id="JAt-RM-rJZ">
-                                            <rect key="frame" x="783" y="1" width="16" height="300"/>
+                                        <scroller key="verticalScroller" verticalHuggingPriority="750" doubleValue="1" horizontal="NO" id="4M4-qv-scR">
+                                            <rect key="frame" x="783" y="1" width="16" height="199"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                         </scroller>
                                     </scrollView>
                                 </subviews>
                                 <constraints>
-                                    <constraint firstItem="wyz-iW-4nd" firstAttribute="top" secondItem="fwR-ip-99g" secondAttribute="top" id="6KV-hb-33o"/>
-                                    <constraint firstItem="wyz-iW-4nd" firstAttribute="leading" secondItem="fwR-ip-99g" secondAttribute="leading" id="o7f-PB-PyS"/>
-                                    <constraint firstAttribute="trailing" secondItem="wyz-iW-4nd" secondAttribute="trailing" id="pbt-t0-HkF"/>
-                                    <constraint firstAttribute="bottom" secondItem="wyz-iW-4nd" secondAttribute="bottom" id="sm1-pu-Odg"/>
+                                    <constraint firstAttribute="trailing" secondItem="ed4-w7-Pxi" secondAttribute="trailing" id="8Vb-sD-HFx"/>
+                                    <constraint firstItem="ed4-w7-Pxi" firstAttribute="top" secondItem="fwR-ip-99g" secondAttribute="top" id="RIl-UG-BdK"/>
+                                    <constraint firstItem="ed4-w7-Pxi" firstAttribute="leading" secondItem="fwR-ip-99g" secondAttribute="leading" id="mW6-a2-Jnn"/>
+                                    <constraint firstAttribute="bottom" secondItem="ed4-w7-Pxi" secondAttribute="bottom" id="x9b-Da-2By"/>
                                 </constraints>
                             </customView>
                         </subviews>
@@ -434,7 +427,7 @@
                             </connections>
                         </button>
                         <button translatesAutoresizingMaskIntoConstraints="NO" id="Vb7-Zi-4ro">
-                            <rect key="frame" x="18" y="18" width="201" height="18"/>
+                            <rect key="frame" x="18" y="18" width="206" height="18"/>
                             <buttonCell key="cell" type="check" title="Display WebRender tile border" bezelStyle="regularSquare" imagePosition="left" inset="2" id="H9K-oH-mwp">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                 <font key="font" metaFont="system"/>

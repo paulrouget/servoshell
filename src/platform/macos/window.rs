@@ -3,6 +3,7 @@ use cocoa::foundation::*;
 use cocoa::base::*;
 use objc::declare::ClassDecl;
 use objc::runtime::{Class, Object, Sel};
+use std::f64;
 use std::ffi::CStr;
 use std::os::raw::c_void;
 use super::utils;
@@ -12,6 +13,7 @@ use libc;
 use servo::ServoCursor;
 use state::WindowState;
 use super::get_state;
+use super::logs::ShellLog;
 
 pub fn register() {
 
@@ -269,6 +271,11 @@ impl Window {
             nswindow.setTitleVisibility_(NSWindowTitleVisibility::NSWindowTitleHidden);
             nswindow.setAcceptsMouseMovedEvents_(YES);
 
+            // Necessary to prevent the log view to wrap text
+            let textview = utils::get_view_by_id(nswindow, "shellViewLogsTextView").unwrap();
+            let text_container: id = msg_send![textview, textContainer];
+            msg_send![text_container, setWidthTracksTextView:NO];
+            msg_send![text_container, setContainerSize:NSSize::new(f64::MAX, f64::MAX)];
         }
 
         Window {
@@ -359,7 +366,7 @@ impl Window {
         let logs = utils::get_view_by_id(self.nswindow, "shellViewLogs").unwrap();
         let visible = get_state().window_states[0].logs_visible;
         let hidden = if visible {NO} else {YES};
-        unsafe {msg_send![logs, setHidden:hidden]}
+        unsafe {msg_send![logs, setHidden:hidden]};
     }
 
     pub fn get_init_state() -> WindowState {
@@ -391,6 +398,20 @@ impl Window {
                 msg_send![sidebar, setHidden:NO];
             } else {
                 msg_send![sidebar, setHidden:YES];
+            }
+        }
+    }
+
+    pub fn append_logs(&self, logs: &Vec<ShellLog>) {
+        unsafe {
+            let textview = utils::get_view_by_id(self.nswindow, "shellViewLogsTextView").unwrap();
+            let textstorage: id = msg_send![textview, textStorage];
+            // FIXME: figure out how to add colors
+            for l in logs {
+                let mutable_string: id = msg_send![textstorage, mutableString];
+                let message = format!("\n{} - {}: {}", l.level, l.target, l.message);
+                let message = NSString::alloc(nil).init_str(message.as_str());
+                msg_send![mutable_string, appendString:message];
             }
         }
     }
