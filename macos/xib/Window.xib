@@ -18,14 +18,14 @@
                 <rect key="frame" x="0.0" y="0.0" width="800" height="600"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <splitView identifier="shellLogSplitView" arrangesAllSubviews="NO" dividerStyle="thin" translatesAutoresizingMaskIntoConstraints="NO" id="4zq-V6-bsL" userLabel="Split with logs">
+                    <splitView identifier="shellViewSplitLogs" arrangesAllSubviews="NO" dividerStyle="thin" translatesAutoresizingMaskIntoConstraints="NO" id="4zq-V6-bsL" userLabel="Split with logs">
                         <rect key="frame" x="0.0" y="0.0" width="800" height="600"/>
                         <subviews>
-                            <splitView identifier="shellSidebarSplitView" fixedFrame="YES" arrangesAllSubviews="NO" dividerStyle="thin" vertical="YES" id="gKh-eK-Mgj" userLabel="Split with sidebar">
+                            <splitView identifier="shellViewSplitSidebar" fixedFrame="YES" arrangesAllSubviews="NO" dividerStyle="thin" vertical="YES" id="gKh-eK-Mgj" userLabel="Split with sidebar">
                                 <rect key="frame" x="0.0" y="0.0" width="800" height="599"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <subviews>
-                                    <customView identifier="shellSidebarView" hidden="YES" id="oV7-2n-kKj" userLabel="Sidebar">
+                                    <customView identifier="shellViewSidebar" hidden="YES" id="oV7-2n-kKj" userLabel="Sidebar">
                                         <rect key="frame" x="0.0" y="0.0" width="184" height="600"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <subviews>
@@ -53,11 +53,11 @@
                                             <constraint firstItem="nXU-ZC-HDO" firstAttribute="top" secondItem="oV7-2n-kKj" secondAttribute="top" id="zBQ-PJ-kUY"/>
                                         </constraints>
                                     </customView>
-                                    <customView identifier="shellContentView" id="N8b-Tc-LeP" userLabel="Content">
+                                    <customView identifier="shellViewServoContainer" id="N8b-Tc-LeP" userLabel="Content">
                                         <rect key="frame" x="1" y="0.0" width="799" height="599"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <subviews>
-                                            <view identifier="shellServoView" wantsLayer="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5UK-PV-Jqx" customClass="NSServoView">
+                                            <view identifier="shellViewServo" wantsLayer="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5UK-PV-Jqx" customClass="NSServoView">
                                                 <rect key="frame" x="0.0" y="0.0" width="799" height="599"/>
                                             </view>
                                         </subviews>
@@ -74,7 +74,7 @@
                                     <real value="250"/>
                                 </holdingPriorities>
                             </splitView>
-                            <customView identifier="shellLogsView" hidden="YES" id="fwR-ip-99g" userLabel="Logs">
+                            <customView identifier="shellViewLogs" hidden="YES" id="fwR-ip-99g" userLabel="Logs">
                                 <rect key="frame" x="0.0" y="298" width="800" height="302"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <subviews>
@@ -141,7 +141,7 @@
                         <nil key="toolTip"/>
                         <size key="minSize" width="36" height="27"/>
                         <size key="maxSize" width="40" height="27"/>
-                        <button key="view" verticalHuggingPriority="750" id="cBY-tX-rNh">
+                        <button key="view" identifier="shellToolbarViewSidebar" verticalHuggingPriority="750" id="cBY-tX-rNh">
                             <rect key="frame" x="6" y="14" width="36" height="27"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="NSSidebarTemplate" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="2vP-4b-H2i">
@@ -157,11 +157,11 @@
                         <nil key="toolTip"/>
                         <size key="minSize" width="36" height="27"/>
                         <size key="maxSize" width="40" height="27"/>
-                        <customView key="view" id="pc3-go-sT6" userLabel="Reload/Stop" customClass="NSControl">
+                        <customView key="view" identifier="shellToolbarViewReloadStop" id="pc3-go-sT6" userLabel="Reload/Stop" customClass="NSControl">
                             <rect key="frame" x="18" y="14" width="36" height="27"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <subviews>
-                                <button toolTip="Reload" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="IOC-Z6-Gwh">
+                                <button identifier="shellToolbarViewReload" toolTip="Reload" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="IOC-Z6-Gwh">
                                     <rect key="frame" x="0.0" y="0.0" width="36" height="27"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                     <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="NSRefreshTemplate" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="Uj2-Ew-Zfm">
@@ -172,7 +172,7 @@
                                         <action selector="shellReload:" target="-1" id="vdz-4x-v6D"/>
                                     </connections>
                                 </button>
-                                <button hidden="YES" toolTip="Stop" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="aRI-mX-sS7">
+                                <button identifier="shellToolbarViewStop" hidden="YES" toolTip="Stop" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="aRI-mX-sS7">
                                     <rect key="frame" x="0.0" y="0.0" width="36" height="27"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                     <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="NSStopProgressTemplate" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="dYd-5s-HSz">
@@ -193,7 +193,7 @@
                         <nil key="toolTip"/>
                         <size key="minSize" width="67" height="27"/>
                         <size key="maxSize" width="69" height="27"/>
-                        <segmentedControl key="view" toolTip="Go Back/Forward" verticalHuggingPriority="750" id="dir-AS-5Cf">
+                        <segmentedControl key="view" identifier="shellToolbarViewNavigation" toolTip="Go Back/Forward" verticalHuggingPriority="750" id="dir-AS-5Cf">
                             <rect key="frame" x="0.0" y="14" width="67" height="27"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <segmentedCell key="cell" borderStyle="border" alignment="left" style="texturedSquare" trackingMode="momentary" id="0rj-D1-yTm">
@@ -212,7 +212,7 @@
                         <nil key="toolTip"/>
                         <size key="minSize" width="36" height="27"/>
                         <size key="maxSize" width="40" height="27"/>
-                        <button key="view" toolTip="Open This Page In Default Web Browser" verticalHuggingPriority="750" id="JeK-cS-AiF">
+                        <button key="view" identifier="shellToolbarViewOpenInDefaultBrowser" toolTip="Open This Page In Default Web Browser" verticalHuggingPriority="750" id="JeK-cS-AiF">
                             <rect key="frame" x="50" y="14" width="36" height="27"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="NSShareTemplate" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="uMS-WD-0CA">
@@ -228,11 +228,11 @@
                         <nil key="toolTip"/>
                         <size key="minSize" width="163" height="32"/>
                         <size key="maxSize" width="200" height="96"/>
-                        <customView key="view" identifier="shellUrlbar" id="UYb-tk-Y3b">
+                        <customView key="view" identifier="shellToolbarViewUrlbar" id="UYb-tk-Y3b">
                             <rect key="frame" x="0.0" y="14" width="165" height="32"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <subviews>
-                                <textField identifier="shellUrlTextfield" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="NO" textCompletion="NO" translatesAutoresizingMaskIntoConstraints="NO" id="4kT-I4-Kwu">
+                                <textField identifier="shellToolbarViewUrlbarTextfield" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="NO" textCompletion="NO" translatesAutoresizingMaskIntoConstraints="NO" id="4kT-I4-Kwu">
                                     <rect key="frame" x="0.0" y="5" width="165" height="22"/>
                                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" state="on" borderStyle="bezel" placeholderString="Search or enter website name" usesSingleLineMode="YES" bezelStyle="round" id="QHx-zD-ww4">
                                         <font key="font" metaFont="smallSystem"/>
@@ -246,7 +246,7 @@
                                         <action selector="shellSubmitUserInput:" target="-1" id="xGH-8e-gcS"/>
                                     </connections>
                                 </textField>
-                                <progressIndicator identifier="shellUrlbarThrobber" wantsLayer="YES" horizontalHuggingPriority="750" verticalHuggingPriority="750" alphaValue="0.80000000000000004" maxValue="100" displayedWhenStopped="NO" bezeled="NO" indeterminate="YES" controlSize="small" style="spinning" translatesAutoresizingMaskIntoConstraints="NO" id="YwO-lE-biT">
+                                <progressIndicator identifier="shellToolbarViewUrlbarThrobber" wantsLayer="YES" horizontalHuggingPriority="750" verticalHuggingPriority="750" alphaValue="0.80000000000000004" maxValue="100" displayedWhenStopped="NO" bezeled="NO" indeterminate="YES" controlSize="small" style="spinning" translatesAutoresizingMaskIntoConstraints="NO" id="YwO-lE-biT">
                                     <rect key="frame" x="145" y="8" width="16" height="16"/>
                                     <constraints>
                                         <constraint firstAttribute="height" constant="16" id="Aba-Cp-TZ6"/>
@@ -267,7 +267,7 @@
                         <nil key="toolTip"/>
                         <size key="minSize" width="67" height="27"/>
                         <size key="maxSize" width="97" height="27"/>
-                        <segmentedControl key="view" toolTip="Zoom This Page" verticalHuggingPriority="750" id="Qpf-nX-gHV">
+                        <segmentedControl key="view" identifier="shellToolbarViewZoom" toolTip="Zoom This Page" verticalHuggingPriority="750" id="Qpf-nX-gHV">
                             <rect key="frame" x="0.0" y="14" width="97" height="27"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <segmentedCell key="cell" borderStyle="border" alignment="left" style="texturedSquare" trackingMode="momentary" id="CyU-pL-eza">
@@ -288,7 +288,7 @@
                         <nil key="toolTip"/>
                         <size key="minSize" width="36" height="27"/>
                         <size key="maxSize" width="40" height="27"/>
-                        <button key="view" toolTip="Options" verticalHuggingPriority="750" id="Uqd-md-bbc">
+                        <button key="view" identifier="shellToolbarViewOptions" toolTip="Options" verticalHuggingPriority="750" id="Uqd-md-bbc">
                             <rect key="frame" x="7" y="14" width="36" height="27"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="NSActionTemplate" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="mpP-Md-cRS">

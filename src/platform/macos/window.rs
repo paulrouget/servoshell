@@ -308,9 +308,9 @@ impl Window {
                 let action: Sel = msg_send![item, action];
                 let identifier: id = msg_send![view, identifier];
                 let delegate: id = msg_send![self.nswindow, delegate];
-                if NSString::isEqualToString(identifier, "shellUrlbar") {
+                if NSString::isEqualToString(identifier, "shellToolbarViewUrlbar") {
                     let stopped: BOOL = msg_send![delegate, validateAction:sel!(shellStop:)];
-                    let indicator = utils::get_view_by_id(view, "shellUrlbarThrobber").unwrap();
+                    let indicator = utils::get_view_by_id(view, "shellToolbarViewUrlbarThrobber").unwrap();
                     if stopped == YES {
                         msg_send![indicator, startAnimation:nil];
                     } else {
@@ -372,7 +372,7 @@ impl Window {
         }
 
         // Show logs if necessary
-        let logs = utils::get_view_by_id(self.nswindow, "shellLogsView").unwrap();
+        let logs = utils::get_view_by_id(self.nswindow, "shellViewLogs").unwrap();
         let visible = get_state().window_states[0].logs_visible;
         let hidden = if visible {NO} else {YES};
         unsafe {msg_send![logs, setHidden:hidden]}
@@ -390,7 +390,7 @@ impl Window {
     pub fn create_view(&self) -> Result<View, &'static str> {
         // FIXME: We should dynamically create a NSServoView,
         // and adds the constraints, instead on relying on IB's instance.
-        utils::get_view_by_id(self.nswindow, "shellServoView")
+        utils::get_view_by_id(self.nswindow, "shellViewServo")
             .map(|nsview| View::new(nsview))
             .ok_or("Can't find NSServoView")
     }
@@ -400,7 +400,7 @@ impl Window {
         // we need to have access to "animator()" which, afaiu, comes only
         // from a NSSplitViewController. We want to be able to use this:
         // https://developer.apple.com/reference/appkit/nssplitviewcontroller/1388905-togglesidebar
-        let sidebar = utils::get_view_by_id(self.nswindow, "shellSidebarView").unwrap();
+        let sidebar = utils::get_view_by_id(self.nswindow, "shellViewSidebar").unwrap();
         unsafe {
             let hidden: BOOL = msg_send![sidebar, isHidden];
             if hidden == YES {
@@ -421,7 +421,7 @@ impl Window {
         let item = self.get_toolbar_item("urlbar").unwrap();
         unsafe {
             let view = msg_send![item, view];
-            let field = utils::get_view_by_id(view, "shellUrlTextfield").unwrap();
+            let field = utils::get_view_by_id(view, "shellToolbarViewUrlbarTextfield").unwrap();
             let string = NSString::alloc(nil).init_str(url);
             msg_send![field, setStringValue:string];
         }
@@ -431,7 +431,7 @@ impl Window {
         let item = self.get_toolbar_item("urlbar").unwrap();
         unsafe {
             let view = msg_send![item, view];
-            let field = utils::get_view_by_id(view, "shellUrlTextfield").unwrap();
+            let field = utils::get_view_by_id(view, "shellToolbarViewUrlbarTextfield").unwrap();
             msg_send![field, becomeFirstResponder];
         }
     }
