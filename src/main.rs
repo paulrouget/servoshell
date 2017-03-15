@@ -26,7 +26,7 @@ use servo::ServoEvent;
 use simplelog::{Config, LogLevel, LogLevelFilter, WriteLogger};
 use std::fs::File;
 use std::env::args;
-use servo::{Servo, ServoUrl, FollowLinkPolicy};
+use servo::{Servo, ServoUrl};
 
 use platform::get_state;
 
@@ -64,9 +64,7 @@ fn main() {
     let servo = {
         let geometry = view.get_geometry();
         let riser = window.create_eventloop_riser();
-        // let policy = FollowLinkPolicy::FollowOriginalDomain;
-        let policy = FollowLinkPolicy::FollowAnyLink;
-        Servo::new(geometry, riser, &url, policy)
+        Servo::new(geometry, riser, &url)
     };
 
     get_state().window_states[0].current_browser_index = Some(0);
@@ -208,7 +206,16 @@ fn main() {
                                 get_state().window_states[0].logs_visible = !get_state().window_states[0].logs_visible;
                                 ui_invalidated = true;
                             },
-                            WindowCommand::ToggleOptionLockDomain => { },
+                            WindowCommand::ToggleOptionLockDomain => {
+                                state.domain_locked = !state.domain_locked;
+                                if state.domain_locked {
+                                    let url = ServoUrl::parse(state.url.as_ref().unwrap()).unwrap();
+                                    let domain = url.domain().unwrap();
+                                    servo.limit_to_domain(Some(domain.to_owned()));
+                                } else {
+                                    servo.limit_to_domain(None);
+                                }
+                            },
                             WindowCommand::ToggleOptionFragmentBorders => { },
                             WindowCommand::ToggleOptionParallelDisplayListBuidling => { },
                             WindowCommand::ToggleOptionShowParallelLayout => { },

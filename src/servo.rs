@@ -50,11 +50,6 @@ pub enum ServoEvent {
 
 pub type CompositorChannel = (Box<CompositorProxy + Send>, Box<CompositorReceiver>);
 
-pub enum FollowLinkPolicy {
-    FollowAnyLink,
-    FollowOriginalDomain,
-}
-
 pub struct Servo {
     // FIXME: it's annoying that event for servo are named "WindowEvent"
     events_for_servo: RefCell<Vec<WindowEvent>>,
@@ -92,26 +87,14 @@ impl Servo {
         servo_version()
     }
 
-    pub fn new(geometry: DrawableGeometry,
-               riser: EventLoopRiser,
-               url: &str,
-               follow_link_policy: FollowLinkPolicy)
-               -> Servo {
-
-        let url = ServoUrl::parse(url).ok().unwrap(); // FIXME. What if fail?
-
-        let restrict_domain = match (follow_link_policy, url.domain()) {
-            (FollowLinkPolicy::FollowOriginalDomain, Some(domain)) => {
-                Some(domain.clone().to_owned())
-            }
-            _ => None
-        };
+    pub fn new(geometry: DrawableGeometry, riser: EventLoopRiser, _url: &str) -> Servo {
+        // FIXME: url not used here
 
         let callbacks = Rc::new(ServoCallbacks {
             event_queue: RefCell::new(Vec::new()),
             geometry: Cell::new(geometry),
             riser: riser,
-            restrict_domain: restrict_domain,
+            domain_limit: RefCell::new(None),
         });
 
         let mut servo = servo::Browser::new(callbacks.clone());
@@ -261,6 +244,10 @@ impl Servo {
         self.events_for_servo.borrow_mut().push(WindowEvent::ResetZoom);
     }
 
+    pub fn limit_to_domain(&self, domain: Option<String>) {
+        *self.callbacks.domain_limit.borrow_mut() = domain;
+    }
+
     pub fn sync(&self, force: bool) {
         // FIXME: ports/glutin/window.rs uses mem::replace. Should we too?
         // See: https://doc.rust-lang.org/core/mem/fn.replace.html
@@ -274,9 +261,9 @@ impl Servo {
 
 struct ServoCallbacks {
     pub geometry: Cell<DrawableGeometry>,
+    pub domain_limit: RefCell<Option<String>>,
     event_queue: RefCell<Vec<ServoEvent>>,
     riser: EventLoopRiser,
-    restrict_domain: Option<String>,
 }
 
 impl ServoCallbacks {
@@ -300,7 +287,7 @@ impl WindowMethods for ServoCallbacks {
     }
 
     fn allow_navigation(&self, url: ServoUrl) -> bool {
-        let allow = match self.restrict_domain.as_ref() {
+        let allow = match self.domain_limit.borrow().as_ref() {
             None => true,
             Some(domain) => domain == url.domain().unwrap()
         };
