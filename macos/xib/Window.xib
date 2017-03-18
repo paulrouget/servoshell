@@ -217,7 +217,7 @@
                             <action selector="shellOpenInDefaultBrowser:" target="-1" id="lNJ-UJ-ZId"/>
                         </connections>
                     </toolbarItem>
-                    <toolbarItem implicitItemIdentifier="2B97C7D1-2CD2-4B50-97F2-C5D682965EC7" explicitItemIdentifier="urlbar" label="Custom View" paletteLabel="Custom View" tag="-1" id="cSq-oO-aYU" userLabel="Urlbar">
+                    <toolbarItem implicitItemIdentifier="2B97C7D1-2CD2-4B50-97F2-C5D682965EC7" explicitItemIdentifier="urlbar" label="Urlbar" paletteLabel="Urlbar" tag="-1" id="cSq-oO-aYU" userLabel="Urlbar">
                         <nil key="toolTip"/>
                         <size key="minSize" width="163" height="32"/>
                         <size key="maxSize" width="200" height="96"/>
