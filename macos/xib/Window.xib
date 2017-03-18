@@ -60,9 +60,19 @@
                                             <view identifier="shellViewServo" wantsLayer="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5UK-PV-Jqx" customClass="NSServoView">
                                                 <rect key="frame" x="0.0" y="0.0" width="799" height="599"/>
                                             </view>
+                                            <textField identifier="shellStatusLabel" hidden="YES" horizontalHuggingPriority="251" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="NO" textCompletion="NO" translatesAutoresizingMaskIntoConstraints="NO" id="p8g-JG-o4B">
+                                                <rect key="frame" x="0.0" y="0.0" width="37" height="17"/>
+                                                <textFieldCell key="cell" lineBreakMode="truncatingTail" refusesFirstResponder="YES" allowsUndo="NO" sendsActionOnEndEditing="YES" baseWritingDirection="leftToRight" alignment="left" title="Label" drawsBackground="YES" usesSingleLineMode="YES" id="G0y-Oa-tVt">
+                                                    <font key="font" metaFont="system"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
                                         </subviews>
                                         <constraints>
                                             <constraint firstItem="5UK-PV-Jqx" firstAttribute="top" secondItem="N8b-Tc-LeP" secondAttribute="top" id="3dy-xf-utj"/>
+                                            <constraint firstItem="p8g-JG-o4B" firstAttribute="leading" secondItem="N8b-Tc-LeP" secondAttribute="leading" id="42Q-pc-wI8"/>
+                                            <constraint firstAttribute="bottom" secondItem="p8g-JG-o4B" secondAttribute="bottom" id="IO2-h1-Kok"/>
                                             <constraint firstAttribute="bottom" secondItem="5UK-PV-Jqx" secondAttribute="bottom" id="XvF-mS-wzH"/>
                                             <constraint firstItem="5UK-PV-Jqx" firstAttribute="leading" secondItem="N8b-Tc-LeP" secondAttribute="leading" id="lzi-79-6uh"/>
                                             <constraint firstAttribute="trailing" secondItem="5UK-PV-Jqx" secondAttribute="trailing" id="yyL-9d-mcx"/>

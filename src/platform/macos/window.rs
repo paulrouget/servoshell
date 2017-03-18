@@ -432,6 +432,22 @@ impl Window {
         }
     }
 
+    pub fn set_status(&self, status: Option<String>) {
+        let textfield = utils::get_view_by_id(self.nswindow, "shellStatusLabel").unwrap();
+        match status {
+            Some(status) => {
+                unsafe {
+                    msg_send![textfield, setHidden:NO];
+                    let string = NSString::alloc(nil).init_str(&status);
+                    NSTextField::setStringValue_(textfield, string);
+                }
+            }
+            None => {
+                unsafe{msg_send![textfield, setHidden:YES]};
+            }
+        }
+    }
+
     pub fn focus_urlbar(&self) {
         let item = self.get_toolbar_item("urlbar").unwrap();
         unsafe {

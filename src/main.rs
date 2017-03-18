@@ -47,7 +47,7 @@ fn main() {
     // argument that doesn't start with `-`
     let url = args().skip(1).find(|arg| {
         !arg.starts_with("-")
-    }).unwrap_or("http://servo.org".to_owned());
+    }).unwrap_or("https://blog.servo.org/".to_owned());
 
     Servo::configure(&url).unwrap();
     let servo = {
@@ -276,8 +276,9 @@ fn main() {
                         open::that(url.as_str()).ok();
 
                     }
-                    ServoEvent::StatusChanged(..) => {
-                        // FIXME
+                    ServoEvent::StatusChanged(status) => {
+                        // FIXME: why not use state?
+                        window.set_status(status);
                     }
                     ServoEvent::LoadStart => {
                         state.is_loading = true;
