@@ -3,6 +3,7 @@ mod app;
 mod window;
 mod view;
 mod logs;
+mod toolbar;
 
 use std::env;
 use std::sync::{Once, ONCE_INIT};
@@ -25,6 +26,7 @@ pub fn init() {
     INIT.call_once(|| {
         app::register();
         view::register();
+        toolbar::register();
         window::register();
     });
 }

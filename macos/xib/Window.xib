@@ -189,7 +189,7 @@
                         <segmentedControl key="view" identifier="shellToolbarViewNavigation" toolTip="Go Back/Forward" verticalHuggingPriority="750" id="dir-AS-5Cf">
                             <rect key="frame" x="0.0" y="14" width="67" height="27"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <segmentedCell key="cell" borderStyle="border" alignment="left" style="texturedSquare" trackingMode="momentary" id="0rj-D1-yTm">
+                            <segmentedCell key="cell" borderStyle="border" alignment="left" style="texturedSquare" trackingMode="momentary" id="0rj-D1-yTm" customClass="NSShellSegmentedCell">
                                 <font key="font" metaFont="system"/>
                                 <segments>
                                     <segment image="NSGoLeftTemplate" width="32"/>
@@ -263,7 +263,7 @@
                         <segmentedControl key="view" identifier="shellToolbarViewZoom" toolTip="Zoom This Page" verticalHuggingPriority="750" id="Qpf-nX-gHV">
                             <rect key="frame" x="0.0" y="14" width="97" height="27"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <segmentedCell key="cell" borderStyle="border" alignment="left" style="texturedSquare" trackingMode="momentary" id="CyU-pL-eza">
+                            <segmentedCell key="cell" borderStyle="border" alignment="left" style="texturedSquare" trackingMode="momentary" id="CyU-pL-eza" customClass="NSShellSegmentedCell">
                                 <font key="font" metaFont="system"/>
                                 <segments>
                                     <segment label="-" width="32"/>

@@ -123,24 +123,6 @@ impl App {
         // updated via validate_ui
     }
 
-    pub fn update_theme(&self) {
-        let dark = get_state().dark_theme;
-        unsafe {
-            let windows: id = msg_send![self.nsapp, windows];
-            let count: NSInteger = msg_send![windows, count];
-            for i in 0..count {
-                let nswindow: id = msg_send![windows, objectAtIndex:i];
-                let appearance = if dark {
-                    NSAppearanceNameVibrantDark
-                } else {
-                    NSAppearanceNameVibrantLight
-                };
-                let appearance: id = msg_send![class("NSAppearance"), appearanceNamed:appearance];
-                msg_send![nswindow, setAppearance:appearance];
-            }
-        }
-    }
-
     pub fn get_events(&self) -> Vec<AppEvent> {
         let nsobject = unsafe {
             let delegate: id = msg_send![self.nsapp, delegate];

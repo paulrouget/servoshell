@@ -529,6 +529,37 @@ impl Window {
             let _: () = msg_send![cursor, set];
         }
     }
+
+    pub fn update_theme(&self) {
+        let dark = get_state().dark_theme;
+        let (appearance, bordered, segment_style) = if dark {
+            // 3 -> roundRect
+            (NSAppearanceNameVibrantDark, NO, 3)
+        } else {
+            // 0 -> automatic
+            (NSAppearanceNameVibrantLight, YES, 0)
+        };
+
+        let item = self.get_toolbar_item("options").unwrap();
+        let topview = unsafe {
+            let view: id = msg_send![item, view];
+            let view: id = msg_send![view, superview];
+            msg_send![view, superview]
+        };
+        utils::get_view(topview, &|view| {
+            if utils::id_is_instance_of(view, "NSButton") {
+                unsafe {msg_send![view, setBordered:bordered]};
+            }
+            if utils::id_is_instance_of(view, "NSSegmentedControl") {
+                unsafe {msg_send![view, setSegmentStyle:segment_style]};
+            }
+            false
+        });
+        unsafe {
+            let appearance: id = msg_send![class("NSAppearance"), appearanceNamed:appearance];
+            msg_send![self.nswindow, setAppearance:appearance];
+        }
+    }
 }
 
 pub struct EventLoopRiser {
