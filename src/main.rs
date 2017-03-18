@@ -103,7 +103,7 @@ fn main() {
                             AppCommand::ToggleOptionDarkTheme => {
                                 ui_invalidated = true;
                                 get_state().dark_theme = !get_state().dark_theme;
-                                app.update_theme();
+                                window.update_theme();
                             }
                         }
                     }
@@ -279,29 +279,28 @@ fn main() {
                     ServoEvent::StatusChanged(..) => {
                         // FIXME
                     }
-                    ServoEvent::LoadStart(can_go_back, can_go_forward) => {
-                        // FIXME: See https://github.com/servo/servo/issues/15643
-                        ui_invalidated = true;
+                    ServoEvent::LoadStart => {
                         state.is_loading = true;
-                        state.can_go_back = can_go_back;
-                        state.can_go_forward = can_go_forward;
-                    }
-                    ServoEvent::LoadEnd(can_go_back, can_go_forward, root) => {
-                        // FIXME: See https://github.com/servo/servo/issues/15643
                         ui_invalidated = true;
+                    }
+                    ServoEvent::LoadEnd => {
                         state.is_loading = false;
-                        if root {
-                            state.can_go_back = can_go_back;
-                            state.can_go_forward = can_go_forward;
-                        }
+                        ui_invalidated = true;
                     }
                     ServoEvent::LoadError(..) => {
                         // FIXME
                     }
-                    ServoEvent::HeadParsed(url) => {
+                    ServoEvent::HeadParsed => {
+                        // FIXME
+                    }
+                    ServoEvent::HistoryChanged(history) => {
+                        let current = history.current;
+                        let url = history.entries[current].url.to_string();
+                        window.set_url(&url);
+                        state.url = Some(url);
+                        state.can_go_back = current > 0;
+                        state.can_go_forward = current < history.entries.len() - 1;
                         ui_invalidated = true;
-                        window.set_url(url.as_str());
-                        state.url = Some(url.into_string());
                     }
                     ServoEvent::CursorChanged(cursor) => {
                         window.set_cursor(cursor);

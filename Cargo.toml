@@ -15,5 +15,5 @@ objc = "0.2"
 objc-foundation = "*"
 core-foundation = "0.2.3"
 core-graphics = "0.3"
-cocoa = { path = "../cocoa-rs/" } # paulrouget/appeararanceNames
+cocoa = "^0.8.1"
 libservo = {path = "../servo/components/servo"} # 9986b42333 + paul/head_parsed_url

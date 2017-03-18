@@ -6,7 +6,7 @@ use self::servo::servo_config::prefs::{PrefValue, PREFS};
 use self::servo::servo_config::resource_files::set_resources_path;
 use self::servo::compositing::windowing::{MouseWindowEvent, WindowMethods, WindowEvent, WindowNavigateMsg};
 use self::servo::compositing::compositor_thread::{self, CompositorProxy, CompositorReceiver};
-use self::servo::msg::constellation_msg::{self, Key};
+use self::servo::msg::constellation_msg::{self, HistoryEntries, Key};
 use self::servo::servo_geometry::DeviceIndependentPixel;
 use self::servo::euclid::{Point2D, Size2D};
 use self::servo::euclid::scale_factor::ScaleFactor;
@@ -30,7 +30,6 @@ use std::sync::mpsc;
 use std::rc::Rc;
 use std::cell::{Cell, RefCell};
 
-#[derive(Debug, Clone)]
 pub enum ServoEvent {
     SetWindowInnerSize(u32, u32),
     SetWindowPosition(i32, i32),
@@ -39,10 +38,11 @@ pub enum ServoEvent {
     TitleChanged(Option<String>),
     UnhandledURL(ServoUrl),
     StatusChanged(Option<String>),
-    LoadStart(bool, bool),
-    LoadEnd(bool, bool, bool),
+    LoadStart,
+    LoadEnd,
     LoadError(String),
-    HeadParsed(ServoUrl),
+    HeadParsed,
+    HistoryChanged(HistoryEntries),
     CursorChanged(ServoCursor),
     FaviconChanged(ServoUrl),
     Key(Option<char>, Key, constellation_msg::KeyModifiers),
@@ -368,12 +368,12 @@ impl WindowMethods for ServoCallbacks {
         self.event_queue.borrow_mut().push(ServoEvent::StatusChanged(status));
     }
 
-    fn load_start(&self, can_go_back: bool, can_go_forward: bool) {
-        self.event_queue.borrow_mut().push(ServoEvent::LoadStart(can_go_back, can_go_forward));
+    fn load_start(&self) {
+        self.event_queue.borrow_mut().push(ServoEvent::LoadStart);
     }
 
-    fn load_end(&self, can_go_back: bool, can_go_forward: bool, root: bool) {
-        self.event_queue.borrow_mut().push(ServoEvent::LoadEnd(can_go_back, can_go_forward, root));
+    fn load_end(&self) {
+        self.event_queue.borrow_mut().push(ServoEvent::LoadEnd);
     }
 
     fn load_error(&self, _: NetError, url: String) {
@@ -381,8 +381,12 @@ impl WindowMethods for ServoCallbacks {
         self.event_queue.borrow_mut().push(ServoEvent::LoadError(url));
     }
 
-    fn head_parsed(&self, url: ServoUrl) {
-        self.event_queue.borrow_mut().push(ServoEvent::HeadParsed(url));
+    fn head_parsed(&self) {
+        self.event_queue.borrow_mut().push(ServoEvent::HeadParsed);
+    }
+
+    fn history_changed(&self, history_entries: HistoryEntries) {
+        self.event_queue.borrow_mut().push(ServoEvent::HistoryChanged(history_entries));
     }
 
     fn set_cursor(&self, cursor: ServoCursor) {
