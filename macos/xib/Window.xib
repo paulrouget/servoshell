@@ -240,7 +240,7 @@
                                     </connections>
                                 </textField>
                                 <progressIndicator identifier="shellToolbarViewUrlbarThrobber" wantsLayer="YES" horizontalHuggingPriority="750" verticalHuggingPriority="750" alphaValue="0.80000000000000004" maxValue="100" displayedWhenStopped="NO" bezeled="NO" indeterminate="YES" controlSize="small" style="spinning" translatesAutoresizingMaskIntoConstraints="NO" id="YwO-lE-biT">
-                                    <rect key="frame" x="145" y="8" width="16" height="16"/>
+                                    <rect key="frame" x="143" y="8" width="16" height="16"/>
                                     <constraints>
                                         <constraint firstAttribute="height" constant="16" id="Aba-Cp-TZ6"/>
                                         <constraint firstAttribute="width" constant="16" id="wGy-IJ-tas"/>
@@ -248,10 +248,10 @@
                                 </progressIndicator>
                             </subviews>
                             <constraints>
-                                <constraint firstAttribute="trailing" secondItem="YwO-lE-biT" secondAttribute="trailing" constant="4" id="5BH-FR-dYB"/>
+                                <constraint firstAttribute="trailing" secondItem="YwO-lE-biT" secondAttribute="trailing" constant="6" id="5BH-FR-dYB"/>
                                 <constraint firstItem="YwO-lE-biT" firstAttribute="centerY" secondItem="UYb-tk-Y3b" secondAttribute="centerY" id="RFa-VC-VKt"/>
-                                <constraint firstAttribute="trailing" secondItem="4kT-I4-Kwu" secondAttribute="trailing" id="Sqc-vG-VG9"/>
-                                <constraint firstItem="4kT-I4-Kwu" firstAttribute="leading" secondItem="UYb-tk-Y3b" secondAttribute="leading" id="XJc-0e-u6l"/>
+                                <constraint firstAttribute="trailing" secondItem="4kT-I4-Kwu" secondAttribute="trailing" constant="2" id="Sqc-vG-VG9"/>
+                                <constraint firstItem="4kT-I4-Kwu" firstAttribute="leading" secondItem="UYb-tk-Y3b" secondAttribute="leading" constant="2" id="XJc-0e-u6l"/>
                                 <constraint firstItem="4kT-I4-Kwu" firstAttribute="centerY" secondItem="UYb-tk-Y3b" secondAttribute="centerY" id="hfa-at-g6B"/>
                             </constraints>
                         </customView>
