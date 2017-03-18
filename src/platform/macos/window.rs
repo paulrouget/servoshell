@@ -532,13 +532,13 @@ impl Window {
 
     pub fn update_theme(&self) {
         let dark = get_state().dark_theme;
-        let (appearance, bordered, segment_style) = if dark {
+        let (appearance, bordered, segment_style) = unsafe { if dark {
             // 3 -> roundRect
             (NSAppearanceNameVibrantDark, NO, 3)
         } else {
             // 0 -> automatic
             (NSAppearanceNameVibrantLight, YES, 0)
-        };
+        }};
 
         let item = self.get_toolbar_item("options").unwrap();
         let topview = unsafe {
@@ -552,6 +552,16 @@ impl Window {
             }
             if utils::id_is_instance_of(view, "NSSegmentedControl") {
                 unsafe {msg_send![view, setSegmentStyle:segment_style]};
+            }
+            if utils::id_is_instance_of(view, "NSTextField") {
+                unsafe {
+                    let layer: id = msg_send![view, layer];
+                    msg_send![layer, setCornerRadius:3.0];
+                    let alpha = if dark {0.1} else {0.0};
+                    let color: id = msg_send![Class::get("NSColor").unwrap(), colorWithRed:1.0 green:1.0 blue:1.0 alpha:alpha];
+                    let color: id = msg_send![color, CGColor];
+                    msg_send![layer, setBackgroundColor:color];
+                }
             }
             false
         });

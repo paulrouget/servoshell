@@ -8,7 +8,6 @@ use super::window;
 use super::utils;
 use app::{AppEvent, AppCommand};
 use state::AppState;
-use super::get_state;
 
 pub fn register() {
     let superclass = Class::get("NSResponder").unwrap();
