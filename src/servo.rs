@@ -244,6 +244,10 @@ impl Servo {
         *self.callbacks.domain_limit.borrow_mut() = domain;
     }
 
+    pub fn set_webrender_profiler_enabled(&self, enabled: bool) {
+        self.servo_browser.borrow_mut().set_webrender_profiler_enabled(enabled);
+    }
+
     pub fn sync(&self, force: bool) {
         // FIXME: ports/glutin/window.rs uses mem::replace. Should we too?
         // See: https://doc.rust-lang.org/core/mem/fn.replace.html

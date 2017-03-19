@@ -209,7 +209,11 @@ fn main() {
                             WindowCommand::ToggleOptionParallelDisplayListBuidling => { },
                             WindowCommand::ToggleOptionShowParallelLayout => { },
                             WindowCommand::ToggleOptionConvertMouseToTouch => { },
-                            WindowCommand::ToggleOptionWebRenderStats => { },
+                            WindowCommand::ToggleOptionWebRenderStats => {
+                                let ref mut state = get_state().window_states[0].browser_states[0];
+                                state.show_webrender_stats = !state.show_webrender_stats;
+                                servo.set_webrender_profiler_enabled(state.show_webrender_stats);
+                            },
                             WindowCommand::ToggleOptionTileBorders => { },
                         }
                     }
