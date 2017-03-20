@@ -229,8 +229,8 @@
                     </toolbarItem>
                     <toolbarItem implicitItemIdentifier="2B97C7D1-2CD2-4B50-97F2-C5D682965EC7" explicitItemIdentifier="urlbar" label="Urlbar" paletteLabel="Urlbar" tag="-1" id="cSq-oO-aYU" userLabel="Urlbar">
                         <nil key="toolTip"/>
-                        <size key="minSize" width="163" height="32"/>
-                        <size key="maxSize" width="200" height="96"/>
+                        <size key="minSize" width="200" height="32"/>
+                        <size key="maxSize" width="300" height="96"/>
                         <customView key="view" identifier="shellToolbarViewUrlbar" id="UYb-tk-Y3b">
                             <rect key="frame" x="0.0" y="14" width="165" height="32"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -249,7 +249,7 @@
                                         <action selector="shellSubmitUserInput:" target="-1" id="xGH-8e-gcS"/>
                                     </connections>
                                 </textField>
-                                <progressIndicator identifier="shellToolbarViewUrlbarThrobber" wantsLayer="YES" horizontalHuggingPriority="750" verticalHuggingPriority="750" alphaValue="0.80000000000000004" maxValue="100" displayedWhenStopped="NO" bezeled="NO" indeterminate="YES" controlSize="small" style="spinning" translatesAutoresizingMaskIntoConstraints="NO" id="YwO-lE-biT">
+                                <progressIndicator identifier="shellToolbarViewUrlbarThrobber" wantsLayer="YES" horizontalHuggingPriority="750" verticalHuggingPriority="750" maxValue="100" displayedWhenStopped="NO" bezeled="NO" indeterminate="YES" controlSize="small" style="spinning" translatesAutoresizingMaskIntoConstraints="NO" id="YwO-lE-biT">
                                     <rect key="frame" x="143" y="8" width="16" height="16"/>
                                     <constraints>
                                         <constraint firstAttribute="height" constant="16" id="Aba-Cp-TZ6"/>
