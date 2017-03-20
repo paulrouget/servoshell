@@ -4,6 +4,7 @@ mod window;
 mod view;
 mod logs;
 mod toolbar;
+mod bookmarks;
 
 use std::env;
 use std::sync::{Once, ONCE_INIT};
@@ -28,6 +29,7 @@ pub fn init() {
         view::register();
         toolbar::register();
         window::register();
+        bookmarks::register();
     });
 }
 
