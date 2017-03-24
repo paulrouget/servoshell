@@ -61,7 +61,7 @@ fn main() {
 
     info!("Servo version: {}", servo.version());
 
-    app.run(|| {
+    let handle_events = || {
 
         // Loop until no events are available anymore.
         loop {
@@ -334,6 +334,10 @@ fn main() {
         if get_state().window_states[0].logs_visible {
             window.append_logs(&logs.get_logs());
         }
-    });
+    };
+
+    view.set_live_resize_callback(&handle_events);
+
+    app.run(handle_events);
 
 }

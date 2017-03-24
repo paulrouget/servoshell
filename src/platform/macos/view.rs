@@ -24,6 +24,7 @@ pub fn register() {
     let mut class = ClassDecl::new("NSServoView", superclass).unwrap();
 
     class.add_ivar::<*mut c_void>("event_queue");
+    class.add_ivar::<*mut c_void>("live_resize_callback");
 
     extern fn store_nsevent(this: &Object, _sel: Sel, nsevent: id) {
         let event = {
@@ -96,8 +97,14 @@ pub fn register() {
     extern fn set_frame_size(this: &Object, _sel: Sel, size: NSSize) {
         unsafe {
             msg_send![super(this, Class::get("NSView").unwrap()), setFrameSize:size];
+            utils::get_event_queue(this).push(ViewEvent::GeometryDidChange);
+            let live_resize: BOOL = msg_send![this, inLiveResize];
+            if live_resize == YES {
+                let ivar: *mut c_void = *this.get_ivar("live_resize_callback");
+                let callback: &Fn() = *(ivar as *mut &Fn());
+                callback();
+            }
         }
-        utils::get_event_queue(this).push(ViewEvent::GeometryDidChange);
     }
 
     unsafe {
@@ -128,6 +135,14 @@ impl View {
         View {
             nsview: nsview,
             context: context
+        }
+    }
+
+    pub fn set_live_resize_callback<F>(&self, callback: &F) where F: Fn() {
+        // FIXME: If I don't specify the type, segfault… why???
+        let ptr: *mut &Fn() = Box::into_raw(Box::new(callback));
+        unsafe {
+            (*self.nsview).set_ivar("live_resize_callback", ptr as *mut c_void);
         }
     }
 
@@ -169,6 +184,7 @@ impl View {
     }
 
     pub fn get_events(&self) -> Vec<ViewEvent> {
+        // FIXME: we should allow only one GeometryDidChange
         let nsobject = unsafe { &*self.nsview};
         utils::get_event_queue(nsobject).drain(..).collect()
     }
