@@ -1,6 +1,6 @@
 [root]
 name = "servoshell"
-version = "0.1.0"
+version = "0.0.2"
 dependencies = [
  "cgl 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "cocoa 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
