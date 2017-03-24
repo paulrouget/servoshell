@@ -1,6 +1,6 @@
 pub use platform::View;
 
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct DrawableGeometry {
     pub view_size: (u32, u32),
     pub margins: (u32, u32, u32, u32),
