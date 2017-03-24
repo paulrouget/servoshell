@@ -7,4 +7,13 @@ It requires a patched version of cocoa-rs and servo. See Cargo.toml.
 
 Create the dot-app with: [`cargo bundle`](https://github.com/burtonageo/cargo-bundle]).
 
-![scrolling](https://thumbs.gfycat.com/WaterloggedFancyHarpyeagle-size_restricted.gif "scrolling")
+## Download
+
+[v0.0.2 for mac](https://github.com/paulrouget/servoshell/releases) (Windows and Linux not supported yet).
+
+## Screenshots
+
+![regular](https://github.com/paulrouget/servoshell/blob/master/screenshots/regular.png?raw=true "regular")
+![dark theme](https://github.com/paulrouget/servoshell/blob/master/screenshots/dark-theme.png?raw=true "dark theme")
+![options](https://github.com/paulrouget/servoshell/blob/master/screenshots/options.png?raw=true "options")
+![debug](https://github.com/paulrouget/servoshell/blob/master/screenshots/debug.png?raw=true "debug")
