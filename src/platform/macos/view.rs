@@ -4,7 +4,6 @@
 
 extern crate core_foundation;
 extern crate cgl;
-extern crate gleam;
 
 use view::DrawableGeometry;
 
@@ -12,8 +11,10 @@ use cocoa::appkit;
 use cocoa::appkit::*;
 use cocoa::foundation::*;
 use cocoa::base::*;
+use gleam::gl;
 use objc::declare::ClassDecl;
 use objc::runtime::{Class, Object, Sel};
+use std::rc::Rc;
 use self::cgl::{CGLEnable, kCGLCECrashOnRemovedFunctions};
 use self::core_foundation::base::TCFType;
 use self::core_foundation::string::CFString;
@@ -130,16 +131,22 @@ pub fn register() {
 pub struct View {
     nsview: id,
     context: id,
+    gl: Rc<gl::Gl>,
 }
 
 impl View {
 
     pub fn new(nsview: id) -> View {
-        let context: id = View::init_gl(nsview);
+        let (context, gl) = View::init_gl(nsview);
         View {
             nsview: nsview,
-            context: context
+            context: context,
+            gl: gl.clone(),
         }
+    }
+
+    pub fn gl(&self) -> Rc<gl::Gl> {
+        self.gl.clone()
     }
 
     pub fn set_live_resize_callback<F>(&self, callback: &F) where F: Fn() {
@@ -205,7 +212,7 @@ impl View {
         }
     }
 
-    fn init_gl(nsview: id) -> id {
+    fn init_gl(nsview: id) -> (id, Rc<gl::Gl>) {
         let ctx = unsafe {
             nsview.setWantsBestResolutionOpenGLSurface_(YES);
             let attributes = vec![NSOpenGLPFADoubleBuffer as u32,
@@ -236,23 +243,21 @@ impl View {
             msg_send![ctx, makeCurrentContext];
         };
 
-        gleam::gl::load_with(|addr| {
-            let symbol_name: CFString = FromStr::from_str(addr).unwrap();
-            let framework_name: CFString = FromStr::from_str("com.apple.opengl").unwrap();
-            let framework = unsafe {
-                CFBundleGetBundleWithIdentifier(framework_name.as_concrete_TypeRef())
-            };
-            let symbol = unsafe {
-                CFBundleGetFunctionPointerForName(framework, symbol_name.as_concrete_TypeRef())
-            };
-            symbol as *const c_void
-        });
+        let gl = unsafe {
+            gl::GlFns::load_with(|addr| {
+                let symbol_name: CFString = FromStr::from_str(addr).unwrap();
+                let framework_name: CFString = FromStr::from_str("com.apple.opengl").unwrap();
+                let framework = CFBundleGetBundleWithIdentifier(framework_name.as_concrete_TypeRef());
+                let symbol = CFBundleGetFunctionPointerForName(framework, symbol_name.as_concrete_TypeRef());
+                symbol as *const c_void
+            })
+        };
 
-        gleam::gl::clear_color(1.0, 1.0, 1.0, 1.0);
-        gleam::gl::clear(gleam::gl::COLOR_BUFFER_BIT);
-        gleam::gl::finish();
+        gl.clear_color(1.0, 1.0, 1.0, 1.0);
+        gl.clear(gl::COLOR_BUFFER_BIT);
+        gl.finish();
 
-        ctx
+        (ctx, gl)
     }
 }
 

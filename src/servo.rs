@@ -20,6 +20,7 @@ use self::servo::euclid::size::TypedSize2D;
 use self::servo::script_traits::{DevicePixel, MouseButton, TouchEventType};
 use self::servo::net_traits::net_error_list::NetError;
 use self::servo::webrender_traits;
+use gleam::gl;
 use state::BrowserState;
 use platform;
 
@@ -91,7 +92,7 @@ impl Servo {
         servo_version()
     }
 
-    pub fn new(geometry: DrawableGeometry, riser: EventLoopRiser, _url: &str) -> Servo {
+    pub fn new(geometry: DrawableGeometry, gl: Rc<gl::Gl>, riser: EventLoopRiser, _url: &str) -> Servo {
         // FIXME: url not used here
 
         let callbacks = Rc::new(ServoCallbacks {
@@ -99,6 +100,7 @@ impl Servo {
             geometry: Cell::new(geometry),
             riser: riser,
             domain_limit: RefCell::new(None),
+            gl: gl.clone()
         });
 
         let mut servo = servo::Browser::new(callbacks.clone());
@@ -268,6 +270,7 @@ struct ServoCallbacks {
     pub domain_limit: RefCell<Option<String>>,
     event_queue: RefCell<Vec<ServoEvent>>,
     riser: EventLoopRiser,
+    gl: Rc<gl::Gl>,
 }
 
 impl ServoCallbacks {
@@ -308,6 +311,10 @@ impl WindowMethods for ServoCallbacks {
              riser: self.riser.clone(),
          } as Box<CompositorProxy + Send>,
          box receiver as Box<CompositorReceiver>)
+    }
+
+    fn gl(&self) -> Rc<gl::Gl> {
+        self.gl.clone()
     }
 
     fn hidpi_factor(&self) -> ScaleFactor<f32, DeviceIndependentPixel, DevicePixel> {

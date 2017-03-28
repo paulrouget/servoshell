@@ -7,8 +7,8 @@ build = "build.rs"
 
 [dependencies]
 libc = "*"
-gleam = "0.2"
-cgl = "0.1"
+gleam = "0.4"
+cgl = "0.2"
 open = "1.1.1"
 log = "0.3"
 objc = "0.2"

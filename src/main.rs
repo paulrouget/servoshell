@@ -12,6 +12,7 @@ extern crate log;
 
 extern crate libc;
 extern crate cocoa;
+extern crate gleam;
 extern crate objc_foundation;
 extern crate open;
 
@@ -57,7 +58,7 @@ fn main() {
     let servo = {
         let geometry = view.get_geometry();
         let riser = window.create_eventloop_riser();
-        Servo::new(geometry, riser, &url)
+        Servo::new(geometry, view.gl(), riser, &url)
     };
 
     get_state().window_states[0].current_browser_index = Some(0);
