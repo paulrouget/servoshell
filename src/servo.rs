@@ -10,14 +10,14 @@ use self::servo::servo_config::prefs::{PrefValue, PREFS};
 use self::servo::servo_config::resource_files::set_resources_path;
 use self::servo::compositing::windowing::{MouseWindowEvent, WindowMethods, WindowEvent, WindowNavigateMsg};
 use self::servo::compositing::compositor_thread::{self, CompositorProxy, CompositorReceiver};
-use self::servo::msg::constellation_msg::{self, HistoryEntries, Key};
+use self::servo::msg::constellation_msg::{self, Key};
 use self::servo::servo_geometry::DeviceIndependentPixel;
 use self::servo::euclid::{Point2D, Size2D};
 use self::servo::euclid::scale_factor::ScaleFactor;
 use self::servo::euclid::point::TypedPoint2D;
 use self::servo::euclid::rect::TypedRect;
 use self::servo::euclid::size::TypedSize2D;
-use self::servo::script_traits::{DevicePixel, MouseButton, TouchEventType};
+use self::servo::script_traits::{DevicePixel, LoadData, MouseButton, TouchEventType};
 use self::servo::net_traits::net_error_list::NetError;
 use self::servo::webrender_traits;
 use gleam::gl;
@@ -47,7 +47,7 @@ pub enum ServoEvent {
     LoadEnd,
     LoadError(String),
     HeadParsed,
-    HistoryChanged(HistoryEntries),
+    HistoryChanged(Vec<LoadData>, usize),
     CursorChanged(ServoCursor),
     FaviconChanged(ServoUrl),
     Key(Option<char>, Key, constellation_msg::KeyModifiers),
@@ -400,8 +400,8 @@ impl WindowMethods for ServoCallbacks {
         self.event_queue.borrow_mut().push(ServoEvent::HeadParsed);
     }
 
-    fn history_changed(&self, history_entries: HistoryEntries) {
-        self.event_queue.borrow_mut().push(ServoEvent::HistoryChanged(history_entries));
+    fn history_changed(&self, entries: Vec<LoadData>, current: usize) {
+        self.event_queue.borrow_mut().push(ServoEvent::HistoryChanged(entries, current));
     }
 
     fn set_cursor(&self, cursor: ServoCursor) {

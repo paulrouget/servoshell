@@ -303,13 +303,12 @@ fn main() {
                     ServoEvent::HeadParsed => {
                         // FIXME
                     }
-                    ServoEvent::HistoryChanged(history) => {
-                        let current = history.current;
-                        let url = history.entries[current].url.to_string();
+                    ServoEvent::HistoryChanged(entries, current) => {
+                        let url = entries[current].url.to_string();
                         window.set_url(&url);
                         state.url = Some(url);
                         state.can_go_back = current > 0;
-                        state.can_go_forward = current < history.entries.len() - 1;
+                        state.can_go_forward = current < entries.len() - 1;
                         ui_invalidated = true;
                     }
                     ServoEvent::CursorChanged(cursor) => {
