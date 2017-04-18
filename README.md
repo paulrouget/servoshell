@@ -5,11 +5,11 @@ The code compiles and run, but it's messy and memory management is non existent.
 
 It requires a patched version of Servo. See Cargo.toml.
 
-Create the dot-app with: [`cargo bundle`](https://github.com/burtonageo/cargo-bundle]).
+Create the dot-app with: [`cargo bundle`](https://github.com/burtonageo/cargo-bundle).
 
 ## Download
 
-[v0.0.2 for mac](https://github.com/paulrouget/servoshell/releases) (Windows and Linux not supported yet).
+[v0.0.2 for macOS](https://github.com/paulrouget/servoshell/releases) (Windows and Linux not supported yet).
 
 ## Screenshots
 
