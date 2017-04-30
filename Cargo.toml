@@ -16,4 +16,4 @@ objc-foundation = "*"
 core-foundation = "0.2.3"
 core-graphics = "0.3"
 cocoa = "^0.8.1"
-libservo = {path = "../servo/components/servo"} # 8d25dcb8b5 + paul/head_parsed_url
+libservo = { git = "https://github.com/servo/servo.git", rev = "93a513c06f" }
