@@ -9,7 +9,6 @@ use self::servo::servo_config::opts;
 use self::servo::servo_config::prefs::{PrefValue, PREFS};
 use self::servo::servo_config::resource_files::set_resources_path;
 use self::servo::compositing::windowing::{MouseWindowEvent, WindowMethods, WindowEvent, WindowNavigateMsg};
-use self::servo::compositing::compositor_thread::{self, CompositorProxy, CompositorReceiver};
 use self::servo::msg::constellation_msg::{self, Key};
 use self::servo::servo_geometry::DeviceIndependentPixel;
 use self::servo::euclid::{Point2D, Size2D};
@@ -24,12 +23,14 @@ use gleam::gl;
 use state::BrowserState;
 use platform;
 
+use self::servo::BrowserId;
+
+pub use self::servo::compositing::compositor_thread::EventLoopWaker;
 pub use self::servo::style_traits::cursor::Cursor as ServoCursor;
 pub use self::servo::servo_url::ServoUrl;
 
 use view;
 use view::DrawableGeometry;
-use platform::EventLoopRiser;
 
 use std::sync::mpsc;
 use std::rc::Rc;
@@ -53,18 +54,17 @@ pub enum ServoEvent {
     Key(Option<char>, Key, constellation_msg::KeyModifiers),
 }
 
-pub type CompositorChannel = (Box<CompositorProxy + Send>, Box<CompositorReceiver>);
-
 pub struct Servo {
     // FIXME: it's annoying that event for servo are named "WindowEvent"
     events_for_servo: RefCell<Vec<WindowEvent>>,
-    servo_browser: RefCell<servo::Browser<ServoCallbacks>>,
+    servo: RefCell<servo::Servo<ServoCallbacks>>,
     callbacks: Rc<ServoCallbacks>,
+    browser: BrowserId,
 }
 
 impl Servo {
 
-    pub fn configure(url: &str) -> Result<(), &'static str> {
+    pub fn configure() -> Result<(), &'static str> {
 
         let path = match platform::get_resources_path() {
             Some(path) => path.join("servo_resources"),
@@ -74,17 +74,7 @@ impl Servo {
         let path = path.to_str().unwrap().to_string();
         set_resources_path(Some(path));
 
-        let url = match ServoUrl::parse(url) {
-            Ok(url) => url,
-            Err(_) => panic!("Can't parse initial URL: {}", url)
-        };
-        let mut opts = opts::default_opts();
-        opts.headless = false;
-        opts.url = Some(url);
-        opts::set_defaults(opts);
-        // FIXME: Pipeline creation fails is layout_threads pref not set
-        PREFS.set("layout.threads", PrefValue::Number(1.0));
-
+        opts::set_defaults(opts::default_opts());
         Ok(())
     }
 
@@ -92,25 +82,32 @@ impl Servo {
         servo_version()
     }
 
-    pub fn new(geometry: DrawableGeometry, gl: Rc<gl::Gl>, riser: EventLoopRiser, _url: &str) -> Servo {
+    pub fn new(geometry: DrawableGeometry, gl: Rc<gl::Gl>, waker: Box<EventLoopWaker>, url: &str) -> Servo {
         // FIXME: url not used here
 
         let callbacks = Rc::new(ServoCallbacks {
             event_queue: RefCell::new(Vec::new()),
             geometry: Cell::new(geometry),
-            riser: riser,
+            waker: waker,
             domain_limit: RefCell::new(None),
             gl: gl.clone()
         });
 
-        let mut servo = servo::Browser::new(callbacks.clone());
+        let mut servo = servo::Servo::new(callbacks.clone());
+
+        let url = match ServoUrl::parse(url) {
+            Ok(url) => url,
+            Err(_) => panic!("Can't parse initial URL: {}", url)
+        };
+        let browser = servo.create_browser(url).unwrap();
 
         servo.handle_events(vec![WindowEvent::InitializeCompositing]);
 
         Servo {
             events_for_servo: RefCell::new(Vec::new()),
-            servo_browser: RefCell::new(servo),
+            servo: RefCell::new(servo),
             callbacks: callbacks,
+            browser: browser,
         }
     }
 
@@ -140,22 +137,22 @@ impl Servo {
     }
 
     pub fn reload(&self) {
-        let event = WindowEvent::Reload;
+        let event = WindowEvent::Reload(self.browser);
         self.events_for_servo.borrow_mut().push(event);
     }
 
     pub fn go_back(&self) {
-        let event = WindowEvent::Navigation(WindowNavigateMsg::Back);
+        let event = WindowEvent::Navigation(self.browser, WindowNavigateMsg::Back);
         self.events_for_servo.borrow_mut().push(event);
     }
 
     pub fn go_forward(&self) {
-        let event = WindowEvent::Navigation(WindowNavigateMsg::Forward);
+        let event = WindowEvent::Navigation(self.browser, WindowNavigateMsg::Forward);
         self.events_for_servo.borrow_mut().push(event);
     }
 
     pub fn load_url(&self, url: ServoUrl) {
-        let event = WindowEvent::LoadUrl(url.to_string());
+        let event = WindowEvent::LoadUrl(self.browser, url);
         self.events_for_servo.borrow_mut().push(event);
     }
 
@@ -251,7 +248,7 @@ impl Servo {
     }
 
     pub fn set_webrender_profiler_enabled(&self, enabled: bool) {
-        self.servo_browser.borrow_mut().set_webrender_profiler_enabled(enabled);
+        self.servo.borrow_mut().set_webrender_profiler_enabled(enabled);
     }
 
     pub fn sync(&self, force: bool) {
@@ -260,7 +257,7 @@ impl Servo {
         if !self.events_for_servo.borrow().is_empty() || force {
             let mut events = self.events_for_servo.borrow_mut();
             let clone = events.drain(..).collect();
-            self.servo_browser.borrow_mut().handle_events(clone);
+            self.servo.borrow_mut().handle_events(clone);
         }
     }
 }
@@ -269,7 +266,7 @@ struct ServoCallbacks {
     pub geometry: Cell<DrawableGeometry>,
     pub domain_limit: RefCell<Option<String>>,
     event_queue: RefCell<Vec<ServoEvent>>,
-    riser: EventLoopRiser,
+    waker: Box<EventLoopWaker>,
     gl: Rc<gl::Gl>,
 }
 
@@ -293,7 +290,7 @@ impl WindowMethods for ServoCallbacks {
         false
     }
 
-    fn allow_navigation(&self, url: ServoUrl) -> bool {
+    fn allow_navigation(&self, id: BrowserId, url: ServoUrl) -> bool {
         let allow = match self.domain_limit.borrow().as_ref() {
             None => true,
             Some(domain) => domain == url.domain().unwrap()
@@ -304,13 +301,8 @@ impl WindowMethods for ServoCallbacks {
         allow
     }
 
-    fn create_compositor_channel(&self) -> CompositorChannel {
-        let (sender, receiver) = mpsc::channel();
-        (box ShellCompositorProxy {
-             sender: sender,
-             riser: self.riser.clone(),
-         } as Box<CompositorProxy + Send>,
-         box receiver as Box<CompositorReceiver>)
+    fn create_event_loop_waker(&self) -> Box<EventLoopWaker> {
+        self.waker.clone()
     }
 
     fn gl(&self) -> Rc<gl::Gl> {
@@ -349,7 +341,7 @@ impl WindowMethods for ServoCallbacks {
         TypedSize2D::new(width as f32, height as f32)
     }
 
-    fn client_window(&self) -> (Size2D<u32>, Point2D<i32>) {
+    fn client_window(&self, id: BrowserId) -> (Size2D<u32>, Point2D<i32>) {
         let (width, height) = self.geometry.get().view_size;
         let (x, y) = self.geometry.get().position;
         (Size2D::new(width, height), Point2D::new(x as i32, y as i32))
@@ -357,50 +349,51 @@ impl WindowMethods for ServoCallbacks {
 
     // Events
 
-    fn set_inner_size(&self, size: Size2D<u32>) {
+    fn set_inner_size(&self, id: BrowserId, size: Size2D<u32>) {
         self.event_queue
             .borrow_mut()
             .push(ServoEvent::SetWindowInnerSize(size.width as u32, size.height as u32));
     }
 
-    fn set_position(&self, point: Point2D<i32>) {
+    fn set_position(&self, id: BrowserId, point: Point2D<i32>) {
         self.event_queue.borrow_mut().push(ServoEvent::SetWindowPosition(point.x, point.y));
     }
 
-    fn set_fullscreen_state(&self, state: bool) {
+    fn set_fullscreen_state(&self, id: BrowserId, state: bool) {
         self.event_queue.borrow_mut().push(ServoEvent::SetFullScreenState(state))
     }
 
     fn present(&self) {
+        // FIXME: NO!
         self.event_queue.borrow_mut().push(ServoEvent::Present);
     }
 
-    fn set_page_title(&self, title: Option<String>) {
+    fn set_page_title(&self, id: BrowserId, title: Option<String>) {
         self.event_queue.borrow_mut().push(ServoEvent::TitleChanged(title));
     }
 
-    fn status(&self, status: Option<String>) {
+    fn status(&self, id: BrowserId, status: Option<String>) {
         self.event_queue.borrow_mut().push(ServoEvent::StatusChanged(status));
     }
 
-    fn load_start(&self) {
+    fn load_start(&self, id: BrowserId) {
         self.event_queue.borrow_mut().push(ServoEvent::LoadStart);
     }
 
-    fn load_end(&self) {
+    fn load_end(&self, id: BrowserId) {
         self.event_queue.borrow_mut().push(ServoEvent::LoadEnd);
     }
 
-    fn load_error(&self, _: NetError, url: String) {
+    fn load_error(&self, id: BrowserId, _: NetError, url: String) {
         // FIXME: never called by servo
         self.event_queue.borrow_mut().push(ServoEvent::LoadError(url));
     }
 
-    fn head_parsed(&self) {
+    fn head_parsed(&self, id: BrowserId) {
         self.event_queue.borrow_mut().push(ServoEvent::HeadParsed);
     }
 
-    fn history_changed(&self, entries: Vec<LoadData>, current: usize) {
+    fn history_changed(&self, id: BrowserId, entries: Vec<LoadData>, current: usize) {
         self.event_queue.borrow_mut().push(ServoEvent::HistoryChanged(entries, current));
     }
 
@@ -408,32 +401,11 @@ impl WindowMethods for ServoCallbacks {
         self.event_queue.borrow_mut().push(ServoEvent::CursorChanged(cursor));
     }
 
-    fn set_favicon(&self, url: ServoUrl) {
+    fn set_favicon(&self, id: BrowserId, url: ServoUrl) {
         self.event_queue.borrow_mut().push(ServoEvent::FaviconChanged(url));
     }
 
-    fn handle_key(&self, ch: Option<char>, key: Key, mods: constellation_msg::KeyModifiers) {
+    fn handle_key(&self, id: Option<BrowserId>, ch: Option<char>, key: Key, mods: constellation_msg::KeyModifiers) {
         self.event_queue.borrow_mut().push(ServoEvent::Key(ch, key, mods));
-    }
-}
-
-struct ShellCompositorProxy {
-    sender: mpsc::Sender<compositor_thread::Msg>,
-    riser: EventLoopRiser,
-}
-
-impl CompositorProxy for ShellCompositorProxy {
-    fn send(&self, msg: compositor_thread::Msg) {
-        if let Err(err) = self.sender.send(msg) {
-            warn!("Failed to send response ({}).", err);
-        }
-        self.riser.rise()
-    }
-
-    fn clone_compositor_proxy(&self) -> Box<CompositorProxy + Send> {
-        box ShellCompositorProxy {
-            sender: self.sender.clone(),
-            riser: self.riser.clone(),
-        } as Box<CompositorProxy + Send>
     }
 }

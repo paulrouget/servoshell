@@ -153,7 +153,7 @@ impl App {
                     let event_subtype = nsevent.subtype() as i16;
                     if event_subtype == NSEventSubtype::NSApplicationActivatedEventType as i16 {
                         let nswindow: id = msg_send![nsevent, window];
-                        msg_send![nswindow, eventLoopRised];
+                        msg_send![nswindow, eventLoopAwaken];
                     }
                 } else {
                     msg_send![self.nsapp, sendEvent: nsevent];

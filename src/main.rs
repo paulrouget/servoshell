@@ -54,11 +54,11 @@ fn main() {
         !arg.starts_with("-")
     }).unwrap_or("https://blog.servo.org/".to_owned());
 
-    Servo::configure(&url).unwrap();
+    Servo::configure().unwrap();
     let servo = {
         let geometry = view.get_geometry();
-        let riser = window.create_eventloop_riser();
-        Servo::new(geometry, view.gl(), riser, &url)
+        let waker = window.create_event_loop_waker();
+        Servo::new(geometry, view.gl(), waker, &url)
     };
 
     get_state().window_states[0].current_browser_index = Some(0);
@@ -117,7 +117,7 @@ fn main() {
 
             for event in win_events {
                 match event {
-                    WindowEvent::EventLoopRised => {
+                    WindowEvent::EventLoopAwaken => {
                         force_sync = true;
                     }
                     WindowEvent::GeometryDidChange => {

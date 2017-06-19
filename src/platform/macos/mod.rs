@@ -21,7 +21,6 @@ use std::os::raw::c_void;
 
 pub use self::app::App;
 pub use self::window::Window;
-pub use self::window::EventLoopRiser;
 pub use self::view::View;
 pub use self::logs::Logger;
 
