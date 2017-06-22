@@ -14,7 +14,7 @@ use super::utils;
 use window::{WindowEvent, WindowCommand};
 use view::View;
 use libc;
-use servo::ServoCursor;
+use servo::{EventLoopWaker, ServoCursor};
 use state::WindowState;
 use super::get_state;
 use super::logs::ShellLog;
@@ -41,8 +41,9 @@ pub fn register() {
             utils::get_event_queue(this).push(WindowEvent::GeometryDidChange);
         }
 
-        extern fn event_loop_rised(this: &Object, _sel: Sel) {
-            utils::get_event_queue(this).push(WindowEvent::EventLoopRised);
+        extern fn event_loop_awaken(this: &Object, _sel: Sel) {
+            // FIXME: wut?
+            utils::get_event_queue(this).push(WindowEvent::EventLoopAwaken);
         }
 
         extern fn awake_from_nib(this: &mut Object, _sel: Sel) {
@@ -57,7 +58,7 @@ pub fn register() {
         unsafe {
             class.add_method(sel!(toggleTabBar:), toggle_tabbar as extern fn(&Object, Sel, id));
             class.add_method(sel!(toggleToolbarShown:), toggle_toolbar as extern fn(&Object, Sel, id));
-            class.add_method(sel!(eventLoopRised), event_loop_rised as extern fn(&Object, Sel));
+            class.add_method(sel!(eventLoopAwaken), event_loop_awaken as extern fn(&Object, Sel));
             class.add_method(sel!(awakeFromNib), awake_from_nib as extern fn(&mut Object, Sel));
         }
 
@@ -493,11 +494,11 @@ impl Window {
         }
     }
 
-    pub fn create_eventloop_riser(&self) -> EventLoopRiser {
+    pub fn create_event_loop_waker(&self) -> Box<EventLoopWaker> {
         let window_number: NSInteger = unsafe {
             msg_send![self.nswindow, windowNumber]
         };
-        EventLoopRiser {
+        box MacOSEventLoopWaker {
             window_number: window_number,
         }
     }
@@ -592,12 +593,12 @@ impl Window {
     }
 }
 
-pub struct EventLoopRiser {
+pub struct MacOSEventLoopWaker {
     window_number: NSInteger,
 }
 
-impl EventLoopRiser {
-    pub fn rise(&self) {
+impl EventLoopWaker for MacOSEventLoopWaker {
+    fn wake(&self) {
         unsafe {
             let pool = NSAutoreleasePool::new(nil);
             let event: id = msg_send![class("NSEvent"),
@@ -615,8 +616,8 @@ impl EventLoopRiser {
             NSAutoreleasePool::drain(pool);
         }
     }
-    pub fn clone(&self) -> EventLoopRiser {
-        EventLoopRiser {
+    fn clone(&self) -> Box<EventLoopWaker + Send> {
+        box MacOSEventLoopWaker {
             window_number: self.window_number,
         }
     }
