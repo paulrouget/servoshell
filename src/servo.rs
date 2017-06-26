@@ -5,6 +5,7 @@
 extern crate servo;
 
 use self::servo::config::servo_version;
+use self::servo::ipc_channel::ipc::IpcSender;
 use self::servo::servo_config::opts;
 use self::servo::servo_config::resource_files::set_resources_path;
 use self::servo::compositing::windowing::{MouseWindowEvent, WindowMethods, WindowEvent, WindowNavigateMsg};
@@ -34,7 +35,6 @@ pub enum ServoEvent {
     SetWindowInnerSize(u32, u32),
     SetWindowPosition(i32, i32),
     SetFullScreenState(bool),
-    Present,
     TitleChanged(Option<String>),
     UnhandledURL(ServoUrl),
     StatusChanged(Option<String>),
@@ -76,7 +76,7 @@ impl Servo {
         servo_version()
     }
 
-    pub fn new(geometry: DrawableGeometry, gl: Rc<gl::Gl>, waker: Box<EventLoopWaker>, url: &str) -> Servo {
+    pub fn new(geometry: DrawableGeometry, view: Rc<view::View>, waker: Box<EventLoopWaker>, url: &str) -> Servo {
         // FIXME: url not used here
 
         let callbacks = Rc::new(ServoCallbacks {
@@ -84,7 +84,7 @@ impl Servo {
             geometry: Cell::new(geometry),
             waker: waker,
             domain_limit: RefCell::new(None),
-            gl: gl.clone()
+            view: view.clone(),
         });
 
         let mut servo = servo::Servo::new(callbacks.clone());
@@ -263,7 +263,7 @@ struct ServoCallbacks {
     pub domain_limit: RefCell<Option<String>>,
     event_queue: RefCell<Vec<ServoEvent>>,
     waker: Box<EventLoopWaker>,
-    gl: Rc<gl::Gl>,
+    view: Rc<view::View>,
 }
 
 impl ServoCallbacks {
@@ -286,15 +286,15 @@ impl WindowMethods for ServoCallbacks {
         false
     }
 
-    fn allow_navigation(&self, id: BrowserId, url: ServoUrl) -> bool {
+    fn allow_navigation(&self, id: BrowserId, url: ServoUrl, chan: IpcSender<bool>) {
         let allow = match self.domain_limit.borrow().as_ref() {
             None => true,
             Some(domain) => domain == url.domain().unwrap()
         };
+        chan.send(allow);
         if !allow {
             self.event_queue.borrow_mut().push(ServoEvent::UnhandledURL(url));
         }
-        allow
     }
 
     fn create_event_loop_waker(&self) -> Box<EventLoopWaker> {
@@ -302,7 +302,7 @@ impl WindowMethods for ServoCallbacks {
     }
 
     fn gl(&self) -> Rc<gl::Gl> {
-        self.gl.clone()
+        self.view.gl()
     }
 
     fn hidpi_factor(&self) -> ScaleFactor<f32, DeviceIndependentPixel, DevicePixel> {
@@ -360,8 +360,7 @@ impl WindowMethods for ServoCallbacks {
     }
 
     fn present(&self) {
-        // FIXME: NO!
-        self.event_queue.borrow_mut().push(ServoEvent::Present);
+        self.view.swap_buffers();
     }
 
     fn set_page_title(&self, id: BrowserId, title: Option<String>) {

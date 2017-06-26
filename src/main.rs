@@ -27,6 +27,7 @@ use app::{App, AppEvent, AppCommand};
 use window::{Window, WindowEvent, WindowCommand};
 use view::ViewEvent;
 use servo::ServoEvent;
+use std::rc::Rc;
 use std::env::args;
 use servo::{Servo, ServoUrl};
 
@@ -46,7 +47,7 @@ fn main() {
     get_state().current_window_index = Some(0);
     get_state().window_states.push(Window::get_init_state());
 
-    let view = window.create_view().unwrap();
+    let view = Rc::new(window.create_view().unwrap());
 
     // Skip first argument (executable), and find the first
     // argument that doesn't start with `-`
@@ -58,7 +59,7 @@ fn main() {
     let servo = {
         let geometry = view.get_geometry();
         let waker = window.create_event_loop_waker();
-        Servo::new(geometry, view.gl(), waker, &url)
+        Servo::new(geometry, view.clone(), waker, &url)
     };
 
     get_state().window_states[0].current_browser_index = Some(0);
@@ -273,9 +274,6 @@ fn main() {
                         } else {
                             view.exit_fullscreen();
                         }
-                    }
-                    ServoEvent::Present => {
-                        view.swap_buffers();
                     }
                     ServoEvent::TitleChanged(title) => {
                         window.set_title(&title.unwrap_or("No Title".to_owned()));
