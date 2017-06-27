@@ -416,8 +416,8 @@ impl Window {
             let view = msg_send![item, view];
             let field = utils::get_view_by_id(view, "shellToolbarViewUrlbarTextfield").unwrap();
             match get_state().window_states[0].browser_states[idx].url {
-                Some(ref url) => msg_send![field, setStringValue:NSString::alloc(nil).init_str(url)],
-                None => NSString::alloc(nil).init_str(""),
+                Some(ref url) if url != "about:blank" => msg_send![field, setStringValue:NSString::alloc(nil).init_str(url)],
+                _ => msg_send![field, setStringValue:NSString::alloc(nil).init_str("")],
             };
         }
 
