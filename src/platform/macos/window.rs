@@ -282,11 +282,19 @@ impl Window {
             let toolbar: id = msg_send![nswindow, toolbar];
             msg_send![toolbar, setShowsBaselineSeparator:NO];
 
-            let foobar = utils::get_view_by_id(nswindow, "foobar").unwrap();
-            msg_send![foobar, setButtonOptimumWidth:200];
-            msg_send![foobar, setButtonMinWidth:100];
-            let txt = NSString::alloc(nil).init_str("Yosemite");
-            msg_send![foobar, setStyleNamed:txt];
+            let tabbar = utils::get_view_by_id(nswindow, "tabbar").unwrap();
+            msg_send![tabbar, setStyleNamed:NSString::alloc(nil).init_str("Yosemite")];
+            msg_send![tabbar, setCanCloseOnlyTab:YES];
+            msg_send![tabbar, setDisableTabClose:NO];
+            msg_send![tabbar, setAllowsBackgroundTabClosing:YES];
+            msg_send![tabbar, setHideForSingleTab:YES];
+            msg_send![tabbar, setShowAddTabButton:YES];
+            msg_send![tabbar, setUseOverflowMenu:YES];
+            msg_send![tabbar, setSizeButtonsToFit:NO];
+            msg_send![tabbar, setButtonMinWidth:100];
+            msg_send![tabbar, setButtonOptimumWidth:200];
+            msg_send![tabbar, setButtonMaxWidth:300];
+            msg_send![tabbar, setAutomaticallyAnimates:YES];
 
             // Necessary to prevent the log view to wrap text
             let textview = utils::get_view_by_id(nswindow, "shellViewLogsTextView").unwrap();

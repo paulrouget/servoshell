@@ -180,7 +180,7 @@
                     <customView translatesAutoresizingMaskIntoConstraints="NO" id="2mh-An-c1C" userLabel="Tabs">
                         <rect key="frame" x="0.0" y="407" width="799" height="25"/>
                         <subviews>
-                            <customView identifier="foobar" translatesAutoresizingMaskIntoConstraints="NO" id="hYc-OO-4Fd" customClass="MMTabBarView">
+                            <customView identifier="tabbar" translatesAutoresizingMaskIntoConstraints="NO" id="hYc-OO-4Fd" customClass="MMTabBarView">
                                 <rect key="frame" x="0.0" y="0.0" width="799" height="25"/>
                                 <connections>
                                     <outlet property="tabView" destination="lZA-eI-LZ4" id="IaL-XZ-k6j"/>
@@ -198,31 +198,7 @@
                                     </tabViewItem>
                                     <tabViewItem label="View" identifier="2" id="iFD-aj-hva">
                                         <view key="view" id="77p-SZ-0gx">
-                                            <rect key="frame" x="10" y="33" width="793" height="170"/>
-                                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                        </view>
-                                    </tabViewItem>
-                                    <tabViewItem label="View" identifier="2" id="V4K-aN-SK7">
-                                        <view key="view" id="9fc-ZQ-w4O">
-                                            <rect key="frame" x="10" y="33" width="793" height="170"/>
-                                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                        </view>
-                                    </tabViewItem>
-                                    <tabViewItem label="View" identifier="2" id="nqX-FM-aG8">
-                                        <view key="view" id="7WM-yK-HVX">
-                                            <rect key="frame" x="10" y="33" width="793" height="170"/>
-                                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                        </view>
-                                    </tabViewItem>
-                                    <tabViewItem label="View" identifier="2" id="Ojp-C7-Poj">
-                                        <view key="view" id="Gbp-kj-Yui">
-                                            <rect key="frame" x="10" y="33" width="793" height="170"/>
-                                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                        </view>
-                                    </tabViewItem>
-                                    <tabViewItem label="View" identifier="2" id="L6U-qT-zpQ">
-                                        <view key="view" id="nX9-Ph-bRO">
-                                            <rect key="frame" x="10" y="33" width="793" height="170"/>
+                                            <rect key="frame" x="10" y="30.5" width="793" height="0.0"/>
                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                         </view>
                                     </tabViewItem>
