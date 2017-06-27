@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11762" systemVersion="16D32" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="12121" systemVersion="16F73" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11762"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="12121"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
         <capability name="stacking Non-gravity area distributions on NSStackView" minToolsVersion="7.0" minSystemVersion="10.11"/>
     </dependencies>
@@ -12,17 +12,17 @@
         <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" releasedWhenClosed="NO" frameAutosaveName="" animationBehavior="default" id="Oln-kV-sOz" customClass="NSShellWindow">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" unifiedTitleAndToolbar="YES" fullSizeContentView="YES"/>
             <windowPositionMask key="initialPositionMask" topStrut="YES" bottomStrut="YES"/>
-            <rect key="contentRect" x="109" y="93" width="800" height="600"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1280" height="800"/>
+            <rect key="contentRect" x="109" y="93" width="799" height="469"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1440" height="900"/>
             <view key="contentView" id="DaH-qF-Fmi" userLabel="Content View">
-                <rect key="frame" x="0.0" y="0.0" width="800" height="600"/>
+                <rect key="frame" x="0.0" y="0.0" width="799" height="469"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <splitView identifier="shellViewSplitLogs" arrangesAllSubviews="NO" dividerStyle="thin" translatesAutoresizingMaskIntoConstraints="NO" id="4zq-V6-bsL" userLabel="Split with logs">
-                        <rect key="frame" x="0.0" y="0.0" width="800" height="600"/>
+                        <rect key="frame" x="0.0" y="0.0" width="799" height="469"/>
                         <subviews>
                             <splitView identifier="shellViewSplitSidebar" fixedFrame="YES" arrangesAllSubviews="NO" dividerStyle="thin" vertical="YES" id="gKh-eK-Mgj" userLabel="Split with sidebar">
-                                <rect key="frame" x="0.0" y="0.0" width="800" height="599"/>
+                                <rect key="frame" x="0.0" y="0.0" width="799" height="468"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <subviews>
                                     <customView identifier="shellViewSidebar" hidden="YES" id="oV7-2n-kKj" userLabel="Sidebar">
@@ -101,11 +101,11 @@
                                         </constraints>
                                     </customView>
                                     <customView identifier="shellViewServoContainer" id="N8b-Tc-LeP" userLabel="Content">
-                                        <rect key="frame" x="1" y="0.0" width="799" height="599"/>
+                                        <rect key="frame" x="1" y="0.0" width="798" height="468"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <subviews>
                                             <view identifier="shellViewServo" wantsLayer="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5UK-PV-Jqx" customClass="NSServoView">
-                                                <rect key="frame" x="0.0" y="0.0" width="799" height="599"/>
+                                                <rect key="frame" x="0.0" y="0.0" width="798" height="468"/>
                                             </view>
                                             <textField identifier="shellStatusLabel" hidden="YES" horizontalHuggingPriority="251" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="NO" textCompletion="NO" translatesAutoresizingMaskIntoConstraints="NO" id="p8g-JG-o4B">
                                                 <rect key="frame" x="0.0" y="0.0" width="37" height="17"/>
@@ -142,9 +142,10 @@
                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                             <subviews>
                                                 <textView identifier="shellViewLogsTextView" editable="NO" importsGraphics="NO" horizontallyResizable="YES" baseWritingDirection="leftToRight" findStyle="bar" incrementalSearchingEnabled="YES" allowsCharacterPickerTouchBarItem="NO" usesRuler="YES" textCompletion="NO" id="ya1-Rz-vfb">
-                                                    <rect key="frame" x="0.0" y="0.0" width="10" height="14"/>
+                                                    <rect key="frame" x="0.0" y="0.0" width="798" height="199"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxX="YES" flexibleMinY="YES" heightSizable="YES" flexibleMaxY="YES"/>
                                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                                    <size key="minSize" width="798" height="199"/>
                                                     <size key="maxSize" width="10000000" height="10000000"/>
                                                     <color key="insertionPointColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                 </textView>
@@ -176,12 +177,83 @@
                             <real value="250"/>
                         </holdingPriorities>
                     </splitView>
+                    <customView translatesAutoresizingMaskIntoConstraints="NO" id="2mh-An-c1C" userLabel="Tabs">
+                        <rect key="frame" x="0.0" y="407" width="799" height="25"/>
+                        <subviews>
+                            <customView identifier="foobar" translatesAutoresizingMaskIntoConstraints="NO" id="hYc-OO-4Fd" customClass="MMTabBarView">
+                                <rect key="frame" x="0.0" y="0.0" width="799" height="25"/>
+                                <connections>
+                                    <outlet property="tabView" destination="lZA-eI-LZ4" id="IaL-XZ-k6j"/>
+                                </connections>
+                            </customView>
+                            <tabView hidden="YES" translatesAutoresizingMaskIntoConstraints="NO" id="lZA-eI-LZ4">
+                                <rect key="frame" x="-7" y="-10" width="813" height="41"/>
+                                <font key="font" metaFont="system"/>
+                                <tabViewItems>
+                                    <tabViewItem label="Tab" identifier="1" id="MW7-D9-qf3">
+                                        <view key="view" ambiguous="YES" id="hKX-VX-hTt">
+                                            <rect key="frame" x="10" y="30.5" width="793" height="0.0"/>
+                                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                        </view>
+                                    </tabViewItem>
+                                    <tabViewItem label="View" identifier="2" id="iFD-aj-hva">
+                                        <view key="view" id="77p-SZ-0gx">
+                                            <rect key="frame" x="10" y="33" width="793" height="170"/>
+                                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                        </view>
+                                    </tabViewItem>
+                                    <tabViewItem label="View" identifier="2" id="V4K-aN-SK7">
+                                        <view key="view" id="9fc-ZQ-w4O">
+                                            <rect key="frame" x="10" y="33" width="793" height="170"/>
+                                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                        </view>
+                                    </tabViewItem>
+                                    <tabViewItem label="View" identifier="2" id="nqX-FM-aG8">
+                                        <view key="view" id="7WM-yK-HVX">
+                                            <rect key="frame" x="10" y="33" width="793" height="170"/>
+                                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                        </view>
+                                    </tabViewItem>
+                                    <tabViewItem label="View" identifier="2" id="Ojp-C7-Poj">
+                                        <view key="view" id="Gbp-kj-Yui">
+                                            <rect key="frame" x="10" y="33" width="793" height="170"/>
+                                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                        </view>
+                                    </tabViewItem>
+                                    <tabViewItem label="View" identifier="2" id="L6U-qT-zpQ">
+                                        <view key="view" id="nX9-Ph-bRO">
+                                            <rect key="frame" x="10" y="33" width="793" height="170"/>
+                                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                        </view>
+                                    </tabViewItem>
+                                </tabViewItems>
+                                <connections>
+                                    <outlet property="delegate" destination="hYc-OO-4Fd" id="rz2-Vf-gGW"/>
+                                </connections>
+                            </tabView>
+                        </subviews>
+                        <constraints>
+                            <constraint firstItem="hYc-OO-4Fd" firstAttribute="top" secondItem="2mh-An-c1C" secondAttribute="top" id="0q1-oY-fTx"/>
+                            <constraint firstAttribute="bottom" secondItem="lZA-eI-LZ4" secondAttribute="bottom" id="2AY-Uw-qtC"/>
+                            <constraint firstAttribute="trailing" secondItem="lZA-eI-LZ4" secondAttribute="trailing" id="5rK-ZS-IQd"/>
+                            <constraint firstAttribute="bottom" secondItem="lZA-eI-LZ4" secondAttribute="bottom" id="8lg-8z-Xc5"/>
+                            <constraint firstAttribute="bottom" secondItem="hYc-OO-4Fd" secondAttribute="bottom" id="F3i-hr-yEp"/>
+                            <constraint firstItem="hYc-OO-4Fd" firstAttribute="leading" secondItem="2mh-An-c1C" secondAttribute="leading" id="KUj-sJ-TYb"/>
+                            <constraint firstItem="lZA-eI-LZ4" firstAttribute="top" secondItem="2mh-An-c1C" secondAttribute="top" id="WcV-6T-6D5"/>
+                            <constraint firstAttribute="trailing" secondItem="hYc-OO-4Fd" secondAttribute="trailing" id="cWr-p1-HxI"/>
+                            <constraint firstItem="lZA-eI-LZ4" firstAttribute="leading" secondItem="2mh-An-c1C" secondAttribute="leading" id="ou2-7m-xeD"/>
+                            <constraint firstAttribute="height" constant="25" id="zI6-Uf-PLN"/>
+                        </constraints>
+                    </customView>
                 </subviews>
                 <constraints>
-                    <constraint firstItem="4zq-V6-bsL" firstAttribute="leading" secondItem="DaH-qF-Fmi" secondAttribute="leading" id="M5h-72-jbE"/>
-                    <constraint firstAttribute="bottom" secondItem="4zq-V6-bsL" secondAttribute="bottom" id="o5s-02-iMP"/>
-                    <constraint firstAttribute="trailing" secondItem="4zq-V6-bsL" secondAttribute="trailing" id="o6a-3N-JqJ"/>
-                    <constraint firstItem="4zq-V6-bsL" firstAttribute="top" secondItem="DaH-qF-Fmi" secondAttribute="top" id="sGc-AW-9Rg"/>
+                    <constraint firstItem="4zq-V6-bsL" firstAttribute="top" secondItem="DaH-qF-Fmi" secondAttribute="top" id="3Fg-uA-W4w"/>
+                    <constraint firstItem="4zq-V6-bsL" firstAttribute="leading" secondItem="DaH-qF-Fmi" secondAttribute="leading" id="9Oh-Ec-TdU"/>
+                    <constraint firstAttribute="trailing" secondItem="2mh-An-c1C" secondAttribute="trailing" id="GL4-mH-8mQ"/>
+                    <constraint firstAttribute="bottom" secondItem="4zq-V6-bsL" secondAttribute="bottom" id="O1l-Rn-DCw"/>
+                    <constraint firstItem="2mh-An-c1C" firstAttribute="top" secondItem="DaH-qF-Fmi" secondAttribute="top" constant="37" id="dQJ-1U-Ui7"/>
+                    <constraint firstAttribute="trailing" secondItem="4zq-V6-bsL" secondAttribute="trailing" id="gdo-6l-7Ia"/>
+                    <constraint firstItem="2mh-An-c1C" firstAttribute="leading" secondItem="DaH-qF-Fmi" secondAttribute="leading" id="o9B-7c-u3h"/>
                 </constraints>
             </view>
             <toolbar key="toolbar" implicitIdentifier="29C381EB-D93D-4732-85FB-A6F47C82B023" autosavesConfiguration="NO" displayMode="iconOnly" sizeMode="regular" id="ann-49-zau">
@@ -211,9 +283,8 @@
                             <rect key="frame" x="18" y="14" width="36" height="27"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <subviews>
-                                <button identifier="shellToolbarViewReload" toolTip="Reload" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="IOC-Z6-Gwh">
-                                    <rect key="frame" x="0.0" y="0.0" width="36" height="27"/>
-                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <button identifier="shellToolbarViewReload" toolTip="Reload" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="IOC-Z6-Gwh">
+                                    <rect key="frame" x="0.0" y="0.0" width="36" height="25"/>
                                     <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="NSRefreshTemplate" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="Uj2-Ew-Zfm">
                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                         <font key="font" metaFont="system"/>
@@ -222,9 +293,8 @@
                                         <action selector="shellReload:" target="-1" id="vdz-4x-v6D"/>
                                     </connections>
                                 </button>
-                                <button identifier="shellToolbarViewStop" hidden="YES" toolTip="Stop" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="aRI-mX-sS7">
-                                    <rect key="frame" x="0.0" y="0.0" width="36" height="27"/>
-                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <button identifier="shellToolbarViewStop" hidden="YES" toolTip="Stop" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="aRI-mX-sS7">
+                                    <rect key="frame" x="0.0" y="0.0" width="36" height="25"/>
                                     <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="NSStopProgressTemplate" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="dYd-5s-HSz">
                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                         <font key="font" metaFont="system"/>
@@ -234,6 +304,14 @@
                                     </connections>
                                 </button>
                             </subviews>
+                            <constraints>
+                                <constraint firstItem="aRI-mX-sS7" firstAttribute="baseline" secondItem="IOC-Z6-Gwh" secondAttribute="baseline" id="4Vs-z6-NyA"/>
+                                <constraint firstItem="aRI-mX-sS7" firstAttribute="leading" secondItem="pc3-go-sT6" secondAttribute="leading" id="8do-Lp-Spx"/>
+                                <constraint firstItem="IOC-Z6-Gwh" firstAttribute="centerY" secondItem="pc3-go-sT6" secondAttribute="centerY" id="94y-JJ-fmO"/>
+                                <constraint firstItem="aRI-mX-sS7" firstAttribute="trailing" secondItem="IOC-Z6-Gwh" secondAttribute="trailing" id="99X-kj-z8S"/>
+                                <constraint firstAttribute="trailing" secondItem="IOC-Z6-Gwh" secondAttribute="trailing" id="onl-IE-aaf"/>
+                                <constraint firstItem="aRI-mX-sS7" firstAttribute="leading" secondItem="IOC-Z6-Gwh" secondAttribute="leading" id="rCm-ww-gQv"/>
+                            </constraints>
                         </customView>
                         <connections>
                             <action selector="shellReloadStop:" target="-1" id="KIt-Cy-cFn"/>
@@ -361,6 +439,7 @@
                     <toolbarItem reference="588-1C-kbe"/>
                 </defaultToolbarItems>
             </toolbar>
+            <point key="canvasLocation" x="138.5" y="279.5"/>
         </window>
         <viewController id="8l9-S4-ely" userLabel="Popover View Controller">
             <connections>

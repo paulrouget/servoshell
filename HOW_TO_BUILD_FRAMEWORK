@@ -1,0 +1,3 @@
+Used: https://github.com/dparnell/MMTabBarView
+install_name_tool -add_rpath /Users/paul/git/servoshell/macos/framework ./target/debug/servoshell
+

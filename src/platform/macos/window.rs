@@ -19,6 +19,9 @@ use state::WindowState;
 use super::get_state;
 use super::logs::ShellLog;
 
+#[link(name = "MMTabBarView", kind = "framework")]
+extern { }
+
 pub fn register() {
 
     /* NSWindow subclass */ {
@@ -275,6 +278,15 @@ impl Window {
 
             nswindow.setTitleVisibility_(NSWindowTitleVisibility::NSWindowTitleHidden);
             nswindow.setAcceptsMouseMovedEvents_(YES);
+
+            let toolbar: id = msg_send![nswindow, toolbar];
+            msg_send![toolbar, setShowsBaselineSeparator:NO];
+
+            let foobar = utils::get_view_by_id(nswindow, "foobar").unwrap();
+            msg_send![foobar, setButtonOptimumWidth:200];
+            msg_send![foobar, setButtonMinWidth:100];
+            let txt = NSString::alloc(nil).init_str("Yosemite");
+            msg_send![foobar, setStyleNamed:txt];
 
             // Necessary to prevent the log view to wrap text
             let textview = utils::get_view_by_id(nswindow, "shellViewLogsTextView").unwrap();
