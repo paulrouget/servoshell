@@ -11,6 +11,7 @@ fn main() {
     fs::create_dir_all(&nibs_dir).unwrap();
     ibtool("macos/xib/App.xib", nibs_dir);
     ibtool("macos/xib/Window.xib", nibs_dir);
+    println!("cargo:rustc-link-search=framework=/Users/paul/git/servoshell/Carthage/Build/Mac/");
 }
 
 fn ibtool(src: &str, out_dir: &Path) {

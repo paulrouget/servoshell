@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11762" systemVersion="16D32" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="12121" systemVersion="16F73" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11762"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="12121"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
         <capability name="stacking Non-gravity area distributions on NSStackView" minToolsVersion="7.0" minSystemVersion="10.11"/>
     </dependencies>
@@ -13,7 +13,7 @@
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" unifiedTitleAndToolbar="YES" fullSizeContentView="YES"/>
             <windowPositionMask key="initialPositionMask" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="109" y="93" width="800" height="600"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1280" height="800"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1440" height="900"/>
             <view key="contentView" id="DaH-qF-Fmi" userLabel="Content View">
                 <rect key="frame" x="0.0" y="0.0" width="800" height="600"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -142,9 +142,10 @@
                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                             <subviews>
                                                 <textView identifier="shellViewLogsTextView" editable="NO" importsGraphics="NO" horizontallyResizable="YES" baseWritingDirection="leftToRight" findStyle="bar" incrementalSearchingEnabled="YES" allowsCharacterPickerTouchBarItem="NO" usesRuler="YES" textCompletion="NO" id="ya1-Rz-vfb">
-                                                    <rect key="frame" x="0.0" y="0.0" width="10" height="14"/>
+                                                    <rect key="frame" x="0.0" y="0.0" width="798" height="199"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxX="YES" flexibleMinY="YES" heightSizable="YES" flexibleMaxY="YES"/>
                                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                                    <size key="minSize" width="798" height="199"/>
                                                     <size key="maxSize" width="10000000" height="10000000"/>
                                                     <color key="insertionPointColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                 </textView>
@@ -176,11 +177,20 @@
                             <real value="250"/>
                         </holdingPriorities>
                     </splitView>
+                    <customView identifier="shellTabs" translatesAutoresizingMaskIntoConstraints="NO" id="6Xl-KG-LDe" customClass="TabsControl" customModule="KPCTabsControl">
+                        <rect key="frame" x="0.0" y="538" width="800" height="24"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="24" id="ClU-BG-2ph"/>
+                        </constraints>
+                    </customView>
                 </subviews>
                 <constraints>
+                    <constraint firstItem="6Xl-KG-LDe" firstAttribute="leading" secondItem="DaH-qF-Fmi" secondAttribute="leading" id="HzQ-7S-QIe"/>
                     <constraint firstItem="4zq-V6-bsL" firstAttribute="leading" secondItem="DaH-qF-Fmi" secondAttribute="leading" id="M5h-72-jbE"/>
+                    <constraint firstAttribute="trailing" secondItem="6Xl-KG-LDe" secondAttribute="trailing" id="c4E-Np-COa"/>
                     <constraint firstAttribute="bottom" secondItem="4zq-V6-bsL" secondAttribute="bottom" id="o5s-02-iMP"/>
                     <constraint firstAttribute="trailing" secondItem="4zq-V6-bsL" secondAttribute="trailing" id="o6a-3N-JqJ"/>
+                    <constraint firstItem="6Xl-KG-LDe" firstAttribute="top" secondItem="DaH-qF-Fmi" secondAttribute="top" constant="38" id="ob6-On-bep"/>
                     <constraint firstItem="4zq-V6-bsL" firstAttribute="top" secondItem="DaH-qF-Fmi" secondAttribute="top" id="sGc-AW-9Rg"/>
                 </constraints>
             </view>
@@ -212,7 +222,7 @@
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <subviews>
                                 <button identifier="shellToolbarViewReload" toolTip="Reload" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="IOC-Z6-Gwh">
-                                    <rect key="frame" x="0.0" y="0.0" width="36" height="27"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="36" height="25"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                     <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="NSRefreshTemplate" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="Uj2-Ew-Zfm">
                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -223,7 +233,7 @@
                                     </connections>
                                 </button>
                                 <button identifier="shellToolbarViewStop" hidden="YES" toolTip="Stop" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="aRI-mX-sS7">
-                                    <rect key="frame" x="0.0" y="0.0" width="36" height="27"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="36" height="25"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                     <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="NSStopProgressTemplate" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="dYd-5s-HSz">
                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>

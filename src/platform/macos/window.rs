@@ -19,7 +19,39 @@ use state::WindowState;
 use super::get_state;
 use super::logs::ShellLog;
 
+#[link(name = "KPCTabsControl", kind = "framework")]
+extern {
+    // pub static ChromeStyle: id;
+}
+
 pub fn register() {
+
+    /* Tab datasource */ {
+        let superclass = Class::get("NSObject").unwrap();
+        let mut class = ClassDecl::new("TabsDataSource", superclass).unwrap();
+
+        extern fn number_of_tabs(this: &Object, _sel: Sel, sender: id) -> NSInteger {
+            10
+        }
+
+        extern fn item_at_index(this: &Object, _sel: Sel, sender: id, idx: NSInteger) -> id {
+            unsafe {
+                NSString::alloc(nil).init_str("HI")
+            }
+        }
+
+        extern fn title_for_item(this: &Object, _sel: Sel, sender: id, item: id) -> id {
+            item
+        }
+
+        unsafe {
+            class.add_method(sel!(tabsControlNumberOfTabs:), number_of_tabs as extern fn(&Object, Sel, id) -> NSInteger);
+            class.add_method(sel!(tabsControl:itemAtIndex:), item_at_index as extern fn(&Object, Sel, id, NSInteger) -> id);
+            class.add_method(sel!(tabsControl:titleForItem:), title_for_item as extern fn(&Object, Sel, id, id) -> id);
+        }
+
+        class.register();
+    }
 
     /* NSWindow subclass */ {
 
@@ -275,6 +307,14 @@ impl Window {
 
             nswindow.setTitleVisibility_(NSWindowTitleVisibility::NSWindowTitleHidden);
             nswindow.setAcceptsMouseMovedEvents_(YES);
+
+            let tabs = utils::get_view_by_id(nswindow, "shellTabs").unwrap();
+            // let style: id = msg_send![, new];
+            // msg_send![tabs, setStyle:class("SafariStyle")];
+            let ds: id = msg_send![class("TabsDataSource"), alloc];
+            msg_send![tabs, setDataSource:ds];
+            msg_send![tabs, reloadTabs];
+
 
             // Necessary to prevent the log view to wrap text
             let textview = utils::get_view_by_id(nswindow, "shellViewLogsTextView").unwrap();

@@ -1,0 +1,3 @@
+carthage update
+
+install_name_tool -add_rpath /usr/local/Cellar/carthage/0.23.0/Frameworks/CarthageKit.framework/Versions/A/Frameworks/ -add_rpath /Users/paul/git/servoshell/Carthage/Build/Mac/ ./target/debug/servoshell
