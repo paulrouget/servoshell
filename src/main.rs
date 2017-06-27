@@ -218,6 +218,7 @@ fn main() {
                             WindowCommand::NewTab => {
                                 let browser = servo.create_browser("about:blank");
                                 servo.select_browser(browser.id);
+                                servo.update_geometry(view.get_geometry());
                                 get_state().window_states[0].current_browser_index = Some(idx + 1);
                                 get_state().window_states[0].browser_states.push(browser);
                                 ui_invalidated = true;

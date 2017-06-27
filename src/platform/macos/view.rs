@@ -22,6 +22,7 @@ use self::core_foundation::bundle::{CFBundleGetBundleWithIdentifier, CFBundleGet
 use std::os::raw::c_void;
 use std::str::FromStr;
 use view::{ElementState, MouseButton, ViewEvent, TouchPhase, MouseScrollDelta};
+use super::get_state;
 use super::utils;
 
 pub fn register() {
@@ -180,8 +181,15 @@ impl View {
             let content_frame: NSRect = msg_send![content_view, frame];
             let visible_rect: NSRect = msg_send![nswindow, contentLayoutRect];
 
+            let tabheight = if get_state().window_states[0].browser_states.len() > 1 {
+                // FIXME
+                35.0
+            } else {
+                0.0
+            };
+
             let bottom = 0;
-            let top = (content_frame.size.height - visible_rect.size.height) as u32;
+            let top = (content_frame.size.height - visible_rect.size.height + tabheight) as u32;
             let left = 0;
             let right = 0;
 
