@@ -286,7 +286,7 @@ impl WindowMethods for ServoCallbacks {
         false
     }
 
-    fn allow_navigation(&self, id: BrowserId, url: ServoUrl, chan: IpcSender<bool>) {
+    fn allow_navigation(&self, _id: BrowserId, url: ServoUrl, chan: IpcSender<bool>) {
         let allow = match self.domain_limit.borrow().as_ref() {
             None => true,
             Some(domain) => domain == url.domain().unwrap()
@@ -337,7 +337,7 @@ impl WindowMethods for ServoCallbacks {
         TypedSize2D::new(width as f32, height as f32)
     }
 
-    fn client_window(&self, id: BrowserId) -> (Size2D<u32>, Point2D<i32>) {
+    fn client_window(&self, _id: BrowserId) -> (Size2D<u32>, Point2D<i32>) {
         let (width, height) = self.geometry.get().view_size;
         let (x, y) = self.geometry.get().position;
         (Size2D::new(width, height), Point2D::new(x as i32, y as i32))
@@ -345,17 +345,17 @@ impl WindowMethods for ServoCallbacks {
 
     // Events
 
-    fn set_inner_size(&self, id: BrowserId, size: Size2D<u32>) {
+    fn set_inner_size(&self, _id: BrowserId, size: Size2D<u32>) {
         self.event_queue
             .borrow_mut()
             .push(ServoEvent::SetWindowInnerSize(size.width as u32, size.height as u32));
     }
 
-    fn set_position(&self, id: BrowserId, point: Point2D<i32>) {
+    fn set_position(&self, _id: BrowserId, point: Point2D<i32>) {
         self.event_queue.borrow_mut().push(ServoEvent::SetWindowPosition(point.x, point.y));
     }
 
-    fn set_fullscreen_state(&self, id: BrowserId, state: bool) {
+    fn set_fullscreen_state(&self, _id: BrowserId, state: bool) {
         self.event_queue.borrow_mut().push(ServoEvent::SetFullScreenState(state))
     }
 
@@ -363,32 +363,32 @@ impl WindowMethods for ServoCallbacks {
         self.view.swap_buffers();
     }
 
-    fn set_page_title(&self, id: BrowserId, title: Option<String>) {
+    fn set_page_title(&self, _id: BrowserId, title: Option<String>) {
         self.event_queue.borrow_mut().push(ServoEvent::TitleChanged(title));
     }
 
-    fn status(&self, id: BrowserId, status: Option<String>) {
+    fn status(&self, _id: BrowserId, status: Option<String>) {
         self.event_queue.borrow_mut().push(ServoEvent::StatusChanged(status));
     }
 
-    fn load_start(&self, id: BrowserId) {
+    fn load_start(&self, _id: BrowserId) {
         self.event_queue.borrow_mut().push(ServoEvent::LoadStart);
     }
 
-    fn load_end(&self, id: BrowserId) {
+    fn load_end(&self, _id: BrowserId) {
         self.event_queue.borrow_mut().push(ServoEvent::LoadEnd);
     }
 
-    fn load_error(&self, id: BrowserId, _: NetError, url: String) {
+    fn load_error(&self, _id: BrowserId, _: NetError, url: String) {
         // FIXME: never called by servo
         self.event_queue.borrow_mut().push(ServoEvent::LoadError(url));
     }
 
-    fn head_parsed(&self, id: BrowserId) {
+    fn head_parsed(&self, _id: BrowserId) {
         self.event_queue.borrow_mut().push(ServoEvent::HeadParsed);
     }
 
-    fn history_changed(&self, id: BrowserId, entries: Vec<LoadData>, current: usize) {
+    fn history_changed(&self, _id: BrowserId, entries: Vec<LoadData>, current: usize) {
         self.event_queue.borrow_mut().push(ServoEvent::HistoryChanged(entries, current));
     }
 
@@ -396,11 +396,11 @@ impl WindowMethods for ServoCallbacks {
         self.event_queue.borrow_mut().push(ServoEvent::CursorChanged(cursor));
     }
 
-    fn set_favicon(&self, id: BrowserId, url: ServoUrl) {
+    fn set_favicon(&self, _id: BrowserId, url: ServoUrl) {
         self.event_queue.borrow_mut().push(ServoEvent::FaviconChanged(url));
     }
 
-    fn handle_key(&self, id: Option<BrowserId>, ch: Option<char>, key: Key, mods: constellation_msg::KeyModifiers) {
+    fn handle_key(&self, _id: Option<BrowserId>, ch: Option<char>, key: Key, mods: constellation_msg::KeyModifiers) {
         self.event_queue.borrow_mut().push(ServoEvent::Key(ch, key, mods));
     }
 }
