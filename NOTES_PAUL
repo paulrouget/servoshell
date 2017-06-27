@@ -1,0 +1,4 @@
+Used: https://github.com/dparnell/MMTabBarView
+install_name_tool -add_rpath /Users/paul/git/servoshell/macos/framework ./target/debug/servoshell
+
+/usr/bin/xcodebuild -target MMTabBarView -configuration Release

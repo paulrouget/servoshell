@@ -49,21 +49,24 @@ fn main() {
 
     let view = Rc::new(window.create_view().unwrap());
 
+    Servo::configure().unwrap();
+    let servo = {
+        let geometry = view.get_geometry();
+        let waker = window.create_event_loop_waker();
+        Servo::new(geometry, view.clone(), waker)
+    };
+
     // Skip first argument (executable), and find the first
     // argument that doesn't start with `-`
     let url = args().skip(1).find(|arg| {
         !arg.starts_with("-")
     }).unwrap_or("https://blog.servo.org/".to_owned());
 
-    Servo::configure().unwrap();
-    let servo = {
-        let geometry = view.get_geometry();
-        let waker = window.create_event_loop_waker();
-        Servo::new(geometry, view.clone(), waker, &url)
-    };
+    let browser = servo.create_browser(&url);
+    servo.select_browser(browser.id);
 
     get_state().window_states[0].current_browser_index = Some(0);
-    get_state().window_states[0].browser_states.push(Servo::get_init_state());
+    get_state().window_states[0].browser_states.push(browser);
 
     info!("Servo version: {}", servo.version());
 
@@ -135,19 +138,20 @@ fn main() {
                         // FIXME
                     }
                     WindowEvent::DoCommand(cmd) => {
-                        let ref mut state = get_state().window_states[0].browser_states[0];
+                        let idx = get_state().window_states[0].current_browser_index.unwrap();
+                        let ref mut state = get_state().window_states[0].browser_states[idx];
                         match cmd {
                             WindowCommand::Stop => {
                                 // FIXME
                             }
                             WindowCommand::Reload => {
-                                servo.reload();
+                                servo.reload(state.id);
                             }
                             WindowCommand::NavigateBack => {
-                                servo.go_back();
+                                servo.go_back(state.id);
                             }
                             WindowCommand::NavigateForward => {
-                                servo.go_forward();
+                                servo.go_forward(state.id);
                             }
                             WindowCommand::OpenLocation => {
                                 window.focus_urlbar();
@@ -192,7 +196,7 @@ fn main() {
                                 });
                                 match url {
                                     Ok(url) => {
-                                        servo.load_url(url)
+                                        servo.load_url(state.id, url)
                                     },
                                     Err(err) => warn!("Can't parse url: {}", err),
                                 }
@@ -211,6 +215,35 @@ fn main() {
                                     servo.limit_to_domain(None);
                                 }
                             },
+                            WindowCommand::NewTab => {
+                                let browser = servo.create_browser("about:blank");
+                                servo.select_browser(browser.id);
+                                get_state().window_states[0].current_browser_index = Some(idx + 1);
+                                get_state().window_states[0].browser_states.push(browser);
+                                ui_invalidated = true;
+                            },
+                            WindowCommand::PrevTab => {
+                                let new_idx = if idx == 0 {
+                                    get_state().window_states[0].browser_states.len() - 1
+                                } else {
+                                    idx - 1
+                                };
+                                get_state().window_states[0].current_browser_index = Some(new_idx);
+                                let id = get_state().window_states[0].browser_states[new_idx].id;
+                                servo.select_browser(id);
+                                ui_invalidated = true;
+                            },
+                            WindowCommand::NextTab => {
+                                let new_idx = if idx == get_state().window_states[0].browser_states.len() - 1 {
+                                    0
+                                } else {
+                                    idx + 1
+                                };
+                                get_state().window_states[0].current_browser_index = Some(new_idx);
+                                let id = get_state().window_states[0].browser_states[new_idx].id;
+                                servo.select_browser(id);
+                                ui_invalidated = true;
+                            },
                             WindowCommand::ToggleOptionFragmentBorders => { },
                             WindowCommand::ToggleOptionParallelDisplayListBuidling => { },
                             WindowCommand::ToggleOptionShowParallelLayout => { },
@@ -227,7 +260,8 @@ fn main() {
             }
 
             for event in view_events {
-                let ref mut state = get_state().window_states[0].browser_states[0];
+                let idx = get_state().window_states[0].current_browser_index.unwrap();
+                let ref mut state = get_state().window_states[0].browser_states[idx];
                 match event {
                     ViewEvent::GeometryDidChange => {
                         servo.update_geometry(view.get_geometry());
@@ -260,7 +294,6 @@ fn main() {
             }
 
             for event in servo_events {
-                let ref mut state = get_state().window_states[0].browser_states[0];
                 match event {
                     ServoEvent::SetWindowInnerSize(..) => {
                         // ignore
@@ -275,44 +308,62 @@ fn main() {
                             view.exit_fullscreen();
                         }
                     }
-                    ServoEvent::TitleChanged(title) => {
-                        window.set_title(&title.unwrap_or("No Title".to_owned()));
-
+                    ServoEvent::TitleChanged(id, title) => {
+                        match get_state().window_states[0].browser_states.iter_mut().find(|b| b.id == id) {
+                            Some(mut browser) => {
+                                browser.title = title;
+                                ui_invalidated = true;
+                            }
+                            None => { /*FIXME*/ }
+                        }
                     }
                     ServoEvent::UnhandledURL(url) => {
                         open::that(url.as_str()).ok();
 
                     }
                     ServoEvent::StatusChanged(status) => {
-                        // FIXME: why not use state?
                         window.set_status(status);
                     }
-                    ServoEvent::LoadStart => {
-                        state.is_loading = true;
-                        ui_invalidated = true;
+                    ServoEvent::LoadStart(id) => {
+                        match get_state().window_states[0].browser_states.iter_mut().find(|b| b.id == id) {
+                            Some(browser) => {
+                                browser.is_loading = true;
+                                ui_invalidated = true;
+                            }
+                            None => { /*FIXME*/ }
+                        }
                     }
-                    ServoEvent::LoadEnd => {
-                        state.is_loading = false;
-                        ui_invalidated = true;
+                    ServoEvent::LoadEnd(id) => {
+                        match get_state().window_states[0].browser_states.iter_mut().find(|b| b.id == id) {
+                            Some(browser) => {
+                                browser.is_loading = false;
+                                ui_invalidated = true;
+                            }
+                            None => { /*FIXME*/ }
+                        }
                     }
                     ServoEvent::LoadError(..) => {
                         // FIXME
                     }
-                    ServoEvent::HeadParsed => {
+                    ServoEvent::HeadParsed(..) => {
                         // FIXME
                     }
-                    ServoEvent::HistoryChanged(entries, current) => {
-                        let url = entries[current].url.to_string();
-                        window.set_url(&url);
-                        state.url = Some(url);
-                        state.can_go_back = current > 0;
-                        state.can_go_forward = current < entries.len() - 1;
-                        ui_invalidated = true;
+                    ServoEvent::HistoryChanged(id, entries, current) => {
+                        match get_state().window_states[0].browser_states.iter_mut().find(|b| b.id == id) {
+                            Some(browser) => {
+                                let url = entries[current].url.to_string();
+                                browser.url = Some(url);
+                                browser.can_go_back = current > 0;
+                                browser.can_go_forward = current < entries.len() - 1;
+                                ui_invalidated = true;
+                            }
+                            None => { /*FIXME*/ }
+                        }
                     }
                     ServoEvent::CursorChanged(cursor) => {
                         window.set_cursor(cursor);
                     }
-                    ServoEvent::FaviconChanged(..) => {
+                    ServoEvent::FaviconChanged(id, url) => {
                         // FIXME
                     }
                     ServoEvent::Key(..) => {

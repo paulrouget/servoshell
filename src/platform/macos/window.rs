@@ -19,6 +19,9 @@ use state::WindowState;
 use super::get_state;
 use super::logs::ShellLog;
 
+#[link(name = "MMTabBarView", kind = "framework")]
+extern { }
+
 pub fn register() {
 
     /* NSWindow subclass */ {
@@ -107,7 +110,8 @@ pub fn register() {
                     WindowCommand::ZoomIn
                 }
             } else if action == sel!(shellReloadStop:) {
-                if get_state().window_states[0].browser_states[0].is_loading {
+                let idx = get_state().window_states[0].current_browser_index.unwrap();
+                if get_state().window_states[0].browser_states[idx].is_loading {
                     WindowCommand::Stop
                 } else {
                     WindowCommand::Reload
@@ -115,6 +119,9 @@ pub fn register() {
             } else if action == sel!(shellStop:) { WindowCommand::Stop }
             else if action == sel!(shellReload:) { WindowCommand::Reload }
             else if action == sel!(shellOpenLocation:) { WindowCommand::OpenLocation }
+            else if action == sel!(shellNewTab:) { WindowCommand::NewTab }
+            else if action == sel!(shellNextTab:) { WindowCommand::NextTab}
+            else if action == sel!(shellPrevTab:) { WindowCommand::PrevTab}
             else if action == sel!(shellZoomIn:) { WindowCommand::ZoomIn }
             else if action == sel!(shellZoomOut:) { WindowCommand::ZoomOut }
             else if action == sel!(shellZoomToActualSize:) { WindowCommand::ZoomToActualSize }
@@ -145,12 +152,19 @@ pub fn register() {
         }
 
         extern fn validate_action(_this: &Object, _sel: Sel, action: Sel) -> BOOL {
-            let ref state = get_state().window_states[0].browser_states[0]; // FIXME
+            let idx = get_state().window_states[0].current_browser_index.unwrap();
+            let ref state = get_state().window_states[0].browser_states[idx];
             let enabled = if action == sel!(shellStop:) {
                 state.is_loading
             } else if action == sel!(shellReload:) {
                 !state.is_loading
             } else if action == sel!(shellOpenLocation:) {
+                true
+            } else if action == sel!(shellNewTab:) {
+                true
+            } else if action == sel!(shellNextTab:) {
+                true
+            } else if action == sel!(shellPrevTab:) {
                 true
             } else if action == sel!(shellZoomIn:) {
                 true
@@ -177,7 +191,8 @@ pub fn register() {
         }
 
         extern fn get_state_for_action(_this: &Object, _sel: Sel, action: Sel) -> NSInteger {
-            let ref state = get_state().window_states[0].browser_states[0]; // FIXME
+            let idx = get_state().window_states[0].current_browser_index.unwrap();
+            let ref state = get_state().window_states[0].browser_states[idx];
             let on = if action == sel!(shellToggleOptionDarkTheme:) {
                 get_state().dark_theme
             } else if action == sel!(shellToggleOptionShowLogs:) {
@@ -224,6 +239,9 @@ pub fn register() {
             class.add_method(sel!(shellStop:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellReload:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellOpenLocation:), record_command as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellNewTab:), record_command as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellNextTab:), record_command as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellPrevTab:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellZoomIn:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellZoomOut:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellZoomToActualSize:), record_command as extern fn(&Object, Sel, id));
@@ -275,6 +293,23 @@ impl Window {
 
             nswindow.setTitleVisibility_(NSWindowTitleVisibility::NSWindowTitleHidden);
             nswindow.setAcceptsMouseMovedEvents_(YES);
+
+            let toolbar: id = msg_send![nswindow, toolbar];
+            msg_send![toolbar, setShowsBaselineSeparator:NO];
+
+            let tabbar = utils::get_view_by_id(nswindow, "tabbar").unwrap();
+            msg_send![tabbar, setStyleNamed:NSString::alloc(nil).init_str("Yosemite")];
+            msg_send![tabbar, setCanCloseOnlyTab:YES];
+            msg_send![tabbar, setDisableTabClose:NO];
+            msg_send![tabbar, setAllowsBackgroundTabClosing:YES];
+            msg_send![tabbar, setHideForSingleTab:YES];
+            msg_send![tabbar, setShowAddTabButton:YES];
+            msg_send![tabbar, setUseOverflowMenu:YES];
+            msg_send![tabbar, setSizeButtonsToFit:NO];
+            msg_send![tabbar, setButtonMinWidth:100];
+            msg_send![tabbar, setButtonOptimumWidth:200];
+            msg_send![tabbar, setButtonMaxWidth:300];
+            msg_send![tabbar, setAutomaticallyAnimates:YES];
 
             // Necessary to prevent the log view to wrap text
             let textview = utils::get_view_by_id(nswindow, "shellViewLogsTextView").unwrap();
@@ -372,6 +407,77 @@ impl Window {
         let visible = get_state().window_states[0].logs_visible;
         let hidden = if visible {NO} else {YES};
         unsafe {msg_send![logs, setHidden:hidden]};
+
+        // Update urlbar
+        let item = self.get_toolbar_item("urlbar").unwrap();
+        let idx = get_state().window_states[0].current_browser_index.unwrap();
+        // FIXME: alloc everytime is bad.
+        unsafe {
+            let view = msg_send![item, view];
+            let field = utils::get_view_by_id(view, "shellToolbarViewUrlbarTextfield").unwrap();
+            match get_state().window_states[0].browser_states[idx].url {
+                Some(ref url) => msg_send![field, setStringValue:NSString::alloc(nil).init_str(url)],
+                None => NSString::alloc(nil).init_str(""),
+            };
+        }
+
+        // Update tabbar
+        // Sorry for the basic stupid diff
+        let tabview = utils::get_view_by_id(self.nswindow, "tabview").unwrap();
+        let visual_count: usize = unsafe {
+            msg_send![tabview, numberOfTabViewItems]
+        };
+        let state_count = get_state().window_states[0].browser_states.len();
+        if state_count != visual_count {
+            if state_count == visual_count + 1 {
+                // Need to add a tab
+                // Always append at the end
+                let id = get_state().window_states[0].browser_states[state_count - 1].id;
+                // add item
+                unsafe {
+                    let item: id = msg_send![class("NSTabViewItem"), alloc];
+                    let identifier = NSString::alloc(nil).init_str(format!("{}", id).as_str());
+                    let item: id = msg_send![item, initWithIdentifier:identifier];
+                    msg_send![tabview, addTabViewItem:item];
+                }
+            } else if state_count == visual_count - 1 {
+                println!("Remove item");
+                // for i in 0..visual_count {
+                //     if i == visual_count - 1 {
+                //         // remove it
+                //     } else {
+                //         let id = get_state().window_states[0].browser_states[i].id;
+                //         unsafe {
+                //             let item: id = msg_send![tabview, tabViewItemAtIndex:i];
+                //             let view_id: id = msg_send![item, identifier];
+                //             // if item.id != id {
+                //             //     // remove it
+                //             //     break;
+                //             // }
+                //         }
+                //     }
+                // }
+            } else {
+                // That should never happen
+                println!("Inconsistent tabs");
+            }
+        }
+
+        unsafe {
+            for i in 0..state_count {
+                let item: id = msg_send![tabview, tabViewItemAtIndex:i];
+                let nsstring = match get_state().window_states[0].browser_states[i].title {
+                    Some(ref title) => NSString::alloc(nil).init_str(title),
+                    None => NSString::alloc(nil).init_str("No Title"),
+                };
+                msg_send![item, setLabel:nsstring];
+            }
+
+            msg_send![tabview, selectTabViewItemAtIndex:idx];
+        }
+
+
+
     }
 
     pub fn get_init_state() -> WindowState {
@@ -424,17 +530,6 @@ impl Window {
     pub fn get_events(&self) -> Vec<WindowEvent> {
         let nsobject = unsafe { &*self.nswindow};
         utils::get_event_queue(nsobject).drain(..).collect()
-    }
-
-    pub fn set_url(&self, url: &str) {
-        // FIXME: can't get NSWindow::representedURL to work
-        let item = self.get_toolbar_item("urlbar").unwrap();
-        unsafe {
-            let view = msg_send![item, view];
-            let field = utils::get_view_by_id(view, "shellToolbarViewUrlbarTextfield").unwrap();
-            let string = NSString::alloc(nil).init_str(url);
-            msg_send![field, setStringValue:string];
-        }
     }
 
     pub fn set_status(&self, status: Option<String>) {

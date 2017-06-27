@@ -16,7 +16,8 @@ objc-foundation = "*"
 core-foundation = "0.2.3"
 core-graphics = "0.3"
 cocoa = "^0.8.1"
-libservo = { git = "https://github.com/servo/servo", rev = "93a513c06f" }
+libservo = { git = "https://github.com/servo/servo" }
 
 [replace]
+# This needs to be paulrouget's servo fork, branch api_next_next
 "https://github.com/servo/servo#libservo:0.0.1" = { path = '../servo/components/servo' }

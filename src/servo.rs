@@ -19,8 +19,7 @@ use gleam::gl;
 use state::BrowserState;
 use platform;
 
-use self::servo::BrowserId;
-
+pub use self::servo::BrowserId;
 pub use self::servo::compositing::compositor_thread::EventLoopWaker;
 pub use self::servo::style_traits::cursor::Cursor as ServoCursor;
 pub use self::servo::servo_url::ServoUrl;
@@ -35,16 +34,16 @@ pub enum ServoEvent {
     SetWindowInnerSize(u32, u32),
     SetWindowPosition(i32, i32),
     SetFullScreenState(bool),
-    TitleChanged(Option<String>),
+    TitleChanged(BrowserId, Option<String>),
     UnhandledURL(ServoUrl),
     StatusChanged(Option<String>),
-    LoadStart,
-    LoadEnd,
+    LoadStart(BrowserId),
+    LoadEnd(BrowserId),
     LoadError(String),
-    HeadParsed,
-    HistoryChanged(Vec<LoadData>, usize),
+    HeadParsed(BrowserId),
+    HistoryChanged(BrowserId, Vec<LoadData>, usize),
     CursorChanged(ServoCursor),
-    FaviconChanged(ServoUrl),
+    FaviconChanged(BrowserId, ServoUrl),
     Key(Option<char>, Key, constellation_msg::KeyModifiers),
 }
 
@@ -53,7 +52,6 @@ pub struct Servo {
     events_for_servo: RefCell<Vec<WindowEvent>>,
     servo: RefCell<servo::Servo<ServoCallbacks>>,
     callbacks: Rc<ServoCallbacks>,
-    browser: BrowserId,
 }
 
 impl Servo {
@@ -76,7 +74,7 @@ impl Servo {
         servo_version()
     }
 
-    pub fn new(geometry: DrawableGeometry, view: Rc<view::View>, waker: Box<EventLoopWaker>, url: &str) -> Servo {
+    pub fn new(geometry: DrawableGeometry, view: Rc<view::View>, waker: Box<EventLoopWaker>) -> Servo {
         // FIXME: url not used here
 
         let callbacks = Rc::new(ServoCallbacks {
@@ -89,29 +87,27 @@ impl Servo {
 
         let mut servo = servo::Servo::new(callbacks.clone());
 
-        let url = match ServoUrl::parse(url) {
-            Ok(url) => url,
-            Err(_) => panic!("Can't parse initial URL: {}", url)
-        };
-        let browser = servo.create_browser(url).unwrap();
-
-        servo.handle_events(vec![WindowEvent::InitializeCompositing]);
-
         Servo {
             events_for_servo: RefCell::new(Vec::new()),
             servo: RefCell::new(servo),
             callbacks: callbacks,
-            browser: browser,
         }
     }
 
-    pub fn get_init_state() -> BrowserState {
+    pub fn create_browser(&self, url: &str) -> BrowserState {
+
+        // FIXME
+        let url = ServoUrl::parse(url).unwrap();
+        let id = self.servo.borrow().create_browser(url).unwrap();
+
         BrowserState {
+            id: id,
             last_mouse_point: (0, 0),
             last_mouse_down_point: (0, 0),
             last_mouse_down_button: None,
             zoom: 1.0,
             url: None,
+            title: None,
             user_input: None,
             can_go_back: false,
             can_go_forward: false,
@@ -126,27 +122,31 @@ impl Servo {
         }
     }
 
+    pub fn select_browser(&self, id: BrowserId) {
+        self.servo.borrow().select_browser(id);
+    }
+
     pub fn get_events(&self) -> Vec<ServoEvent> {
         self.callbacks.get_events()
     }
 
-    pub fn reload(&self) {
-        let event = WindowEvent::Reload(self.browser);
+    pub fn reload(&self, id: BrowserId) {
+        let event = WindowEvent::Reload(id);
         self.events_for_servo.borrow_mut().push(event);
     }
 
-    pub fn go_back(&self) {
-        let event = WindowEvent::Navigation(self.browser, WindowNavigateMsg::Back);
+    pub fn go_back(&self, id: BrowserId) {
+        let event = WindowEvent::Navigation(id, WindowNavigateMsg::Back);
         self.events_for_servo.borrow_mut().push(event);
     }
 
-    pub fn go_forward(&self) {
-        let event = WindowEvent::Navigation(self.browser, WindowNavigateMsg::Forward);
+    pub fn go_forward(&self, id: BrowserId) {
+        let event = WindowEvent::Navigation(id, WindowNavigateMsg::Forward);
         self.events_for_servo.borrow_mut().push(event);
     }
 
-    pub fn load_url(&self, url: ServoUrl) {
-        let event = WindowEvent::LoadUrl(self.browser, url);
+    pub fn load_url(&self, id: BrowserId, url: ServoUrl) {
+        let event = WindowEvent::LoadUrl(id, url);
         self.events_for_servo.borrow_mut().push(event);
     }
 
@@ -363,41 +363,40 @@ impl WindowMethods for ServoCallbacks {
         self.view.swap_buffers();
     }
 
-    fn set_page_title(&self, _id: BrowserId, title: Option<String>) {
-        self.event_queue.borrow_mut().push(ServoEvent::TitleChanged(title));
+    fn set_page_title(&self, id: BrowserId, title: Option<String>) {
+        self.event_queue.borrow_mut().push(ServoEvent::TitleChanged(id, title));
     }
 
     fn status(&self, _id: BrowserId, status: Option<String>) {
         self.event_queue.borrow_mut().push(ServoEvent::StatusChanged(status));
     }
 
-    fn load_start(&self, _id: BrowserId) {
-        self.event_queue.borrow_mut().push(ServoEvent::LoadStart);
+    fn load_start(&self, id: BrowserId) {
+        self.event_queue.borrow_mut().push(ServoEvent::LoadStart(id));
     }
 
-    fn load_end(&self, _id: BrowserId) {
-        self.event_queue.borrow_mut().push(ServoEvent::LoadEnd);
+    fn load_end(&self, id: BrowserId) {
+        self.event_queue.borrow_mut().push(ServoEvent::LoadEnd(id));
     }
 
     fn load_error(&self, _id: BrowserId, _: NetError, url: String) {
         // FIXME: never called by servo
-        self.event_queue.borrow_mut().push(ServoEvent::LoadError(url));
     }
 
-    fn head_parsed(&self, _id: BrowserId) {
-        self.event_queue.borrow_mut().push(ServoEvent::HeadParsed);
+    fn head_parsed(&self, id: BrowserId) {
+        self.event_queue.borrow_mut().push(ServoEvent::HeadParsed(id));
     }
 
-    fn history_changed(&self, _id: BrowserId, entries: Vec<LoadData>, current: usize) {
-        self.event_queue.borrow_mut().push(ServoEvent::HistoryChanged(entries, current));
+    fn history_changed(&self, id: BrowserId, entries: Vec<LoadData>, current: usize) {
+        self.event_queue.borrow_mut().push(ServoEvent::HistoryChanged(id, entries, current));
     }
 
     fn set_cursor(&self, cursor: ServoCursor) {
         self.event_queue.borrow_mut().push(ServoEvent::CursorChanged(cursor));
     }
 
-    fn set_favicon(&self, _id: BrowserId, url: ServoUrl) {
-        self.event_queue.borrow_mut().push(ServoEvent::FaviconChanged(url));
+    fn set_favicon(&self, id: BrowserId, url: ServoUrl) {
+        self.event_queue.borrow_mut().push(ServoEvent::FaviconChanged(id, url));
     }
 
     fn handle_key(&self, _id: Option<BrowserId>, ch: Option<char>, key: Key, mods: constellation_msg::KeyModifiers) {

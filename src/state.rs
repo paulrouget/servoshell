@@ -3,26 +3,30 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use view;
+use servo::BrowserId;
 
 pub struct AppState {
-    pub current_window_index: Option<u32>,
+    pub current_window_index: Option<usize>,
     pub window_states: Vec<WindowState>,
     pub dark_theme: bool,
 }
 
 pub struct WindowState {
-    pub current_browser_index: Option<u32>,
+    pub current_browser_index: Option<usize>,
     pub browser_states: Vec<BrowserState>,
     pub sidebar_is_open: bool,
     pub logs_visible: bool,
 }
 
 pub struct BrowserState {
+    pub id: BrowserId,
     pub last_mouse_point: (i32, i32),
     pub last_mouse_down_point: (i32, i32),
     pub last_mouse_down_button: Option<view::MouseButton>,
     pub zoom: f32,
     pub url: Option<String>,
+    pub title: Option<String>,
+    // FIXME: pub favicon: Option<>,
     pub user_input: Option<String>,
     pub can_go_back: bool,
     pub can_go_forward: bool,
