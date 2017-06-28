@@ -5,10 +5,6 @@ The code compiles and run, but it's messy and memory management is non existent.
 
 Create the dot-app with: [`cargo bundle`](https://github.com/burtonageo/cargo-bundle).
 
-## Download
-
-[v0.0.2 for macOS](https://github.com/paulrouget/servoshell/releases) (Windows and Linux not supported yet).
-
 ## Screenshots
 
 ![regular](https://github.com/paulrouget/servoshell/blob/master/screenshots/regular.png?raw=true "regular")
