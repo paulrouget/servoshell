@@ -11,13 +11,14 @@ gleam = "0.4"
 cgl = "0.2"
 open = "1.1.1"
 log = "0.3"
-objc = "0.2"
+objc = "*"
 objc-foundation = "*"
-core-foundation = "0.2.3"
-core-graphics = "0.3"
-cocoa = "^0.8.1"
-libservo = { git = "https://github.com/servo/servo" }
+core-foundation = "*"
+core-graphics = "*"
+cocoa = "^0.9.2"
+# libservo = { git = "https://github.com/servo/servo" }
+libservo = { path = '../servo/components/servo' }
 
-[replace]
-# This needs to be paulrouget's servo fork, branch api_next_next
-"https://github.com/servo/servo#libservo:0.0.1" = { path = '../servo/components/servo' }
+# [replace]
+# # This needs to be paulrouget's servo fork, branch attach-pipeline-2
+# "https://github.com/servo/servo#libservo:0.0.1" = { path = '../servo/components/servo' }

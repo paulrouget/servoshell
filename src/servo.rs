@@ -5,16 +5,16 @@
 extern crate servo;
 
 use self::servo::config::servo_version;
-use self::servo::ipc_channel::ipc::IpcSender;
 use self::servo::servo_config::opts;
 use self::servo::servo_config::resource_files::set_resources_path;
-use self::servo::compositing::windowing::{MouseWindowEvent, WindowMethods, WindowEvent, WindowNavigateMsg};
-use self::servo::msg::constellation_msg::{self, Key};
+use self::servo::compositing::windowing::{MouseWindowEvent, WindowMethods, WindowEvent};
+use self::servo::msg::constellation_msg::{self, Key, TraversalDirection};
 use self::servo::servo_geometry::DeviceIndependentPixel;
 use self::servo::euclid::{Point2D, ScaleFactor, Size2D, TypedPoint2D, TypedRect, TypedSize2D, TypedVector2D};
+use self::servo::ipc_channel::ipc;
 use self::servo::script_traits::{DevicePixel, LoadData, MouseButton, TouchEventType};
 use self::servo::net_traits::net_error_list::NetError;
-use self::servo::webrender_traits;
+use self::servo::webrender_api;
 use gleam::gl;
 use state::BrowserState;
 use platform;
@@ -98,7 +98,11 @@ impl Servo {
 
         // FIXME
         let url = ServoUrl::parse(url).unwrap();
-        let id = self.servo.borrow().create_browser(url).unwrap();
+
+        let (sender, receiver) = ipc::channel().unwrap();
+        self.servo.borrow_mut().handle_events(vec![WindowEvent::NewBrowser(url, sender)]);
+        let id = receiver.recv().unwrap();
+        self.select_browser(id);
 
         BrowserState {
             id: id,
@@ -123,7 +127,7 @@ impl Servo {
     }
 
     pub fn select_browser(&self, id: BrowserId) {
-        self.servo.borrow().select_browser(id);
+        self.servo.borrow_mut().handle_events(vec![WindowEvent::SelectBrowser(id)]);
     }
 
     pub fn get_events(&self) -> Vec<ServoEvent> {
@@ -136,12 +140,12 @@ impl Servo {
     }
 
     pub fn go_back(&self, id: BrowserId) {
-        let event = WindowEvent::Navigation(id, WindowNavigateMsg::Back);
+        let event = WindowEvent::Navigation(id, TraversalDirection::Back(1));
         self.events_for_servo.borrow_mut().push(event);
     }
 
     pub fn go_forward(&self, id: BrowserId) {
-        let event = WindowEvent::Navigation(id, WindowNavigateMsg::Forward);
+        let event = WindowEvent::Navigation(id, TraversalDirection::Forward(1));
         self.events_for_servo.borrow_mut().push(event);
     }
 
@@ -170,7 +174,7 @@ impl Servo {
         let (x, y) = self.substract_margins(x, y);
 
         let delta = TypedVector2D::new(dx, dy);
-        let scroll_location = webrender_traits::ScrollLocation::Delta(delta);
+        let scroll_location = webrender_api::ScrollLocation::Delta(delta);
         let phase = match phase {
             view::TouchPhase::Started => TouchEventType::Down,
             view::TouchPhase::Moved => TouchEventType::Move,
@@ -244,7 +248,7 @@ impl Servo {
     }
 
     pub fn set_webrender_profiler_enabled(&self, enabled: bool) {
-        self.servo.borrow_mut().set_webrender_profiler_enabled(enabled);
+        // FIXME
     }
 
     pub fn sync(&self, force: bool) {
@@ -286,15 +290,8 @@ impl WindowMethods for ServoCallbacks {
         false
     }
 
-    fn allow_navigation(&self, _id: BrowserId, url: ServoUrl, chan: IpcSender<bool>) {
-        let allow = match self.domain_limit.borrow().as_ref() {
-            None => true,
-            Some(domain) => domain == url.domain().unwrap()
-        };
-        chan.send(allow);
-        if !allow {
-            self.event_queue.borrow_mut().push(ServoEvent::UnhandledURL(url));
-        }
+    fn allow_navigation(&self, _id: BrowserId, url: ServoUrl) -> bool {
+        true
     }
 
     fn create_event_loop_waker(&self) -> Box<EventLoopWaker> {
