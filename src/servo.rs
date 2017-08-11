@@ -12,7 +12,8 @@ use self::servo::msg::constellation_msg::{self, Key, TraversalDirection};
 use self::servo::servo_geometry::DeviceIndependentPixel;
 use self::servo::euclid::{Point2D, ScaleFactor, Size2D, TypedPoint2D, TypedRect, TypedSize2D, TypedVector2D};
 use self::servo::ipc_channel::ipc;
-use self::servo::script_traits::{DevicePixel, LoadData, MouseButton, TouchEventType};
+use self::servo::script_traits::{LoadData, MouseButton, TouchEventType};
+use self::servo::style_traits::DevicePixel;
 use self::servo::net_traits::net_error_list::NetError;
 use self::servo::webrender_api;
 use gleam::gl;
@@ -290,8 +291,8 @@ impl WindowMethods for ServoCallbacks {
         false
     }
 
-    fn allow_navigation(&self, _id: BrowserId, url: ServoUrl) -> bool {
-        true
+    fn allow_navigation(&self, _id: BrowserId, url: ServoUrl, chan: ipc::IpcSender<bool>) {
+        chan.send(true).ok();
     }
 
     fn create_event_loop_waker(&self) -> Box<EventLoopWaker> {
