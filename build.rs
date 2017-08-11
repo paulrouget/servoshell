@@ -7,22 +7,37 @@ use std::path::Path;
 use std::process::Command;
 
 fn main() {
+    build_mmtabbarview();
+    build_nibs();
+}
+
+fn build_mmtabbarview() {
+    let src_dir = Path::new("macos/MMTabBarView/MMTabBarView/");
+    Command::new("xcodebuild")
+        .args(&["-target", "MMTabBarView"])
+        .args(&["-configuration", "Reload"])
+        .current_dir(&src_dir)
+        .status()
+        .ok()
+        .expect("xcodebuild failed");
+    println!("cargo:rustc-link-search=framework=macos/MMTabBarView/MMTabBarView/build/Release/");
+}
+
+fn build_nibs() {
+    fn ibtool(src: &str, out_dir: &Path) {
+        let out = out_dir.to_str().unwrap();
+        let filename = Path::new(src).file_name().unwrap();
+        let out_file = filename.to_str().unwrap().replace("xib", "nib");
+        Command::new("ibtool")
+            .arg(src)
+            .arg("--compile")
+            .arg(&format!("{}/{}", out, out_file))
+            .status()
+            .ok()
+            .expect("ibtool failed");
+    }
     let nibs_dir = Path::new("nibs");
     fs::create_dir_all(&nibs_dir).unwrap();
     ibtool("macos/xib/App.xib", nibs_dir);
     ibtool("macos/xib/Window.xib", nibs_dir);
-    println!("cargo:rustc-link-search=framework=macos/framework/");
-}
-
-fn ibtool(src: &str, out_dir: &Path) {
-    let out = out_dir.to_str().unwrap();
-    let filename = Path::new(src).file_name().unwrap();
-    let out_file = filename.to_str().unwrap().replace("xib", "nib");
-    Command::new("ibtool")
-        .arg(src)
-        .arg("--compile")
-        .arg(&format!("{}/{}", out, out_file))
-        .status()
-        .ok()
-        .expect("ibtool failed");
 }
