@@ -3,12 +3,6 @@
 This is a sandbox project. Prototyping and experimenting with embedding Servo.
 The code compiles and run, but it's messy and memory management is non existent.
 
-Create the dot-app with: [`cargo bundle`](https://github.com/burtonageo/cargo-bundle).
-
-## Download
-
-[v0.0.2 for macOS](https://github.com/paulrouget/servoshell/releases) (Windows and Linux not supported yet).
-
 ## Screenshots
 
 ![tabs](https://github.com/paulrouget/servoshell/blob/master/screenshots/tabs.png?raw=true "regular")
@@ -16,3 +10,10 @@ Create the dot-app with: [`cargo bundle`](https://github.com/burtonageo/cargo-bu
 ![dark theme](https://github.com/paulrouget/servoshell/blob/master/screenshots/dark-theme.png?raw=true "dark theme")
 ![options](https://github.com/paulrouget/servoshell/blob/master/screenshots/options.png?raw=true "options")
 ![debug](https://github.com/paulrouget/servoshell/blob/master/screenshots/debug.png?raw=true "debug")
+
+## How to update Servo
+
+1. change `rev` in `Cargo.toml`
+2. update `rust-toolchain`
+3. copy servo/Cargo.lock to servoshell/Cargo.lock
+4. copy servo/resources to servoshell/servo_resources
