@@ -15,9 +15,8 @@ fn build_mmtabbarview() {
     Command::new("xcodebuild")
         .args(&["-project", "./macos/MMTabBarView/MMTabBarView/MMTabBarView.xcodeproj"])
         .args(&["-configuration", "Release"])
-        .args(&["CONFIGURATION_BUILD_DIR=../../../target/MMTabBarView/"])
+        .args(&["SYMROOT=../../../target/MMTabBarView/"])
         .status()
-        .ok()
         .expect("xcodebuild failed");
     println!("cargo:rustc-link-search=framework=target/MMTabBarView");
 }
