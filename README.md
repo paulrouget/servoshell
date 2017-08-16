@@ -11,6 +11,7 @@ Create the dot-app with: [`cargo bundle`](https://github.com/burtonageo/cargo-bu
 
 ## Screenshots
 
+![tabs](https://github.com/paulrouget/servoshell/blob/master/screenshots/tabs.png?raw=true "regular")
 ![regular](https://github.com/paulrouget/servoshell/blob/master/screenshots/regular.png?raw=true "regular")
 ![dark theme](https://github.com/paulrouget/servoshell/blob/master/screenshots/dark-theme.png?raw=true "dark theme")
 ![options](https://github.com/paulrouget/servoshell/blob/master/screenshots/options.png?raw=true "options")
