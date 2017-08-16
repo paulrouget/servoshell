@@ -16,9 +16,4 @@ objc-foundation = "*"
 core-foundation = "*"
 core-graphics = "*"
 cocoa = "^0.9.2"
-# libservo = { git = "https://github.com/servo/servo" }
-libservo = { path = '../servo/components/servo' }
-
-# [replace]
-# # This needs to be paulrouget's servo fork, branch attach-pipeline-2
-# "https://github.com/servo/servo#libservo:0.0.1" = { path = '../servo/components/servo' }
+libservo = { git = "https://github.com/servo/servo", rev = "dc654c9" }
