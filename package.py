@@ -85,9 +85,5 @@ def package(target):
 
 if len(sys.argv) > 1 and sys.argv[1] == "--release":
     package('release')
-elif len(sys.argv) > 1 and sys.argv[1] == "--debug":
-    package('debug')
 else:
-    print 'Use --debug or --release argument'
-    sys.exit(1)
-
+    package('debug')
