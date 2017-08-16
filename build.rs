@@ -18,7 +18,7 @@ fn build_mmtabbarview() {
         .args(&["SYMROOT=../../../target/MMTabBarView/"])
         .status()
         .expect("xcodebuild failed");
-    println!("cargo:rustc-link-search=framework=target/MMTabBarView");
+    println!("cargo:rustc-link-search=framework=target/MMTabBarView/Release/");
 }
 
 fn build_nibs() {

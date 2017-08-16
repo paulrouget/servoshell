@@ -20,7 +20,7 @@ use super::get_state;
 use super::logs::ShellLog;
 
 #[link(name = "MMTabBarView", kind = "framework")]
-#[link_args = "-rpath target/MMTabBarView/ -rpath @executable_path/../Frameworks/"]
+#[link_args = "-rpath target/MMTabBarView/Release/ -rpath @executable_path/../Frameworks/"]
 extern { }
 
 pub fn register() {
