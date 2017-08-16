@@ -12,15 +12,14 @@ fn main() {
 }
 
 fn build_mmtabbarview() {
-    let src_dir = Path::new("macos/MMTabBarView/MMTabBarView/");
     Command::new("xcodebuild")
-        .args(&["-target", "MMTabBarView"])
-        .args(&["-configuration", "Reload"])
-        .current_dir(&src_dir)
+        .args(&["-project", "./macos/MMTabBarView/MMTabBarView/MMTabBarView.xcodeproj"])
+        .args(&["-configuration", "Release"])
+        .args(&["CONFIGURATION_BUILD_DIR=../../../target/MMTabBarView/"])
         .status()
         .ok()
         .expect("xcodebuild failed");
-    println!("cargo:rustc-link-search=framework=macos/MMTabBarView/MMTabBarView/build/Release/");
+    println!("cargo:rustc-link-search=framework=target/MMTabBarView");
 }
 
 fn build_nibs() {
