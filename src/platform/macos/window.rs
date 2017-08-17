@@ -584,6 +584,7 @@ impl Window {
     }
 
     pub fn set_title(&self, title: &str) {
+        // FIXME: never called
         unsafe {
             let title = NSString::alloc(nil).init_str(title);
             msg_send![self.nswindow, setTitle:title]

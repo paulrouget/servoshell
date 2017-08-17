@@ -312,16 +312,12 @@ fn main() {
                     }
                     ServoEvent::TitleChanged(id, title) => {
                         match get_state().window_states[0].browser_states.iter_mut().find(|b| b.id == id) {
-                            Some(mut browser) => {
+                            Some(browser) => {
                                 browser.title = title;
                                 ui_invalidated = true;
                             }
                             None => { /*FIXME*/ }
                         }
-                    }
-                    ServoEvent::UnhandledURL(url) => {
-                        open::that(url.as_str()).ok();
-
                     }
                     ServoEvent::StatusChanged(status) => {
                         window.set_status(status);
@@ -344,9 +340,6 @@ fn main() {
                             None => { /*FIXME*/ }
                         }
                     }
-                    ServoEvent::LoadError(..) => {
-                        // FIXME
-                    }
                     ServoEvent::HeadParsed(..) => {
                         // FIXME
                     }
@@ -365,7 +358,7 @@ fn main() {
                     ServoEvent::CursorChanged(cursor) => {
                         window.set_cursor(cursor);
                     }
-                    ServoEvent::FaviconChanged(id, url) => {
+                    ServoEvent::FaviconChanged(..) => {
                         // FIXME
                     }
                     ServoEvent::Key(..) => {

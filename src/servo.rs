@@ -36,11 +36,9 @@ pub enum ServoEvent {
     SetWindowPosition(i32, i32),
     SetFullScreenState(bool),
     TitleChanged(BrowserId, Option<String>),
-    UnhandledURL(ServoUrl),
     StatusChanged(Option<String>),
     LoadStart(BrowserId),
     LoadEnd(BrowserId),
-    LoadError(String),
     HeadParsed(BrowserId),
     HistoryChanged(BrowserId, Vec<LoadData>, usize),
     CursorChanged(ServoCursor),
@@ -86,7 +84,7 @@ impl Servo {
             view: view.clone(),
         });
 
-        let mut servo = servo::Servo::new(callbacks.clone());
+        let servo = servo::Servo::new(callbacks.clone());
 
         Servo {
             events_for_servo: RefCell::new(Vec::new()),
@@ -248,7 +246,7 @@ impl Servo {
         *self.callbacks.domain_limit.borrow_mut() = domain;
     }
 
-    pub fn set_webrender_profiler_enabled(&self, enabled: bool) {
+    pub fn set_webrender_profiler_enabled(&self, _enabled: bool) {
         // FIXME
     }
 
@@ -291,7 +289,7 @@ impl WindowMethods for ServoCallbacks {
         false
     }
 
-    fn allow_navigation(&self, _id: BrowserId, url: ServoUrl, chan: ipc::IpcSender<bool>) {
+    fn allow_navigation(&self, _id: BrowserId, _url: ServoUrl, chan: ipc::IpcSender<bool>) {
         chan.send(true).ok();
     }
 
@@ -377,7 +375,7 @@ impl WindowMethods for ServoCallbacks {
         self.event_queue.borrow_mut().push(ServoEvent::LoadEnd(id));
     }
 
-    fn load_error(&self, _id: BrowserId, _: NetError, url: String) {
+    fn load_error(&self, _id: BrowserId, _: NetError, _url: String) {
         // FIXME: never called by servo
     }
 
