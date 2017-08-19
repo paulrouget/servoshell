@@ -180,7 +180,10 @@ pub fn register() {
             } else if action == sel!(shellNavigateForward:) {
                 state.can_go_forward
             } else if action == sel!(shellOpenInDefaultBrowser:) {
-                state.url.is_some()
+                match state.url {
+                    Some(ref url) if url != "about:blank" => true,
+                    _ => false
+                }
             } else if action == sel!(shellToggleSidebar:) {
                 true
             } else if action == sel!(shellShowOptions:) {
