@@ -214,6 +214,10 @@ fn main() {
                                 get_state().window_states[0].browser_states.push(browser);
                                 ui_invalidated = true;
                             },
+                            WindowCommand::CloseTab => {
+                                // FIXME
+                                // https://github.com/servo/servo/issues/18006
+                            },
                             WindowCommand::PrevTab => {
                                 let new_idx = if idx == 0 {
                                     get_state().window_states[0].browser_states.len() - 1

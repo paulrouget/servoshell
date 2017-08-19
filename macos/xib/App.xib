@@ -74,7 +74,7 @@
                             </menuItem>
                             <menuItem title="Close Tab" keyEquivalent="w" id="DVo-aG-piG">
                                 <connections>
-                                    <action selector="performClose:" target="-1" id="HmO-Ls-i7Q"/>
+                                    <action selector="shellCloseTab:" target="-1" id="HmO-Ls-i7Q"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="aJh-i4-bef"/>

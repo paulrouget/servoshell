@@ -121,6 +121,7 @@ pub fn register() {
             else if action == sel!(shellReload:) { WindowCommand::Reload }
             else if action == sel!(shellOpenLocation:) { WindowCommand::OpenLocation }
             else if action == sel!(shellNewTab:) { WindowCommand::NewTab }
+            else if action == sel!(shellCloseTab:) { WindowCommand::CloseTab}
             else if action == sel!(shellNextTab:) { WindowCommand::NextTab}
             else if action == sel!(shellPrevTab:) { WindowCommand::PrevTab}
             else if action == sel!(shellZoomIn:) { WindowCommand::ZoomIn }
@@ -161,6 +162,8 @@ pub fn register() {
             } else if action == sel!(shellOpenLocation:) {
                 true
             } else if action == sel!(shellNewTab:) {
+                true
+            } else if action == sel!(shellCloseTab:) {
                 true
             } else if action == sel!(shellNextTab:) {
                 true
@@ -238,6 +241,7 @@ pub fn register() {
             class.add_method(sel!(shellReload:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellOpenLocation:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellNewTab:), record_command as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellCloseTab:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellNextTab:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellPrevTab:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellZoomIn:), record_command as extern fn(&Object, Sel, id));

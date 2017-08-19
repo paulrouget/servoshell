@@ -27,6 +27,7 @@ pub enum WindowCommand {
     ZoomToActualSize,
     ToggleSidebar,
     NewTab,
+    CloseTab,
     NextTab,
     PrevTab,
     ShowOptions,
