@@ -240,6 +240,14 @@ fn main() {
                                 servo.select_browser(id);
                                 ui_invalidated = true;
                             },
+                            WindowCommand::SelectTab(idx) => {
+                                if get_state().window_states[0].current_browser_index != Some(idx) {
+                                    get_state().window_states[0].current_browser_index = Some(idx);
+                                    let id = get_state().window_states[0].browser_states[idx].id;
+                                    servo.select_browser(id);
+                                    ui_invalidated = true;
+                                }
+                            },
                             WindowCommand::ToggleOptionFragmentBorders => { },
                             WindowCommand::ToggleOptionParallelDisplayListBuidling => { },
                             WindowCommand::ToggleOptionShowParallelLayout => { },

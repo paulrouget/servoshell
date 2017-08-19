@@ -30,6 +30,7 @@ pub enum WindowCommand {
     CloseTab,
     NextTab,
     PrevTab,
+    SelectTab(usize),
     ShowOptions,
     Load(String),
     ToggleOptionShowLogs,

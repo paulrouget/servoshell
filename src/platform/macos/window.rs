@@ -228,6 +228,12 @@ pub fn register() {
             utils::get_event_queue(this).push(WindowEvent::DoCommand(cmd));
         }
 
+        extern fn tabview_selected(this: &Object, _sel: Sel, tabview: id, item: id) {
+            let idx: NSInteger = unsafe { msg_send![tabview, indexOfTabViewItem:item] };
+            let cmd = WindowCommand::SelectTab(idx as usize);
+            utils::get_event_queue(this).push(WindowEvent::DoCommand(cmd));
+        }
+
         unsafe {
             // We don't need to record the windowDidResize notification as the view does record the
             // viewDidEndLiveResize notification.
@@ -267,6 +273,8 @@ pub fn register() {
             class.add_method(sel!(getStateForAction:), get_state_for_action as extern fn(&Object, Sel, Sel) -> NSInteger);
 
             class.add_method(sel!(shellSubmitUserInput:), submit_user_input as extern fn(&Object, Sel, id));
+
+            class.add_method(sel!(tabView:didSelectTabViewItem:), tabview_selected as extern fn(&Object, Sel, id, id));
         }
 
         class.register();
@@ -311,6 +319,8 @@ impl Window {
             msg_send![tabbar, setButtonOptimumWidth:200];
             msg_send![tabbar, setButtonMaxWidth:300];
             msg_send![tabbar, setAutomaticallyAnimates:YES];
+
+            msg_send![tabbar, setDelegate:delegate];
 
             // Necessary to prevent the log view to wrap text
             let textview = utils::get_view_by_id(nswindow, "shellViewLogsTextView").unwrap();
