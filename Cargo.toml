@@ -16,4 +16,4 @@ objc-foundation = "*"
 core-foundation = "*"
 core-graphics = "*"
 cocoa = "^0.9.2"
-libservo = { git = "https://github.com/servo/servo", rev = "dc654c9" }
+libservo = { git = "https://github.com/servo/servo", rev = "d7b7e7aea8" }
