@@ -422,6 +422,7 @@ impl Window {
             };
         }
 
+        // FIXME, very ugly
         // Update tabbar
         // Sorry for the basic stupid diff
         let tabview = utils::get_view_by_id(self.nswindow, "tabview").unwrap();
