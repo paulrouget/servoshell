@@ -31,7 +31,6 @@ pub struct BrowserState {
     pub can_go_back: bool,
     pub can_go_forward: bool,
     pub is_loading: bool,
-    pub domain_locked: bool,
     pub show_fragment_borders: bool,
     pub parallel_display_list_building: bool,
     pub show_parallel_layout: bool,

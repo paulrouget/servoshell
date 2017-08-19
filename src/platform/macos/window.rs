@@ -132,7 +132,6 @@ pub fn register() {
             else if action == sel!(shellToggleSidebar:) { WindowCommand::ToggleSidebar }
             else if action == sel!(shellShowOptions:) { WindowCommand::ShowOptions }
             else if action == sel!(shellToggleOptionShowLogs:) { WindowCommand::ToggleOptionShowLogs }
-            else if action == sel!(shellToggleOptionLockDomain:) { WindowCommand::ToggleOptionLockDomain }
             else if action == sel!(shellToggleOptionFragmentBorders:) { WindowCommand::ToggleOptionFragmentBorders }
             else if action == sel!(shellToggleOptionParallelDisplayListBuidling:) { WindowCommand::ToggleOptionParallelDisplayListBuidling }
             else if action == sel!(shellToggleOptionShowParallelLayout:) { WindowCommand::ToggleOptionShowParallelLayout }
@@ -198,8 +197,6 @@ pub fn register() {
                 get_state().dark_theme
             } else if action == sel!(shellToggleOptionShowLogs:) {
                 get_state().window_states[0].logs_visible
-            } else if action == sel!(shellToggleOptionLockDomain:) {
-                state.domain_locked
             } else if action == sel!(shellToggleOptionFragmentBorders:) {
                 state.show_fragment_borders
             } else if action == sel!(shellToggleOptionParallelDisplayListBuidling:) {
@@ -252,7 +249,6 @@ pub fn register() {
             class.add_method(sel!(shellToggleSidebar:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellShowOptions:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellToggleOptionShowLogs:), record_command as extern fn(&Object, Sel, id));
-            class.add_method(sel!(shellToggleOptionLockDomain:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellToggleOptionFragmentBorders:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellToggleOptionParallelDisplayListBuidling:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellToggleOptionShowParallelLayout:), record_command as extern fn(&Object, Sel, id));

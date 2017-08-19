@@ -206,16 +206,6 @@ fn main() {
                                 get_state().window_states[0].logs_visible = !get_state().window_states[0].logs_visible;
                                 ui_invalidated = true;
                             },
-                            WindowCommand::ToggleOptionLockDomain => {
-                                state.domain_locked = !state.domain_locked;
-                                if state.domain_locked {
-                                    let url = ServoUrl::parse(state.url.as_ref().unwrap()).unwrap();
-                                    let domain = url.domain().unwrap();
-                                    servo.limit_to_domain(Some(domain.to_owned()));
-                                } else {
-                                    servo.limit_to_domain(None);
-                                }
-                            },
                             WindowCommand::NewTab => {
                                 let browser = servo.create_browser("about:blank");
                                 servo.select_browser(browser.id);

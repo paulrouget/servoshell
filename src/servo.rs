@@ -80,7 +80,6 @@ impl Servo {
             event_queue: RefCell::new(Vec::new()),
             geometry: Cell::new(geometry),
             waker: waker,
-            domain_limit: RefCell::new(None),
             view: view.clone(),
         });
 
@@ -115,7 +114,6 @@ impl Servo {
             can_go_back: false,
             can_go_forward: false,
             is_loading: false,
-            domain_locked: false,
             show_fragment_borders: false,
             parallel_display_list_building: false,
             show_parallel_layout: false,
@@ -242,10 +240,6 @@ impl Servo {
         self.events_for_servo.borrow_mut().push(WindowEvent::ResetZoom);
     }
 
-    pub fn limit_to_domain(&self, domain: Option<String>) {
-        *self.callbacks.domain_limit.borrow_mut() = domain;
-    }
-
     pub fn set_webrender_profiler_enabled(&self, _enabled: bool) {
         // FIXME
     }
@@ -263,7 +257,6 @@ impl Servo {
 
 struct ServoCallbacks {
     pub geometry: Cell<DrawableGeometry>,
-    pub domain_limit: RefCell<Option<String>>,
     event_queue: RefCell<Vec<ServoEvent>>,
     waker: Box<EventLoopWaker>,
     view: Rc<view::View>,

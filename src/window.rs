@@ -32,7 +32,6 @@ pub enum WindowCommand {
     ShowOptions,
     Load(String),
     ToggleOptionShowLogs,
-    ToggleOptionLockDomain,
     ToggleOptionFragmentBorders,
     ToggleOptionParallelDisplayListBuidling,
     ToggleOptionShowParallelLayout,

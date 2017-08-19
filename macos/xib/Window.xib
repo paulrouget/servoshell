@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="12121" systemVersion="16F73" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="12121" systemVersion="16G29" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="12121"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -13,7 +13,7 @@
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" unifiedTitleAndToolbar="YES" fullSizeContentView="YES"/>
             <windowPositionMask key="initialPositionMask" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="109" y="93" width="799" height="469"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1440" height="900"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1680" height="1027"/>
             <view key="contentView" id="DaH-qF-Fmi" userLabel="Content View">
                 <rect key="frame" x="0.0" y="0.0" width="799" height="469"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -240,14 +240,14 @@
                     </toolbarItem>
                     <toolbarItem implicitItemIdentifier="C7B1B64E-DB25-410C-BE32-506C48874751" label="Reload/Stop" paletteLabel="Reload/Stop" tag="-1" id="lwy-Uc-1yt">
                         <nil key="toolTip"/>
-                        <size key="minSize" width="36" height="27"/>
-                        <size key="maxSize" width="40" height="27"/>
+                        <size key="minSize" width="0.0" height="27"/>
+                        <size key="maxSize" width="38" height="27"/>
                         <customView key="view" identifier="shellToolbarViewReloadStop" id="pc3-go-sT6" userLabel="Reload/Stop" customClass="NSControl">
-                            <rect key="frame" x="18" y="14" width="36" height="27"/>
+                            <rect key="frame" x="18" y="14" width="37" height="27"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <subviews>
-                                <button identifier="shellToolbarViewReload" toolTip="Reload" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="IOC-Z6-Gwh">
-                                    <rect key="frame" x="0.0" y="0.0" width="36" height="25"/>
+                                <button identifier="shellToolbarViewReload" toolTip="Reload" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="IOC-Z6-Gwh" userLabel="Reload">
+                                    <rect key="frame" x="0.0" y="1" width="37" height="25"/>
                                     <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="NSRefreshTemplate" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="Uj2-Ew-Zfm">
                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                         <font key="font" metaFont="system"/>
@@ -256,8 +256,8 @@
                                         <action selector="shellReload:" target="-1" id="vdz-4x-v6D"/>
                                     </connections>
                                 </button>
-                                <button identifier="shellToolbarViewStop" hidden="YES" toolTip="Stop" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="aRI-mX-sS7">
-                                    <rect key="frame" x="0.0" y="0.0" width="36" height="25"/>
+                                <button identifier="shellToolbarViewStop" hidden="YES" toolTip="Stop" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="aRI-mX-sS7" userLabel="Stop">
+                                    <rect key="frame" x="0.0" y="1" width="37" height="25"/>
                                     <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="NSStopProgressTemplate" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="dYd-5s-HSz">
                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                         <font key="font" metaFont="system"/>
@@ -268,12 +268,12 @@
                                 </button>
                             </subviews>
                             <constraints>
-                                <constraint firstItem="aRI-mX-sS7" firstAttribute="baseline" secondItem="IOC-Z6-Gwh" secondAttribute="baseline" id="4Vs-z6-NyA"/>
-                                <constraint firstItem="aRI-mX-sS7" firstAttribute="leading" secondItem="pc3-go-sT6" secondAttribute="leading" id="8do-Lp-Spx"/>
-                                <constraint firstItem="IOC-Z6-Gwh" firstAttribute="centerY" secondItem="pc3-go-sT6" secondAttribute="centerY" id="94y-JJ-fmO"/>
-                                <constraint firstItem="aRI-mX-sS7" firstAttribute="trailing" secondItem="IOC-Z6-Gwh" secondAttribute="trailing" id="99X-kj-z8S"/>
-                                <constraint firstAttribute="trailing" secondItem="IOC-Z6-Gwh" secondAttribute="trailing" id="onl-IE-aaf"/>
-                                <constraint firstItem="aRI-mX-sS7" firstAttribute="leading" secondItem="IOC-Z6-Gwh" secondAttribute="leading" id="rCm-ww-gQv"/>
+                                <constraint firstAttribute="trailing" secondItem="aRI-mX-sS7" secondAttribute="trailing" id="2T5-u9-7lH"/>
+                                <constraint firstItem="IOC-Z6-Gwh" firstAttribute="leading" secondItem="pc3-go-sT6" secondAttribute="leading" id="Bo5-ly-oR3"/>
+                                <constraint firstAttribute="bottom" secondItem="IOC-Z6-Gwh" secondAttribute="bottom" constant="3" id="GlC-jH-lEb"/>
+                                <constraint firstItem="aRI-mX-sS7" firstAttribute="leading" secondItem="pc3-go-sT6" secondAttribute="leading" id="HcX-ph-5ld"/>
+                                <constraint firstAttribute="bottom" secondItem="aRI-mX-sS7" secondAttribute="bottom" constant="3" id="HgJ-t6-EaD"/>
+                                <constraint firstAttribute="trailing" secondItem="IOC-Z6-Gwh" secondAttribute="trailing" id="Vyx-HZ-tvJ"/>
                             </constraints>
                         </customView>
                         <connections>
@@ -317,7 +317,7 @@
                     </toolbarItem>
                     <toolbarItem implicitItemIdentifier="2B97C7D1-2CD2-4B50-97F2-C5D682965EC7" explicitItemIdentifier="urlbar" label="Urlbar" paletteLabel="Urlbar" tag="-1" id="cSq-oO-aYU" userLabel="Urlbar">
                         <nil key="toolTip"/>
-                        <size key="minSize" width="200" height="32"/>
+                        <size key="minSize" width="165" height="32"/>
                         <size key="maxSize" width="300" height="96"/>
                         <customView key="view" identifier="shellToolbarViewUrlbar" id="UYb-tk-Y3b">
                             <rect key="frame" x="0.0" y="14" width="165" height="32"/>
@@ -430,7 +430,7 @@
                             </textFieldCell>
                         </textField>
                         <button translatesAutoresizingMaskIntoConstraints="NO" id="6HY-aV-xJQ">
-                            <rect key="frame" x="18" y="275" width="93" height="18"/>
+                            <rect key="frame" x="18" y="272.5" width="93" height="18"/>
                             <buttonCell key="cell" type="check" title="Dark theme" bezelStyle="regularSquare" imagePosition="left" inset="2" id="UZ6-8n-lYN">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                 <font key="font" metaFont="system"/>
@@ -440,7 +440,7 @@
                             </connections>
                         </button>
                         <button translatesAutoresizingMaskIntoConstraints="NO" id="JXI-y9-cQG">
-                            <rect key="frame" x="18" y="250" width="85" height="18"/>
+                            <rect key="frame" x="18" y="245" width="85" height="18"/>
                             <buttonCell key="cell" type="check" title="Show logs" bezelStyle="regularSquare" imagePosition="left" inset="2" id="f2z-M6-CRW">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                 <font key="font" metaFont="system"/>
@@ -449,18 +449,8 @@
                                 <action selector="shellToggleOptionShowLogs:" target="-1" id="Zun-fT-bWF"/>
                             </connections>
                         </button>
-                        <button translatesAutoresizingMaskIntoConstraints="NO" id="lDY-NX-uyP">
-                            <rect key="frame" x="18" y="224.5" width="228" height="18"/>
-                            <buttonCell key="cell" type="check" title="Lock navigation to current domain" bezelStyle="regularSquare" imagePosition="left" inset="2" id="j7B-Cz-z7P">
-                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                <font key="font" metaFont="system"/>
-                            </buttonCell>
-                            <connections>
-                                <action selector="shellToggleOptionLockDomain:" target="-1" id="ZYp-Wh-cZB"/>
-                            </connections>
-                        </button>
                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="NO" translatesAutoresizingMaskIntoConstraints="NO" id="RfR-Y1-7zo" userLabel="Servo">
-                            <rect key="frame" x="8" y="198.5" width="39" height="17"/>
+                            <rect key="frame" x="8" y="216" width="39" height="17"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Servo" id="MZ8-lR-Sga">
                                 <font key="font" metaFont="system"/>
                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -468,7 +458,7 @@
                             </textFieldCell>
                         </textField>
                         <button translatesAutoresizingMaskIntoConstraints="NO" id="r8m-Vx-tbE">
-                            <rect key="frame" x="18" y="171.5" width="165" height="18"/>
+                            <rect key="frame" x="18" y="186.5" width="165" height="18"/>
                             <buttonCell key="cell" type="check" title="Show fragment borders" bezelStyle="regularSquare" imagePosition="left" inset="2" id="3J7-Oz-J59">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                 <font key="font" metaFont="system"/>
@@ -478,7 +468,7 @@
                             </connections>
                         </button>
                         <button translatesAutoresizingMaskIntoConstraints="NO" id="hvz-3i-hNx">
-                            <rect key="frame" x="18" y="146.5" width="186" height="18"/>
+                            <rect key="frame" x="18" y="159" width="186" height="18"/>
                             <buttonCell key="cell" type="check" title="Parallel display list building" bezelStyle="regularSquare" imagePosition="left" inset="2" id="64X-rn-SCy">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                 <font key="font" metaFont="system"/>
@@ -488,7 +478,7 @@
                             </connections>
                         </button>
                         <button translatesAutoresizingMaskIntoConstraints="NO" id="lOU-He-SCA">
-                            <rect key="frame" x="18" y="121.5" width="143" height="18"/>
+                            <rect key="frame" x="18" y="131.5" width="143" height="18"/>
                             <buttonCell key="cell" type="check" title="Show parallel layout" bezelStyle="regularSquare" imagePosition="left" inset="2" id="gbw-pb-UfK">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                 <font key="font" metaFont="system"/>
@@ -498,7 +488,7 @@
                             </connections>
                         </button>
                         <button translatesAutoresizingMaskIntoConstraints="NO" id="xrf-fB-PbZ">
-                            <rect key="frame" x="18" y="96.5" width="168" height="18"/>
+                            <rect key="frame" x="18" y="104" width="168" height="18"/>
                             <buttonCell key="cell" type="check" title="Convert mouse to touch" bezelStyle="regularSquare" imagePosition="left" inset="2" id="H9v-38-lXR">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                 <font key="font" metaFont="system"/>
@@ -508,7 +498,7 @@
                             </connections>
                         </button>
                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="NO" translatesAutoresizingMaskIntoConstraints="NO" id="B30-yS-gXE" userLabel="WR">
-                            <rect key="frame" x="8" y="70" width="75" height="17"/>
+                            <rect key="frame" x="8" y="75" width="75" height="17"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="WebRender" id="1N3-4p-iOR">
                                 <font key="font" metaFont="system"/>
                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -516,7 +506,7 @@
                             </textFieldCell>
                         </textField>
                         <button translatesAutoresizingMaskIntoConstraints="NO" id="KHM-zh-aTM">
-                            <rect key="frame" x="18" y="43" width="170" height="18"/>
+                            <rect key="frame" x="18" y="45.5" width="170" height="18"/>
                             <buttonCell key="cell" type="check" title="Enable WebRender stats" bezelStyle="regularSquare" imagePosition="left" inset="2" id="MSv-ZS-kHH">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                 <font key="font" metaFont="system"/>
@@ -545,7 +535,6 @@
                         <constraint firstItem="xrf-fB-PbZ" firstAttribute="leading" secondItem="9DX-yi-7aO" secondAttribute="leading" constant="20" id="iSP-2h-J7H"/>
                         <constraint firstItem="hvz-3i-hNx" firstAttribute="leading" secondItem="9DX-yi-7aO" secondAttribute="leading" constant="20" id="mZx-9q-SPR"/>
                         <constraint firstItem="Vb7-Zi-4ro" firstAttribute="leading" secondItem="9DX-yi-7aO" secondAttribute="leading" constant="20" id="paZ-gO-mTZ"/>
-                        <constraint firstItem="lDY-NX-uyP" firstAttribute="leading" secondItem="9DX-yi-7aO" secondAttribute="leading" constant="20" id="sx9-h5-JCz"/>
                         <constraint firstItem="6HY-aV-xJQ" firstAttribute="leading" secondItem="9DX-yi-7aO" secondAttribute="leading" constant="20" id="xqq-H6-H45"/>
                     </constraints>
                     <visibilityPriorities>
@@ -560,10 +549,8 @@
                         <integer value="1000"/>
                         <integer value="1000"/>
                         <integer value="1000"/>
-                        <integer value="1000"/>
                     </visibilityPriorities>
                     <customSpacing>
-                        <real value="3.4028234663852886e+38"/>
                         <real value="3.4028234663852886e+38"/>
                         <real value="3.4028234663852886e+38"/>
                         <real value="3.4028234663852886e+38"/>
