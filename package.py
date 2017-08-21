@@ -40,7 +40,7 @@ def package(target):
     framework_path = contents + "Frameworks"
     shutil.rmtree(framework_path, True)
     os.makedirs(framework_path)
-    shutil.copytree("./target/MMTabBarView/MMTabBarView.framework", framework_path + "/MMTabBarView.framework")
+    shutil.copytree("./target/MMTabBarView/Release/MMTabBarView.framework", framework_path + "/MMTabBarView.framework")
 
     lib_path = contents + "MacOS/"
     binary_path = lib_path + "servoshell"
