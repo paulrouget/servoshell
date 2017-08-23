@@ -30,7 +30,7 @@ use view::ViewEvent;
 use servo::ServoEvent;
 use std::rc::Rc;
 use std::env::args;
-use servo::{Servo, ServoUrl};
+use servo::{Servo, ServoUrl, WebRenderDebugOption};
 
 use platform::get_state;
 
@@ -252,12 +252,25 @@ fn main() {
                             WindowCommand::ToggleOptionParallelDisplayListBuidling => { },
                             WindowCommand::ToggleOptionShowParallelLayout => { },
                             WindowCommand::ToggleOptionConvertMouseToTouch => { },
-                            WindowCommand::ToggleOptionWebRenderStats => {
-                                let ref mut state = get_state().window_states[0].browser_states[0];
-                                state.show_webrender_stats = !state.show_webrender_stats;
-                                servo.set_webrender_profiler_enabled(state.show_webrender_stats);
-                            },
                             WindowCommand::ToggleOptionTileBorders => { },
+
+                            WindowCommand::ToggleOptionWRProfiler => {
+                                let ref mut state = get_state().window_states[0].browser_states[0];
+                                state.debug_options.wr_profiler = !state.debug_options.wr_profiler;
+                                servo.toggle_webrender_debug_option(WebRenderDebugOption::Profiler);
+                            },
+
+                            WindowCommand::ToggleOptionWRTextureCacheDebug => {
+                                let ref mut state = get_state().window_states[0].browser_states[0];
+                                state.debug_options.wr_texture_cache_debug = !state.debug_options.wr_texture_cache_debug;
+                                servo.toggle_webrender_debug_option(WebRenderDebugOption::TextureCacheDebug);
+                            },
+
+                            WindowCommand::ToggleOptionWRTargetDebug => {
+                                let ref mut state = get_state().window_states[0].browser_states[0];
+                                state.debug_options.wr_render_target_debug = !state.debug_options.wr_render_target_debug;
+                                servo.toggle_webrender_debug_option(WebRenderDebugOption::RenderTargetDebug);
+                            },
                         }
                     }
                 }

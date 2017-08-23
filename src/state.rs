@@ -31,10 +31,19 @@ pub struct BrowserState {
     pub can_go_back: bool,
     pub can_go_forward: bool,
     pub is_loading: bool,
+    pub debug_options: DebugOptions,
+}
+
+pub struct DebugOptions {
+    // FIXME: pretty sure we got rid of some of these debug options
     pub show_fragment_borders: bool,
     pub parallel_display_list_building: bool,
     pub show_parallel_layout: bool,
     pub convert_mouse_to_touch: bool,
-    pub show_webrender_stats: bool,
     pub show_tiles_borders: bool,
+
+    // webrender:
+    pub wr_profiler: bool,
+    pub wr_texture_cache_debug: bool,
+    pub wr_render_target_debug: bool,
 }

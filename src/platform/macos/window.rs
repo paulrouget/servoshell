@@ -137,8 +137,10 @@ pub fn register() {
             else if action == sel!(shellToggleOptionParallelDisplayListBuidling:) { WindowCommand::ToggleOptionParallelDisplayListBuidling }
             else if action == sel!(shellToggleOptionShowParallelLayout:) { WindowCommand::ToggleOptionShowParallelLayout }
             else if action == sel!(shellToggleOptionConvertMouseToTouch:) { WindowCommand::ToggleOptionConvertMouseToTouch }
-            else if action == sel!(shellToggleOptionWebRenderStats:) { WindowCommand::ToggleOptionWebRenderStats }
             else if action == sel!(shellToggleOptionTileBorders:) { WindowCommand::ToggleOptionTileBorders }
+            else if action == sel!(shellToggleOptionWRProfiler:) { WindowCommand::ToggleOptionWRProfiler }
+            else if action == sel!(shellToggleOptionWRTextureCacheDebug:) { WindowCommand::ToggleOptionWRTextureCacheDebug }
+            else if action == sel!(shellToggleOptionWRRenderTargetDebug:) { WindowCommand::ToggleOptionWRTargetDebug }
             else {
                 panic!("Unexpected action to record: {:?}", action)
             };
@@ -204,17 +206,21 @@ pub fn register() {
             } else if action == sel!(shellToggleOptionShowLogs:) {
                 get_state().window_states[0].logs_visible
             } else if action == sel!(shellToggleOptionFragmentBorders:) {
-                state.show_fragment_borders
+                state.debug_options.show_fragment_borders
             } else if action == sel!(shellToggleOptionParallelDisplayListBuidling:) {
-                state.parallel_display_list_building
+                state.debug_options.parallel_display_list_building
             } else if action == sel!(shellToggleOptionShowParallelLayout:) {
-                state.show_parallel_layout
+                state.debug_options.show_parallel_layout
             } else if action == sel!(shellToggleOptionConvertMouseToTouch:) {
-                state.convert_mouse_to_touch
-            } else if action == sel!(shellToggleOptionWebRenderStats:) {
-                state.show_webrender_stats
+                state.debug_options.convert_mouse_to_touch
             } else if action == sel!(shellToggleOptionTileBorders:) {
-                state.show_tiles_borders
+                state.debug_options.show_tiles_borders
+            } else if action == sel!(shellToggleOptionWRProfiler:) {
+                state.debug_options.wr_profiler
+            } else if action == sel!(shellToggleOptionWRTextureCacheDebug:) {
+                state.debug_options.wr_texture_cache_debug
+            } else if action == sel!(shellToggleOptionWRRenderTargetDebug:) {
+                state.debug_options.wr_render_target_debug
             } else {
                 panic!("Unexpected action for getStateForAction: {:?}", action);
             };
@@ -266,7 +272,9 @@ pub fn register() {
             class.add_method(sel!(shellToggleOptionParallelDisplayListBuidling:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellToggleOptionShowParallelLayout:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellToggleOptionConvertMouseToTouch:), record_command as extern fn(&Object, Sel, id));
-            class.add_method(sel!(shellToggleOptionWebRenderStats:), record_command as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellToggleOptionWRProfiler:), record_command as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellToggleOptionWRTextureCacheDebug:), record_command as extern fn(&Object, Sel, id));
+            class.add_method(sel!(shellToggleOptionWRRenderTargetDebug:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellToggleOptionTileBorders:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellZoom:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellNavigate:), record_command as extern fn(&Object, Sel, id));

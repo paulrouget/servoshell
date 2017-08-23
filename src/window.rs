@@ -38,6 +38,8 @@ pub enum WindowCommand {
     ToggleOptionParallelDisplayListBuidling,
     ToggleOptionShowParallelLayout,
     ToggleOptionConvertMouseToTouch,
-    ToggleOptionWebRenderStats,
     ToggleOptionTileBorders,
+    ToggleOptionWRProfiler,
+    ToggleOptionWRTextureCacheDebug,
+    ToggleOptionWRTargetDebug,
 }

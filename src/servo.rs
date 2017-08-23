@@ -17,13 +17,14 @@ use self::servo::style_traits::DevicePixel;
 use self::servo::net_traits::net_error_list::NetError;
 use self::servo::webrender_api;
 use gleam::gl;
-use state::BrowserState;
+use state::{BrowserState, DebugOptions};
 use platform;
 
 pub use self::servo::BrowserId;
 pub use self::servo::compositing::compositor_thread::EventLoopWaker;
 pub use self::servo::style_traits::cursor::Cursor as ServoCursor;
 pub use self::servo::servo_url::ServoUrl;
+pub use self::servo::compositing::windowing::WebRenderDebugOption;
 
 use view;
 use view::DrawableGeometry;
@@ -114,12 +115,16 @@ impl Servo {
             can_go_back: false,
             can_go_forward: false,
             is_loading: false,
-            show_fragment_borders: false,
-            parallel_display_list_building: false,
-            show_parallel_layout: false,
-            convert_mouse_to_touch: false,
-            show_webrender_stats: false,
-            show_tiles_borders: false,
+            debug_options: DebugOptions {
+                show_fragment_borders: false,
+                parallel_display_list_building: false,
+                show_parallel_layout: false,
+                convert_mouse_to_touch: false,
+                show_tiles_borders: false,
+                wr_profiler: false,
+                wr_texture_cache_debug: false,
+                wr_render_target_debug: false,
+            },
         }
     }
 
@@ -240,8 +245,8 @@ impl Servo {
         self.events_for_servo.borrow_mut().push(WindowEvent::ResetZoom);
     }
 
-    pub fn set_webrender_profiler_enabled(&self, _enabled: bool) {
-        // FIXME
+    pub fn toggle_webrender_debug_option(&self, option: WebRenderDebugOption) {
+        self.events_for_servo.borrow_mut().push(WindowEvent::ToggleWebRenderDebug(option));
     }
 
     pub fn sync(&self, force: bool) {

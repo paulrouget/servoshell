@@ -415,14 +415,14 @@
             </connections>
         </popover>
         <customView autoresizesSubviews="NO" wantsLayer="YES" id="5SJ-N2-gZR" userLabel="Options">
-            <rect key="frame" x="0.0" y="0.0" width="280" height="329"/>
+            <rect key="frame" x="0.0" y="0.0" width="353" height="335"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
                 <stackView distribution="equalSpacing" orientation="vertical" alignment="leading" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" translatesAutoresizingMaskIntoConstraints="NO" id="9DX-yi-7aO">
-                    <rect key="frame" x="0.0" y="0.0" width="280" height="329"/>
+                    <rect key="frame" x="0.0" y="0.0" width="353" height="335"/>
                     <subviews>
                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Mcl-p5-Lnf" userLabel="App">
-                            <rect key="frame" x="8" y="302" width="29" height="17"/>
+                            <rect key="frame" x="8" y="308" width="29" height="17"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="App" id="HqO-VZ-jBt">
                                 <font key="font" metaFont="system"/>
                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -430,7 +430,7 @@
                             </textFieldCell>
                         </textField>
                         <button translatesAutoresizingMaskIntoConstraints="NO" id="6HY-aV-xJQ">
-                            <rect key="frame" x="18" y="272.5" width="93" height="18"/>
+                            <rect key="frame" x="18" y="282.5" width="93" height="18"/>
                             <buttonCell key="cell" type="check" title="Dark theme" bezelStyle="regularSquare" imagePosition="left" inset="2" id="UZ6-8n-lYN">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                 <font key="font" metaFont="system"/>
@@ -440,7 +440,7 @@
                             </connections>
                         </button>
                         <button translatesAutoresizingMaskIntoConstraints="NO" id="JXI-y9-cQG">
-                            <rect key="frame" x="18" y="245" width="85" height="18"/>
+                            <rect key="frame" x="18" y="259" width="85" height="18"/>
                             <buttonCell key="cell" type="check" title="Show logs" bezelStyle="regularSquare" imagePosition="left" inset="2" id="f2z-M6-CRW">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                 <font key="font" metaFont="system"/>
@@ -450,7 +450,7 @@
                             </connections>
                         </button>
                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="NO" translatesAutoresizingMaskIntoConstraints="NO" id="RfR-Y1-7zo" userLabel="Servo">
-                            <rect key="frame" x="8" y="216" width="39" height="17"/>
+                            <rect key="frame" x="8" y="234.5" width="39" height="17"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Servo" id="MZ8-lR-Sga">
                                 <font key="font" metaFont="system"/>
                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -458,7 +458,7 @@
                             </textFieldCell>
                         </textField>
                         <button translatesAutoresizingMaskIntoConstraints="NO" id="r8m-Vx-tbE">
-                            <rect key="frame" x="18" y="186.5" width="165" height="18"/>
+                            <rect key="frame" x="18" y="209" width="165" height="18"/>
                             <buttonCell key="cell" type="check" title="Show fragment borders" bezelStyle="regularSquare" imagePosition="left" inset="2" id="3J7-Oz-J59">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                 <font key="font" metaFont="system"/>
@@ -468,7 +468,7 @@
                             </connections>
                         </button>
                         <button translatesAutoresizingMaskIntoConstraints="NO" id="hvz-3i-hNx">
-                            <rect key="frame" x="18" y="159" width="186" height="18"/>
+                            <rect key="frame" x="18" y="185.5" width="186" height="18"/>
                             <buttonCell key="cell" type="check" title="Parallel display list building" bezelStyle="regularSquare" imagePosition="left" inset="2" id="64X-rn-SCy">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                 <font key="font" metaFont="system"/>
@@ -478,7 +478,7 @@
                             </connections>
                         </button>
                         <button translatesAutoresizingMaskIntoConstraints="NO" id="lOU-He-SCA">
-                            <rect key="frame" x="18" y="131.5" width="143" height="18"/>
+                            <rect key="frame" x="18" y="162" width="143" height="18"/>
                             <buttonCell key="cell" type="check" title="Show parallel layout" bezelStyle="regularSquare" imagePosition="left" inset="2" id="gbw-pb-UfK">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                 <font key="font" metaFont="system"/>
@@ -488,7 +488,7 @@
                             </connections>
                         </button>
                         <button translatesAutoresizingMaskIntoConstraints="NO" id="xrf-fB-PbZ">
-                            <rect key="frame" x="18" y="104" width="168" height="18"/>
+                            <rect key="frame" x="18" y="138.5" width="168" height="18"/>
                             <buttonCell key="cell" type="check" title="Convert mouse to touch" bezelStyle="regularSquare" imagePosition="left" inset="2" id="H9v-38-lXR">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                 <font key="font" metaFont="system"/>
@@ -498,21 +498,41 @@
                             </connections>
                         </button>
                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="NO" translatesAutoresizingMaskIntoConstraints="NO" id="B30-yS-gXE" userLabel="WR">
-                            <rect key="frame" x="8" y="75" width="75" height="17"/>
+                            <rect key="frame" x="8" y="114" width="75" height="17"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="WebRender" id="1N3-4p-iOR">
                                 <font key="font" metaFont="system"/>
                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                             </textFieldCell>
                         </textField>
-                        <button translatesAutoresizingMaskIntoConstraints="NO" id="KHM-zh-aTM">
-                            <rect key="frame" x="18" y="45.5" width="170" height="18"/>
-                            <buttonCell key="cell" type="check" title="Enable WebRender stats" bezelStyle="regularSquare" imagePosition="left" inset="2" id="MSv-ZS-kHH">
+                        <button translatesAutoresizingMaskIntoConstraints="NO" id="KHM-zh-aTM" userLabel="Enable WebRender Profiler">
+                            <rect key="frame" x="18" y="88.5" width="184" height="18"/>
+                            <buttonCell key="cell" type="check" title="Enable WebRender Profiler" bezelStyle="regularSquare" imagePosition="left" inset="2" id="MSv-ZS-kHH">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                 <font key="font" metaFont="system"/>
                             </buttonCell>
                             <connections>
-                                <action selector="shellToggleOptionWebRenderStats:" target="-1" id="APY-OD-KaS"/>
+                                <action selector="shellToggleOptionWRProfiler:" target="-1" id="APY-OD-KaS"/>
+                            </connections>
+                        </button>
+                        <button translatesAutoresizingMaskIntoConstraints="NO" id="LDl-Ci-L6Y" userLabel="Enable WebRender Texture Cache Debug">
+                            <rect key="frame" x="18" y="65" width="272" height="18"/>
+                            <buttonCell key="cell" type="check" title="Enable WebRender Texture Cache Debug" bezelStyle="regularSquare" imagePosition="left" inset="2" id="b19-ZF-NaO">
+                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <connections>
+                                <action selector="shellToggleOptionWRTextureCacheDebug:" target="-1" id="mO7-6y-Eft"/>
+                            </connections>
+                        </button>
+                        <button translatesAutoresizingMaskIntoConstraints="NO" id="tLO-WO-sjn" userLabel="Enable WebRender Render Target Debug">
+                            <rect key="frame" x="18" y="41.5" width="270" height="18"/>
+                            <buttonCell key="cell" type="check" title="Enable WebRender Render Target Debug" bezelStyle="regularSquare" imagePosition="left" inset="2" id="JRp-jr-J4v">
+                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <connections>
+                                <action selector="shellToggleOptionWRRenderTargetDebug:" target="-1" id="ZBi-9K-gRT"/>
                             </connections>
                         </button>
                         <button translatesAutoresizingMaskIntoConstraints="NO" id="Vb7-Zi-4ro">
@@ -530,14 +550,18 @@
                     <constraints>
                         <constraint firstItem="JXI-y9-cQG" firstAttribute="leading" secondItem="9DX-yi-7aO" secondAttribute="leading" constant="20" id="0Qy-Qc-eiD"/>
                         <constraint firstItem="r8m-Vx-tbE" firstAttribute="leading" secondItem="9DX-yi-7aO" secondAttribute="leading" constant="20" id="DXL-Ja-IYw"/>
+                        <constraint firstItem="tLO-WO-sjn" firstAttribute="leading" secondItem="9DX-yi-7aO" secondAttribute="leading" constant="20" id="SL3-UX-XG4"/>
                         <constraint firstItem="lOU-He-SCA" firstAttribute="leading" secondItem="9DX-yi-7aO" secondAttribute="leading" constant="20" id="ZSi-eL-x4d"/>
                         <constraint firstItem="KHM-zh-aTM" firstAttribute="leading" secondItem="9DX-yi-7aO" secondAttribute="leading" constant="20" id="hcu-9f-Y0o"/>
                         <constraint firstItem="xrf-fB-PbZ" firstAttribute="leading" secondItem="9DX-yi-7aO" secondAttribute="leading" constant="20" id="iSP-2h-J7H"/>
                         <constraint firstItem="hvz-3i-hNx" firstAttribute="leading" secondItem="9DX-yi-7aO" secondAttribute="leading" constant="20" id="mZx-9q-SPR"/>
                         <constraint firstItem="Vb7-Zi-4ro" firstAttribute="leading" secondItem="9DX-yi-7aO" secondAttribute="leading" constant="20" id="paZ-gO-mTZ"/>
                         <constraint firstItem="6HY-aV-xJQ" firstAttribute="leading" secondItem="9DX-yi-7aO" secondAttribute="leading" constant="20" id="xqq-H6-H45"/>
+                        <constraint firstItem="LDl-Ci-L6Y" firstAttribute="leading" secondItem="9DX-yi-7aO" secondAttribute="leading" constant="20" id="zSW-od-0Da"/>
                     </constraints>
                     <visibilityPriorities>
+                        <integer value="1000"/>
+                        <integer value="1000"/>
                         <integer value="1000"/>
                         <integer value="1000"/>
                         <integer value="1000"/>
@@ -562,6 +586,8 @@
                         <real value="3.4028234663852886e+38"/>
                         <real value="3.4028234663852886e+38"/>
                         <real value="3.4028234663852886e+38"/>
+                        <real value="3.4028234663852886e+38"/>
+                        <real value="3.4028234663852886e+38"/>
                     </customSpacing>
                 </stackView>
             </subviews>
@@ -571,7 +597,7 @@
                 <constraint firstItem="9DX-yi-7aO" firstAttribute="leading" secondItem="5SJ-N2-gZR" secondAttribute="leading" id="Fg2-uF-YLg"/>
                 <constraint firstItem="9DX-yi-7aO" firstAttribute="top" secondItem="5SJ-N2-gZR" secondAttribute="top" id="SbS-0a-MeO"/>
             </constraints>
-            <point key="canvasLocation" x="705" y="190.5"/>
+            <point key="canvasLocation" x="741.5" y="193.5"/>
         </customView>
         <customObject id="cB9-qK-Pcf" userLabel="Bookmarks" customClass="NSShellBookmarks"/>
     </objects>
