@@ -307,6 +307,9 @@ fn main() {
                             state.last_mouse_down_button = Some(button);
                         }
                     }
+                    ViewEvent::KeyEvent(c, key, keystate, modifiers) => {
+                        servo.send_key(state.id, c, key, keystate, modifiers);
+                    }
                 }
             }
 

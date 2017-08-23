@@ -8,7 +8,7 @@ use self::servo::config::servo_version;
 use self::servo::servo_config::opts;
 use self::servo::servo_config::resource_files::set_resources_path;
 use self::servo::compositing::windowing::{MouseWindowEvent, WindowMethods, WindowEvent};
-use self::servo::msg::constellation_msg::{self, Key, TraversalDirection};
+use self::servo::msg::constellation_msg::TraversalDirection;
 use self::servo::servo_geometry::DeviceIndependentPixel;
 use self::servo::euclid::{Point2D, ScaleFactor, Size2D, TypedPoint2D, TypedRect, TypedSize2D, TypedVector2D};
 use self::servo::ipc_channel::ipc;
@@ -25,6 +25,8 @@ pub use self::servo::compositing::compositor_thread::EventLoopWaker;
 pub use self::servo::style_traits::cursor::Cursor as ServoCursor;
 pub use self::servo::servo_url::ServoUrl;
 pub use self::servo::compositing::windowing::WebRenderDebugOption;
+pub use self::servo::msg::constellation_msg::{Key, KeyModifiers, KeyState};
+pub use self::servo::msg::constellation_msg::{SHIFT, CONTROL, ALT, SUPER};
 
 use view;
 use view::DrawableGeometry;
@@ -44,7 +46,7 @@ pub enum ServoEvent {
     HistoryChanged(BrowserId, Vec<LoadData>, usize),
     CursorChanged(ServoCursor),
     FaviconChanged(BrowserId, ServoUrl),
-    Key(Option<char>, Key, constellation_msg::KeyModifiers),
+    Key(Option<char>, Key, KeyModifiers),
 }
 
 pub struct Servo {
@@ -249,6 +251,11 @@ impl Servo {
         self.events_for_servo.borrow_mut().push(WindowEvent::ToggleWebRenderDebug(option));
     }
 
+    pub fn send_key(&self, _id: BrowserId, c: Option<char>, key: Key, state: KeyState, mods: KeyModifiers) {
+        // FIXME: we should pass the browser id
+        self.events_for_servo.borrow_mut().push(WindowEvent::KeyEvent(c, key, state, mods));
+    }
+
     pub fn sync(&self, force: bool) {
         // FIXME: ports/glutin/window.rs uses mem::replace. Should we too?
         // See: https://doc.rust-lang.org/core/mem/fn.replace.html
@@ -393,7 +400,7 @@ impl WindowMethods for ServoCallbacks {
         self.event_queue.borrow_mut().push(ServoEvent::FaviconChanged(id, url));
     }
 
-    fn handle_key(&self, _id: Option<BrowserId>, ch: Option<char>, key: Key, mods: constellation_msg::KeyModifiers) {
+    fn handle_key(&self, _id: Option<BrowserId>, ch: Option<char>, key: Key, mods: KeyModifiers) {
         self.event_queue.borrow_mut().push(ServoEvent::Key(ch, key, mods));
     }
 }

@@ -4,6 +4,9 @@
 
 pub use platform::View;
 
+pub use servo::{Key, KeyState, KeyModifiers};
+pub use servo::{SHIFT, CONTROL, ALT, SUPER};
+
 #[derive(Debug, Copy, Clone)]
 pub struct DrawableGeometry {
     pub view_size: (u32, u32),
@@ -14,12 +17,16 @@ pub struct DrawableGeometry {
 
 /// View events
 
+// FIXME: why not Servo events again?
+
+
 #[derive(Debug, Clone)]
 pub enum ViewEvent {
     GeometryDidChange,
     MouseWheel(MouseScrollDelta, TouchPhase),
     MouseInput(ElementState, MouseButton),
     MouseMoved(i32, i32),
+    KeyEvent(Option<char>, Key, KeyState, KeyModifiers),
 }
 
 #[derive(Debug, Clone)]
