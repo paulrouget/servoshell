@@ -215,8 +215,19 @@ fn main() {
                                 ui_invalidated = true;
                             },
                             WindowCommand::CloseTab => {
-                                // FIXME
-                                // https://github.com/servo/servo/issues/18006
+                                if get_state().window_states[0].browser_states.len() > 1 {
+                                    let id = get_state().window_states[0].browser_states[idx].id;
+                                    servo.close_browser(id);
+                                    let new_id = if idx == get_state().window_states[0].browser_states.len() - 1 {
+                                        get_state().window_states[0].current_browser_index = Some(idx - 1);
+                                        get_state().window_states[0].browser_states[idx - 1].id
+                                    } else {
+                                        get_state().window_states[0].browser_states[idx + 1].id
+                                    };
+                                    servo.select_browser(new_id);
+                                    get_state().window_states[0].browser_states.remove(idx);
+                                    ui_invalidated = true;
+                                }
                             },
                             WindowCommand::PrevTab => {
                                 let new_idx = if idx == 0 {

@@ -447,47 +447,45 @@ impl Window {
         // Update tabbar
         // Sorry for the basic stupid diff
         let tabview = utils::get_view_by_id(self.nswindow, "tabview").unwrap();
-        let visual_count: usize = unsafe {
-            msg_send![tabview, numberOfTabViewItems]
-        };
-        let state_count = get_state().window_states[0].browser_states.len();
-        if state_count != visual_count {
-            if state_count == visual_count + 1 {
-                // Need to add a tab
-                // Always append at the end
-                let id = get_state().window_states[0].browser_states[state_count - 1].id;
-                // add item
-                unsafe {
-                    let item: id = msg_send![class("NSTabViewItem"), alloc];
-                    let identifier = NSString::alloc(nil).init_str(format!("{}", id).as_str());
-                    let item: id = msg_send![item, initWithIdentifier:identifier];
-                    msg_send![tabview, addTabViewItem:item];
+
+        let visual_count: usize = unsafe { msg_send![tabview, numberOfTabViewItems] };
+
+        unsafe {
+            for i in (0..visual_count).rev() {
+                let item: id = msg_send![tabview, tabViewItemAtIndex:i];
+                let view_id: id = msg_send![item, identifier];
+                if !get_state().window_states[0].browser_states.iter().any(|b| {
+                    // FIXME: store String
+                    NSString::isEqualToString(view_id, &format!("{}", b.id))
+                }) {
+                    msg_send![tabview, removeTabViewItem:item];
                 }
-            } else if state_count == visual_count - 1 {
-                println!("Remove item");
-                // for i in 0..visual_count {
-                //     if i == visual_count - 1 {
-                //         // remove it
-                //     } else {
-                //         let id = get_state().window_states[0].browser_states[i].id;
-                //         unsafe {
-                //             let item: id = msg_send![tabview, tabViewItemAtIndex:i];
-                //             let view_id: id = msg_send![item, identifier];
-                //             // if item.id != id {
-                //             //     // remove it
-                //             //     break;
-                //             // }
-                //         }
-                //     }
-                // }
-            } else {
-                // That should never happen
-                println!("Inconsistent tabs");
             }
+        }
+
+        let visual_count: usize = unsafe { msg_send![tabview, numberOfTabViewItems] };
+
+        let state_count = get_state().window_states[0].browser_states.len();
+
+        if state_count == visual_count + 1 {
+            // Need to add a tab
+            // Always assume extra tab has been added at the end
+            let id = get_state().window_states[0].browser_states[state_count - 1].id;
+            unsafe {
+                let item: id = msg_send![class("NSTabViewItem"), alloc];
+                let identifier = NSString::alloc(nil).init_str(format!("{}", id).as_str());
+                let item: id = msg_send![item, initWithIdentifier:identifier];
+                msg_send![tabview, addTabViewItem:item];
+            }
+
+        } else if state_count != visual_count {
+            // That should never happen
+            println!("Inconsistent tabs");
         }
 
         unsafe {
             for i in 0..state_count {
+                // FIXME: alloc…
                 let item: id = msg_send![tabview, tabViewItemAtIndex:i];
                 let nsstring = match get_state().window_states[0].browser_states[i].title {
                     Some(ref title) => NSString::alloc(nil).init_str(title),

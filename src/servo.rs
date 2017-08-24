@@ -134,6 +134,10 @@ impl Servo {
         self.servo.borrow_mut().handle_events(vec![WindowEvent::SelectBrowser(id)]);
     }
 
+    pub fn close_browser(&self, id: BrowserId) {
+        self.servo.borrow_mut().handle_events(vec![WindowEvent::CloseBrowser(id)]);
+    }
+
     pub fn get_events(&self) -> Vec<ServoEvent> {
         self.callbacks.get_events()
     }
