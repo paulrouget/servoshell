@@ -77,8 +77,6 @@ impl Servo {
     }
 
     pub fn new(geometry: DrawableGeometry, view: Rc<view::View>, waker: Box<EventLoopWaker>) -> Servo {
-        // FIXME: url not used here
-
         let callbacks = Rc::new(ServoCallbacks {
             event_queue: RefCell::new(Vec::new()),
             geometry: Cell::new(geometry),
@@ -97,13 +95,14 @@ impl Servo {
 
     pub fn create_browser(&self, url: &str) -> BrowserState {
 
-        // FIXME
+        // FIXME: unwrap
         let url = ServoUrl::parse(url).unwrap();
 
         let (sender, receiver) = ipc::channel().unwrap();
         self.servo.borrow_mut().handle_events(vec![WindowEvent::NewBrowser(url, sender)]);
         let id = receiver.recv().unwrap();
         self.select_browser(id);
+        self.sync(false);
 
         BrowserState {
             id: id,
@@ -130,16 +129,18 @@ impl Servo {
         }
     }
 
+    pub fn get_events(&self) -> Vec<ServoEvent> {
+        self.callbacks.get_events()
+    }
+
     pub fn select_browser(&self, id: BrowserId) {
-        self.servo.borrow_mut().handle_events(vec![WindowEvent::SelectBrowser(id)]);
+        let event = WindowEvent::SelectBrowser(id);
+        self.events_for_servo.borrow_mut().push(event);
     }
 
     pub fn close_browser(&self, id: BrowserId) {
-        self.servo.borrow_mut().handle_events(vec![WindowEvent::CloseBrowser(id)]);
-    }
-
-    pub fn get_events(&self) -> Vec<ServoEvent> {
-        self.callbacks.get_events()
+        let event = WindowEvent::CloseBrowser(id);
+        self.events_for_servo.borrow_mut().push(event);
     }
 
     pub fn reload(&self, id: BrowserId) {
