@@ -46,7 +46,7 @@ fn main() {
     let window = app.create_window().unwrap();
 
     get_state().current_window_index = Some(0);
-    get_state().window_states.push(Window::get_init_state());
+    get_state().windows.push(Window::get_init_state());
 
     let view = Rc::new(window.create_view().unwrap());
 
@@ -66,8 +66,8 @@ fn main() {
     let browser = servo.create_browser(&url);
     servo.select_browser(browser.id);
 
-    get_state().window_states[0].current_browser_index = Some(0);
-    get_state().window_states[0].browser_states.push(browser);
+    get_state().windows[0].current_browser_index = Some(0);
+    get_state().windows[0].browsers.push(browser);
 
     info!("Servo version: {}", servo.version());
 
@@ -139,8 +139,8 @@ fn main() {
                         // FIXME
                     }
                     WindowEvent::DoCommand(cmd) => {
-                        let idx = get_state().window_states[0].current_browser_index.unwrap();
-                        let ref mut state = get_state().window_states[0].browser_states[idx];
+                        let idx = get_state().windows[0].current_browser_index.unwrap();
+                        let ref mut state = get_state().windows[0].browsers[idx];
                         match cmd {
                             WindowCommand::Stop => {
                                 // FIXME
@@ -203,58 +203,58 @@ fn main() {
                                 }
                             }
                             WindowCommand::ToggleOptionShowLogs => {
-                                get_state().window_states[0].logs_visible = !get_state().window_states[0].logs_visible;
+                                get_state().windows[0].logs_visible = !get_state().windows[0].logs_visible;
                                 ui_invalidated = true;
                             },
                             WindowCommand::NewTab => {
                                 let browser = servo.create_browser("about:blank");
                                 servo.select_browser(browser.id);
                                 servo.update_geometry(view.get_geometry());
-                                get_state().window_states[0].current_browser_index = Some(idx + 1);
-                                get_state().window_states[0].browser_states.push(browser);
+                                get_state().windows[0].current_browser_index = Some(idx + 1);
+                                get_state().windows[0].browsers.push(browser);
                                 ui_invalidated = true;
                             },
                             WindowCommand::CloseTab => {
-                                if get_state().window_states[0].browser_states.len() > 1 {
-                                    let id = get_state().window_states[0].browser_states[idx].id;
-                                    let new_id = if idx == get_state().window_states[0].browser_states.len() - 1 {
-                                        get_state().window_states[0].current_browser_index = Some(idx - 1);
-                                        get_state().window_states[0].browser_states[idx - 1].id
+                                if get_state().windows[0].browsers.len() > 1 {
+                                    let id = get_state().windows[0].browsers[idx].id;
+                                    let new_id = if idx == get_state().windows[0].browsers.len() - 1 {
+                                        get_state().windows[0].current_browser_index = Some(idx - 1);
+                                        get_state().windows[0].browsers[idx - 1].id
                                     } else {
-                                        get_state().window_states[0].browser_states[idx + 1].id
+                                        get_state().windows[0].browsers[idx + 1].id
                                     };
                                     servo.select_browser(new_id);
                                     servo.close_browser(id);
-                                    get_state().window_states[0].browser_states.remove(idx);
+                                    get_state().windows[0].browsers.remove(idx);
                                     ui_invalidated = true;
                                 }
                             },
                             WindowCommand::PrevTab => {
                                 let new_idx = if idx == 0 {
-                                    get_state().window_states[0].browser_states.len() - 1
+                                    get_state().windows[0].browsers.len() - 1
                                 } else {
                                     idx - 1
                                 };
-                                get_state().window_states[0].current_browser_index = Some(new_idx);
-                                let id = get_state().window_states[0].browser_states[new_idx].id;
+                                get_state().windows[0].current_browser_index = Some(new_idx);
+                                let id = get_state().windows[0].browsers[new_idx].id;
                                 servo.select_browser(id);
                                 ui_invalidated = true;
                             },
                             WindowCommand::NextTab => {
-                                let new_idx = if idx == get_state().window_states[0].browser_states.len() - 1 {
+                                let new_idx = if idx == get_state().windows[0].browsers.len() - 1 {
                                     0
                                 } else {
                                     idx + 1
                                 };
-                                get_state().window_states[0].current_browser_index = Some(new_idx);
-                                let id = get_state().window_states[0].browser_states[new_idx].id;
+                                get_state().windows[0].current_browser_index = Some(new_idx);
+                                let id = get_state().windows[0].browsers[new_idx].id;
                                 servo.select_browser(id);
                                 ui_invalidated = true;
                             },
                             WindowCommand::SelectTab(idx) => {
-                                if get_state().window_states[0].current_browser_index != Some(idx) {
-                                    get_state().window_states[0].current_browser_index = Some(idx);
-                                    let id = get_state().window_states[0].browser_states[idx].id;
+                                if get_state().windows[0].current_browser_index != Some(idx) {
+                                    get_state().windows[0].current_browser_index = Some(idx);
+                                    let id = get_state().windows[0].browsers[idx].id;
                                     servo.select_browser(id);
                                     ui_invalidated = true;
                                 }
@@ -266,19 +266,19 @@ fn main() {
                             WindowCommand::ToggleOptionTileBorders => { },
 
                             WindowCommand::ToggleOptionWRProfiler => {
-                                let ref mut state = get_state().window_states[0].browser_states[0];
+                                let ref mut state = get_state().windows[0].browsers[0];
                                 state.debug_options.wr_profiler = !state.debug_options.wr_profiler;
                                 servo.toggle_webrender_debug_option(WebRenderDebugOption::Profiler);
                             },
 
                             WindowCommand::ToggleOptionWRTextureCacheDebug => {
-                                let ref mut state = get_state().window_states[0].browser_states[0];
+                                let ref mut state = get_state().windows[0].browsers[0];
                                 state.debug_options.wr_texture_cache_debug = !state.debug_options.wr_texture_cache_debug;
                                 servo.toggle_webrender_debug_option(WebRenderDebugOption::TextureCacheDebug);
                             },
 
                             WindowCommand::ToggleOptionWRTargetDebug => {
-                                let ref mut state = get_state().window_states[0].browser_states[0];
+                                let ref mut state = get_state().windows[0].browsers[0];
                                 state.debug_options.wr_render_target_debug = !state.debug_options.wr_render_target_debug;
                                 servo.toggle_webrender_debug_option(WebRenderDebugOption::RenderTargetDebug);
                             },
@@ -288,8 +288,8 @@ fn main() {
             }
 
             for event in view_events {
-                let idx = get_state().window_states[0].current_browser_index.unwrap();
-                let ref mut state = get_state().window_states[0].browser_states[idx];
+                let idx = get_state().windows[0].current_browser_index.unwrap();
+                let ref mut state = get_state().windows[0].browsers[idx];
                 match event {
                     ViewEvent::GeometryDidChange => {
                         servo.update_geometry(view.get_geometry());
@@ -340,7 +340,7 @@ fn main() {
                         }
                     }
                     ServoEvent::TitleChanged(id, title) => {
-                        match get_state().window_states[0].browser_states.iter_mut().find(|b| b.id == id) {
+                        match get_state().windows[0].browsers.iter_mut().find(|b| b.id == id) {
                             Some(browser) => {
                                 browser.title = title;
                                 ui_invalidated = true;
@@ -352,7 +352,7 @@ fn main() {
                         window.set_status(status);
                     }
                     ServoEvent::LoadStart(id) => {
-                        match get_state().window_states[0].browser_states.iter_mut().find(|b| b.id == id) {
+                        match get_state().windows[0].browsers.iter_mut().find(|b| b.id == id) {
                             Some(browser) => {
                                 browser.is_loading = true;
                                 ui_invalidated = true;
@@ -361,7 +361,7 @@ fn main() {
                         }
                     }
                     ServoEvent::LoadEnd(id) => {
-                        match get_state().window_states[0].browser_states.iter_mut().find(|b| b.id == id) {
+                        match get_state().windows[0].browsers.iter_mut().find(|b| b.id == id) {
                             Some(browser) => {
                                 browser.is_loading = false;
                                 ui_invalidated = true;
@@ -373,7 +373,7 @@ fn main() {
                         // FIXME
                     }
                     ServoEvent::HistoryChanged(id, entries, current) => {
-                        match get_state().window_states[0].browser_states.iter_mut().find(|b| b.id == id) {
+                        match get_state().windows[0].browsers.iter_mut().find(|b| b.id == id) {
                             Some(browser) => {
                                 let url = entries[current].url.to_string();
                                 browser.url = Some(url);
@@ -408,7 +408,7 @@ fn main() {
         // new events
 
         // FIXME: logs will grow until pulled
-        if get_state().window_states[0].logs_visible {
+        if get_state().windows[0].logs_visible {
             window.append_logs(&logs.get_logs());
         }
     };

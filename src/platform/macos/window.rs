@@ -112,8 +112,8 @@ pub fn register() {
                     WindowCommand::ZoomIn
                 }
             } else if action == sel!(shellReloadStop:) {
-                let idx = get_state().window_states[0].current_browser_index.unwrap();
-                if get_state().window_states[0].browser_states[idx].is_loading {
+                let idx = get_state().windows[0].current_browser_index.unwrap();
+                if get_state().windows[0].browsers[idx].is_loading {
                     WindowCommand::Stop
                 } else {
                     WindowCommand::Reload
@@ -156,8 +156,8 @@ pub fn register() {
         }
 
         extern fn validate_action(_this: &Object, _sel: Sel, action: Sel) -> BOOL {
-            let idx = get_state().window_states[0].current_browser_index.unwrap();
-            let ref state = get_state().window_states[0].browser_states[idx];
+            let idx = get_state().windows[0].current_browser_index.unwrap();
+            let ref state = get_state().windows[0].browsers[idx];
             let enabled = if action == sel!(shellStop:) {
                 state.is_loading
             } else if action == sel!(shellReload:) {
@@ -200,12 +200,12 @@ pub fn register() {
         }
 
         extern fn get_state_for_action(_this: &Object, _sel: Sel, action: Sel) -> NSInteger {
-            let idx = get_state().window_states[0].current_browser_index.unwrap();
-            let ref state = get_state().window_states[0].browser_states[idx];
+            let idx = get_state().windows[0].current_browser_index.unwrap();
+            let ref state = get_state().windows[0].browsers[idx];
             let on = if action == sel!(shellToggleOptionDarkTheme:) {
                 get_state().dark_theme
             } else if action == sel!(shellToggleOptionShowLogs:) {
-                get_state().window_states[0].logs_visible
+                get_state().windows[0].logs_visible
             } else if action == sel!(shellToggleOptionFragmentBorders:) {
                 state.debug_options.show_fragment_borders
             } else if action == sel!(shellToggleOptionParallelDisplayListBuidling:) {
@@ -438,18 +438,18 @@ impl Window {
 
         // Show logs if necessary
         let logs = utils::get_view_by_id(self.nswindow, "shellViewLogs").unwrap();
-        let visible = get_state().window_states[0].logs_visible;
+        let visible = get_state().windows[0].logs_visible;
         let hidden = if visible {NO} else {YES};
         unsafe {msg_send![logs, setHidden:hidden]};
 
         // Update urlbar
         let item = self.get_toolbar_item("urlbar").unwrap();
-        let idx = get_state().window_states[0].current_browser_index.unwrap();
+        let idx = get_state().windows[0].current_browser_index.unwrap();
         // FIXME: alloc everytime is bad.
         unsafe {
             let view = msg_send![item, view];
             let field = utils::get_view_by_id(view, "shellToolbarViewUrlbarTextfield").unwrap();
-            match get_state().window_states[0].browser_states[idx].url {
+            match get_state().windows[0].browsers[idx].url {
                 Some(ref url) if url != "about:blank" => msg_send![field, setStringValue:NSString::alloc(nil).init_str(url)],
                 _ => msg_send![field, setStringValue:NSString::alloc(nil).init_str("")],
             };
@@ -466,7 +466,7 @@ impl Window {
             for i in (0..visual_count).rev() {
                 let item: id = msg_send![tabview, tabViewItemAtIndex:i];
                 let view_id: id = msg_send![item, identifier];
-                if !get_state().window_states[0].browser_states.iter().any(|b| {
+                if !get_state().windows[0].browsers.iter().any(|b| {
                     // FIXME: store String
                     NSString::isEqualToString(view_id, &format!("{}", b.id))
                 }) {
@@ -477,12 +477,12 @@ impl Window {
 
         let visual_count: usize = unsafe { msg_send![tabview, numberOfTabViewItems] };
 
-        let state_count = get_state().window_states[0].browser_states.len();
+        let state_count = get_state().windows[0].browsers.len();
 
         if state_count == visual_count + 1 {
             // Need to add a tab
             // Always assume extra tab has been added at the end
-            let id = get_state().window_states[0].browser_states[state_count - 1].id;
+            let id = get_state().windows[0].browsers[state_count - 1].id;
             unsafe {
                 let item: id = msg_send![class("NSTabViewItem"), alloc];
                 let identifier = NSString::alloc(nil).init_str(format!("{}", id).as_str());
@@ -496,7 +496,7 @@ impl Window {
         }
 
         unsafe {
-            let idx = get_state().window_states[0].current_browser_index.unwrap();
+            let idx = get_state().windows[0].current_browser_index.unwrap();
             msg_send![tabview, selectTabViewItemAtIndex:idx];
         }
 
@@ -504,7 +504,7 @@ impl Window {
             for i in 0..state_count {
                 // FIXME: alloc…
                 let item: id = msg_send![tabview, tabViewItemAtIndex:i];
-                let nsstring = match get_state().window_states[0].browser_states[i].title {
+                let nsstring = match get_state().windows[0].browsers[i].title {
                     Some(ref title) => NSString::alloc(nil).init_str(title),
                     None => NSString::alloc(nil).init_str("No Title"),
                 };
@@ -523,7 +523,7 @@ impl Window {
     pub fn get_init_state() -> WindowState {
         WindowState {
             current_browser_index: None,
-            browser_states: Vec::new(),
+            browsers: Vec::new(),
             sidebar_is_open: false,
             logs_visible: false,
         }

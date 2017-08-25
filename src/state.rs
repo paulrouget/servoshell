@@ -7,13 +7,13 @@ use servo::BrowserId;
 
 pub struct AppState {
     pub current_window_index: Option<usize>,
-    pub window_states: Vec<WindowState>,
+    pub windows: Vec<WindowState>,
     pub dark_theme: bool,
 }
 
 pub struct WindowState {
     pub current_browser_index: Option<usize>,
-    pub browser_states: Vec<BrowserState>,
+    pub browsers: Vec<BrowserState>,
     pub sidebar_is_open: bool,
     pub logs_visible: bool,
 }

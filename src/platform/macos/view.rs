@@ -213,7 +213,7 @@ impl View {
             let content_frame: NSRect = msg_send![content_view, frame];
             let visible_rect: NSRect = msg_send![nswindow, contentLayoutRect];
 
-            let tabheight = if get_state().window_states[0].browser_states.len() > 1 {
+            let tabheight = if get_state().windows[0].browsers.len() > 1 {
                 // FIXME
                 35.0
             } else {

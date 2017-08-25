@@ -79,7 +79,7 @@ impl App {
 
         let state = AppState {
             current_window_index: None,
-            window_states: Vec::new(),
+            windows: Vec::new(),
             dark_theme: false,
         };
 
