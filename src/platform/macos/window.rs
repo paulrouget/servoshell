@@ -74,6 +74,7 @@ pub fn register() {
         let superclass = Class::get("NSObject").unwrap();
         let mut class = ClassDecl::new("NSShellWindowDelegate", superclass).unwrap();
         class.add_ivar::<*mut c_void>("event_queue");
+        class.add_ivar::<bool>("rendering");
 
         // FIXME: Don't use strings. And maybe use a map to avoid the duplicate code with add_method.
         extern fn record_notification(this: &Object, _sel: Sel, notification: id) {
@@ -238,9 +239,14 @@ pub fn register() {
         }
 
         extern fn tabview_selected(this: &Object, _sel: Sel, tabview: id, item: id) {
-            let idx: NSInteger = unsafe { msg_send![tabview, indexOfTabViewItem:item] };
-            let cmd = WindowCommand::SelectTab(idx as usize);
-            utils::get_event_queue(this).push(WindowEvent::DoCommand(cmd));
+            unsafe {
+                let rendering: bool = *this.get_ivar("rendering");
+                if !rendering {
+                    let idx: NSInteger = msg_send![tabview, indexOfTabViewItem:item];
+                    let cmd = WindowCommand::SelectTab(idx as usize);
+                    utils::get_event_queue(this).push(WindowEvent::DoCommand(cmd));
+                }
+            };
         }
 
         unsafe {
@@ -306,6 +312,7 @@ impl Window {
             let delegate: id = msg_send![class("NSShellWindowDelegate"), alloc];
             let event_queue_ptr: *mut c_void = *(&*nswindow).get_ivar("event_queue");
             (*delegate).set_ivar("event_queue", event_queue_ptr);
+            (*delegate).set_ivar("rendering", true);
 
             msg_send![nswindow, setDelegate:delegate];
 
@@ -338,6 +345,7 @@ impl Window {
             let text_container: id = msg_send![textview, textContainer];
             msg_send![text_container, setWidthTracksTextView:NO];
             msg_send![text_container, setContainerSize:NSSize::new(f64::MAX, f64::MAX)];
+            (*delegate).set_ivar("rendering", false);
         }
 
         Window {
@@ -347,6 +355,12 @@ impl Window {
     }
 
     pub fn state_changed(&self) {
+        let delegate = unsafe {
+            let delegate: id = msg_send![self.nswindow, delegate];
+            (*delegate).set_ivar("rendering", true);
+            delegate
+        };
+
         // First, update the avaibility of the buttons
         unsafe {
             let toolbar: id = msg_send![self.nswindow, toolbar];
@@ -360,7 +374,6 @@ impl Window {
                 }
                 let action: Sel = msg_send![item, action];
                 let identifier: id = msg_send![view, identifier];
-                let delegate: id = msg_send![self.nswindow, delegate];
                 if NSString::isEqualToString(identifier, "shellToolbarViewUrlbar") {
                     let stopped: BOOL = msg_send![delegate, validateAction:sel!(shellStop:)];
                     let indicator = utils::get_view_by_id(view, "shellToolbarViewUrlbarThrobber").unwrap();
@@ -406,7 +419,6 @@ impl Window {
 
         // Then, update the state of the popover
         unsafe {
-            let delegate: id = msg_send![self.nswindow, delegate];
             let controller: id = msg_send![self.nspopover, contentViewController];
             let topview: id = msg_send![controller, view];
             let subviews: id = msg_send![topview, subviews];
@@ -484,6 +496,11 @@ impl Window {
         }
 
         unsafe {
+            let idx = get_state().window_states[0].current_browser_index.unwrap();
+            msg_send![tabview, selectTabViewItemAtIndex:idx];
+        }
+
+        unsafe {
             for i in 0..state_count {
                 // FIXME: alloc…
                 let item: id = msg_send![tabview, tabViewItemAtIndex:i];
@@ -493,11 +510,13 @@ impl Window {
                 };
                 msg_send![item, setLabel:nsstring];
             }
-
-            msg_send![tabview, selectTabViewItemAtIndex:idx];
         }
 
 
+
+        unsafe {
+            (*delegate).set_ivar("rendering", false);
+        }
 
     }
 
