@@ -17,7 +17,7 @@ use self::servo::style_traits::DevicePixel;
 use self::servo::net_traits::net_error_list::NetError;
 use self::servo::webrender_api;
 use gleam::gl;
-use state::{BrowserState, DebugOptions};
+use state::BrowserState;
 use platform;
 
 pub use self::servo::BrowserId;
@@ -116,16 +116,6 @@ impl Servo {
             can_go_back: false,
             can_go_forward: false,
             is_loading: false,
-            debug_options: DebugOptions {
-                show_fragment_borders: false,
-                parallel_display_list_building: false,
-                show_parallel_layout: false,
-                convert_mouse_to_touch: false,
-                show_tiles_borders: false,
-                wr_profiler: false,
-                wr_texture_cache_debug: false,
-                wr_render_target_debug: false,
-            },
         }
     }
 

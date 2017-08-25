@@ -15,7 +15,7 @@ use window::{WindowEvent, WindowCommand};
 use view::View;
 use libc;
 use servo::{EventLoopWaker, ServoCursor};
-use state::WindowState;
+use state::{DebugOptions, WindowState};
 use super::get_state;
 use super::logs::ShellLog;
 
@@ -200,28 +200,27 @@ pub fn register() {
         }
 
         extern fn get_state_for_action(_this: &Object, _sel: Sel, action: Sel) -> NSInteger {
-            let idx = get_state().windows[0].current_browser_index.unwrap();
-            let ref state = get_state().windows[0].browsers[idx];
+            let debug_options = &get_state().windows[0].debug_options;
             let on = if action == sel!(shellToggleOptionDarkTheme:) {
                 get_state().dark_theme
             } else if action == sel!(shellToggleOptionShowLogs:) {
                 get_state().windows[0].logs_visible
             } else if action == sel!(shellToggleOptionFragmentBorders:) {
-                state.debug_options.show_fragment_borders
+                debug_options.show_fragment_borders
             } else if action == sel!(shellToggleOptionParallelDisplayListBuidling:) {
-                state.debug_options.parallel_display_list_building
+                debug_options.parallel_display_list_building
             } else if action == sel!(shellToggleOptionShowParallelLayout:) {
-                state.debug_options.show_parallel_layout
+                debug_options.show_parallel_layout
             } else if action == sel!(shellToggleOptionConvertMouseToTouch:) {
-                state.debug_options.convert_mouse_to_touch
+                debug_options.convert_mouse_to_touch
             } else if action == sel!(shellToggleOptionTileBorders:) {
-                state.debug_options.show_tiles_borders
+                debug_options.show_tiles_borders
             } else if action == sel!(shellToggleOptionWRProfiler:) {
-                state.debug_options.wr_profiler
+                debug_options.wr_profiler
             } else if action == sel!(shellToggleOptionWRTextureCacheDebug:) {
-                state.debug_options.wr_texture_cache_debug
+                debug_options.wr_texture_cache_debug
             } else if action == sel!(shellToggleOptionWRRenderTargetDebug:) {
-                state.debug_options.wr_render_target_debug
+                debug_options.wr_render_target_debug
             } else {
                 panic!("Unexpected action for getStateForAction: {:?}", action);
             };
@@ -526,6 +525,16 @@ impl Window {
             browsers: Vec::new(),
             sidebar_is_open: false,
             logs_visible: false,
+            debug_options: DebugOptions {
+                show_fragment_borders: false,
+                parallel_display_list_building: false,
+                show_parallel_layout: false,
+                convert_mouse_to_touch: false,
+                show_tiles_borders: false,
+                wr_profiler: false,
+                wr_texture_cache_debug: false,
+                wr_render_target_debug: false,
+            },
         }
     }
 

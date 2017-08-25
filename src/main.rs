@@ -266,19 +266,19 @@ fn main() {
                             WindowCommand::ToggleOptionTileBorders => { },
 
                             WindowCommand::ToggleOptionWRProfiler => {
-                                let ref mut state = get_state().windows[0].browsers[0];
+                                let ref mut state = get_state().windows[0];
                                 state.debug_options.wr_profiler = !state.debug_options.wr_profiler;
                                 servo.toggle_webrender_debug_option(WebRenderDebugOption::Profiler);
                             },
 
                             WindowCommand::ToggleOptionWRTextureCacheDebug => {
-                                let ref mut state = get_state().windows[0].browsers[0];
+                                let ref mut state = get_state().windows[0];
                                 state.debug_options.wr_texture_cache_debug = !state.debug_options.wr_texture_cache_debug;
                                 servo.toggle_webrender_debug_option(WebRenderDebugOption::TextureCacheDebug);
                             },
 
                             WindowCommand::ToggleOptionWRTargetDebug => {
-                                let ref mut state = get_state().windows[0].browsers[0];
+                                let ref mut state = get_state().windows[0];
                                 state.debug_options.wr_render_target_debug = !state.debug_options.wr_render_target_debug;
                                 servo.toggle_webrender_debug_option(WebRenderDebugOption::RenderTargetDebug);
                             },

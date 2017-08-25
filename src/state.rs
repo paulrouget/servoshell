@@ -16,6 +16,7 @@ pub struct WindowState {
     pub browsers: Vec<BrowserState>,
     pub sidebar_is_open: bool,
     pub logs_visible: bool,
+    pub debug_options: DebugOptions,
 }
 
 pub struct BrowserState {
@@ -31,11 +32,9 @@ pub struct BrowserState {
     pub can_go_back: bool,
     pub can_go_forward: bool,
     pub is_loading: bool,
-    pub debug_options: DebugOptions,
 }
 
 pub struct DebugOptions {
-    // FIXME: pretty sure we got rid of some of these debug options
     pub show_fragment_borders: bool,
     pub parallel_display_list_building: bool,
     pub show_parallel_layout: bool,
