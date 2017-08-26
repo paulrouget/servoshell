@@ -10,11 +10,11 @@ use objc::runtime::{Class, Object, Sel};
 use std::f64;
 use std::ffi::CStr;
 use std::os::raw::c_void;
-use super::utils::{self, get_state};
+use super::utils::{self, get_mut_state, get_state};
 use window::{WindowEvent, WindowCommand};
 use view::View;
 use libc;
-use servo::{EventLoopWaker, ServoCursor};
+use servo::EventLoopWaker;
 use state::{DebugOptions, WindowState};
 use super::logs::ShellLog;
 
@@ -353,6 +353,11 @@ impl Window {
     }
 
     pub fn state_changed(&self) {
+
+        // FIXME: long function is long
+
+        self.update_theme();
+
         let delegate = unsafe {
             let delegate: id = msg_send![self.nswindow, delegate];
             (*delegate).set_ivar("rendering", true);
@@ -443,7 +448,7 @@ impl Window {
         // Update urlbar
         let item = self.get_toolbar_item("urlbar").unwrap();
         let idx = get_state().windows[0].current_browser_index.unwrap();
-        // FIXME: alloc everytime is bad.
+        // FIXME: alloc everytime is bad. Use diff
         unsafe {
             let view = msg_send![item, view];
             let field = utils::get_view_by_id(view, "shellToolbarViewUrlbarTextfield").unwrap();
@@ -451,6 +456,12 @@ impl Window {
                 Some(ref url) if url != "about:blank" => msg_send![field, setStringValue:NSString::alloc(nil).init_str(url)],
                 _ => msg_send![field, setStringValue:NSString::alloc(nil).init_str("")],
             };
+
+            if get_state().windows[0].urlbar_focused {
+                msg_send![field, becomeFirstResponder];
+                // FIXME: Don't do that!!! We should get a message from the widget
+                get_mut_state().windows[0].urlbar_focused = false;
+            }
         }
 
         // FIXME, very ugly
@@ -511,6 +522,41 @@ impl Window {
         }
 
 
+        // FIXME: This is too basic. If we want animations and proper sidebar support,
+        // we need to have access to "animator()" which, afaiu, comes only
+        // from a NSSplitViewController. We want to be able to use this:
+        // https://developer.apple.com/reference/appkit/nssplitviewcontroller/1388905-togglesidebar
+        let sidebar = utils::get_view_by_id(self.nswindow, "shellViewSidebar").unwrap();
+        unsafe {
+            let hidden = if get_state().windows[0].sidebar_is_open {NO} else {YES};
+            msg_send![sidebar, setHidden:hidden];
+        }
+
+        // FIXME: diff
+        let textfield = utils::get_view_by_id(self.nswindow, "shellStatusLabel").unwrap();
+        match get_state().windows[0].status {
+            Some(ref status) => {
+                unsafe {
+                    msg_send![textfield, setHidden:NO];
+                    let string = NSString::alloc(nil).init_str(status);
+                    NSTextField::setStringValue_(textfield, string);
+                }
+            }
+            None => {
+                unsafe{msg_send![textfield, setHidden:YES]};
+            }
+        }
+
+        unsafe {
+            if get_state().windows[0].options_open {
+                let item = self.get_toolbar_item("options").unwrap();
+                let button: id = msg_send![item, view];
+                let bounds = NSView::bounds(button);
+                msg_send![self.nspopover, showRelativeToRect:bounds ofView:button preferredEdge:3];
+                // FIXME: Don't do that!!! We should get a message from the widget
+                get_mut_state().windows[0].options_open = false;
+            }
+        }
 
         unsafe {
             (*delegate).set_ivar("rendering", false);
@@ -524,6 +570,9 @@ impl Window {
             browsers: Vec::new(),
             sidebar_is_open: false,
             logs_visible: false,
+            status: None,
+            urlbar_focused: false,
+            options_open: false,
             debug_options: DebugOptions {
                 show_fragment_borders: false,
                 parallel_display_list_building: false,
@@ -545,22 +594,6 @@ impl Window {
             .ok_or("Can't find NSServoView")
     }
 
-    pub fn toggle_sidebar(&self) {
-        // FIXME: This is too basic. If we want animations and proper sidebar support,
-        // we need to have access to "animator()" which, afaiu, comes only
-        // from a NSSplitViewController. We want to be able to use this:
-        // https://developer.apple.com/reference/appkit/nssplitviewcontroller/1388905-togglesidebar
-        let sidebar = utils::get_view_by_id(self.nswindow, "shellViewSidebar").unwrap();
-        unsafe {
-            let hidden: BOOL = msg_send![sidebar, isHidden];
-            if hidden == YES {
-                msg_send![sidebar, setHidden:NO];
-            } else {
-                msg_send![sidebar, setHidden:YES];
-            }
-        }
-    }
-
     pub fn append_logs(&self, logs: &Vec<ShellLog>) {
         unsafe {
             let textview = utils::get_view_by_id(self.nswindow, "shellViewLogsTextView").unwrap();
@@ -578,40 +611,6 @@ impl Window {
     pub fn get_events(&self) -> Vec<WindowEvent> {
         let nsobject = unsafe { &*self.nswindow};
         utils::get_event_queue(nsobject).drain(..).collect()
-    }
-
-    pub fn set_status(&self, status: Option<String>) {
-        let textfield = utils::get_view_by_id(self.nswindow, "shellStatusLabel").unwrap();
-        match status {
-            Some(status) => {
-                unsafe {
-                    msg_send![textfield, setHidden:NO];
-                    let string = NSString::alloc(nil).init_str(&status);
-                    NSTextField::setStringValue_(textfield, string);
-                }
-            }
-            None => {
-                unsafe{msg_send![textfield, setHidden:YES]};
-            }
-        }
-    }
-
-    pub fn focus_urlbar(&self) {
-        let item = self.get_toolbar_item("urlbar").unwrap();
-        unsafe {
-            let view = msg_send![item, view];
-            let field = utils::get_view_by_id(view, "shellToolbarViewUrlbarTextfield").unwrap();
-            msg_send![field, becomeFirstResponder];
-        }
-    }
-
-    pub fn show_options(&self) {
-        unsafe {
-            let item = self.get_toolbar_item("options").unwrap();
-            let button: id = msg_send![item, view];
-            let bounds = NSView::bounds(button);
-            msg_send![self.nspopover, showRelativeToRect:bounds ofView:button preferredEdge:3];
-        }
     }
 
     fn get_toolbar_item(&self, identifier: &str) -> Option<id> {
@@ -647,56 +646,21 @@ impl Window {
         }
     }
 
-    // From winit
-    pub fn set_cursor(&self, cursor: ServoCursor) {
-        let cursor_name = match cursor {
-            ServoCursor::Default => "arrowCursor",
-            ServoCursor::Pointer => "pointingHandCursor",
-            ServoCursor::ContextMenu => "contextualMenuCursor",
-            ServoCursor::Crosshair => "crosshairCursor",
-            ServoCursor::Text => "IBeamCursor",
-            ServoCursor::VerticalText => "IBeamCursorForVerticalLayout",
-            ServoCursor::Alias => "dragLinkCursor",
-            ServoCursor::Copy => "dragCopyCursor",
-            ServoCursor::NoDrop => "operationNotAllowedCursor",
-            ServoCursor::NotAllowed => "operationNotAllowedCursor",
-            ServoCursor::Grab => "closedHandCursor",
-            ServoCursor::Grabbing => "closedHandCursor",
-            ServoCursor::EResize => "resizeRightCursor",
-            ServoCursor::NResize => "resizeUpCursor",
-            ServoCursor::SResize => "resizeDownCursor",
-            ServoCursor::WResize => "resizeLeftCursor",
-            ServoCursor::EwResize => "resizeLeftRightCursor",
-            ServoCursor::NsResize => "resizeUpDownCursor",
-            ServoCursor::ColResize => "resizeLeftRightCursor",
-            ServoCursor::RowResize => "resizeUpDownCursor",
-            ServoCursor::None |
-            ServoCursor::Cell |
-            ServoCursor::Move |
-            ServoCursor::NeResize |
-            ServoCursor::NwResize |
-            ServoCursor::SeResize |
-            ServoCursor::SwResize |
-            ServoCursor::NeswResize |
-            ServoCursor::NwseResize |
-            ServoCursor::AllScroll |
-            ServoCursor::ZoomIn |
-            ServoCursor::ZoomOut |
-            ServoCursor::Wait |
-            ServoCursor::Progress |
-            ServoCursor::Help => "arrowServoCursor"
-        };
-        let sel = Sel::register(cursor_name);
-        let cls = Class::get("NSCursor").unwrap();
-        unsafe {
-            use objc::Message;
-            let cursor: id = cls.send_message(sel, ()).unwrap();
-            let _: () = msg_send![cursor, set];
-        }
-    }
-
     pub fn update_theme(&self) {
+        let was_dark = {
+            // FIXME. Use state diff
+            unsafe {
+                let appearance: id = msg_send![self.nswindow, appearance];
+                let name: id = msg_send![appearance, name];
+                name == NSAppearanceNameVibrantDark
+            }
+        };
         let dark = get_state().dark_theme;
+
+        if (dark && was_dark) || (!dark && !was_dark) {
+            return
+        }
+
         let (appearance, bordered, segment_style) = unsafe { if dark {
             // 3 -> roundRect
             (NSAppearanceNameVibrantDark, NO, 3)

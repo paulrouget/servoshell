@@ -9,9 +9,10 @@ use objc::declare::ClassDecl;
 use objc::runtime::{Class, Object, Sel};
 use std::os::raw::c_void;
 use super::window;
-use super::utils;
 use app::{AppEvent, AppCommand};
+use servo::ServoCursor;
 use state::AppState;
+use super::utils::{self, get_state};
 
 pub fn register() {
     let superclass = Class::get("NSResponder").unwrap();
@@ -81,6 +82,7 @@ impl App {
             current_window_index: None,
             windows: Vec::new(),
             dark_theme: false,
+            cursor: ServoCursor::Default,
         };
 
         let instances = match utils::load_nib("App.nib") {
@@ -121,7 +123,15 @@ impl App {
         Ok(app)
     }
 
-    pub fn state(&self) -> &mut AppState {
+    pub fn state(&self) -> &AppState {
+        unsafe {
+            let delegate: id = msg_send![self.nsapp, delegate];
+            let ivar: *const c_void = *(&*delegate).get_ivar("state");
+            &*(ivar as *const AppState)
+        }
+    }
+
+    pub fn mut_state(&self) -> &mut AppState {
         unsafe {
             let delegate: id = msg_send![self.nsapp, delegate];
             let ivar: *mut c_void = *(&*delegate).get_ivar("state");
@@ -130,8 +140,56 @@ impl App {
     }
 
     pub fn state_changed(&self) {
-        // Only the menu will be affected, and they are automatically
-        // updated via validate_ui
+        self.update_cursor();
+    }
+
+    // From winit
+    pub fn update_cursor(&self) {
+
+        let cursor_name = match get_state().cursor {
+            ServoCursor::Default => "arrowCursor",
+            ServoCursor::Pointer => "pointingHandCursor",
+            ServoCursor::ContextMenu => "contextualMenuCursor",
+            ServoCursor::Crosshair => "crosshairCursor",
+            ServoCursor::Text => "IBeamCursor",
+            ServoCursor::VerticalText => "IBeamCursorForVerticalLayout",
+            ServoCursor::Alias => "dragLinkCursor",
+            ServoCursor::Copy => "dragCopyCursor",
+            ServoCursor::NoDrop => "operationNotAllowedCursor",
+            ServoCursor::NotAllowed => "operationNotAllowedCursor",
+            ServoCursor::Grab => "closedHandCursor",
+            ServoCursor::Grabbing => "closedHandCursor",
+            ServoCursor::EResize => "resizeRightCursor",
+            ServoCursor::NResize => "resizeUpCursor",
+            ServoCursor::SResize => "resizeDownCursor",
+            ServoCursor::WResize => "resizeLeftCursor",
+            ServoCursor::EwResize => "resizeLeftRightCursor",
+            ServoCursor::NsResize => "resizeUpDownCursor",
+            ServoCursor::ColResize => "resizeLeftRightCursor",
+            ServoCursor::RowResize => "resizeUpDownCursor",
+            ServoCursor::None |
+            ServoCursor::Cell |
+            ServoCursor::Move |
+            ServoCursor::NeResize |
+            ServoCursor::NwResize |
+            ServoCursor::SeResize |
+            ServoCursor::SwResize |
+            ServoCursor::NeswResize |
+            ServoCursor::NwseResize |
+            ServoCursor::AllScroll |
+            ServoCursor::ZoomIn |
+            ServoCursor::ZoomOut |
+            ServoCursor::Wait |
+            ServoCursor::Progress |
+            ServoCursor::Help => "arrowServoCursor"
+        };
+        let sel = Sel::register(cursor_name);
+        let cls = Class::get("NSCursor").unwrap();
+        unsafe {
+            use objc::Message;
+            let cursor: id = cls.send_message(sel, ()).unwrap();
+            let _: () = msg_send![cursor, set];
+        }
     }
 
     pub fn get_events(&self) -> Vec<AppEvent> {

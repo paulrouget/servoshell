@@ -3,12 +3,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use view;
-use servo::BrowserId;
+use servo::{BrowserId, ServoCursor};
 
 pub struct AppState {
     pub current_window_index: Option<usize>,
     pub windows: Vec<WindowState>,
     pub dark_theme: bool,
+    pub cursor: ServoCursor,
 }
 
 pub struct WindowState {
@@ -17,6 +18,9 @@ pub struct WindowState {
     pub sidebar_is_open: bool,
     pub logs_visible: bool,
     pub debug_options: DebugOptions,
+    pub status: Option<String>,
+    pub urlbar_focused: bool,
+    pub options_open: bool,
 }
 
 pub struct BrowserState {
