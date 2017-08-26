@@ -18,7 +18,7 @@ use self::servo::net_traits::net_error_list::NetError;
 use self::servo::webrender_api;
 use gleam::gl;
 use state::BrowserState;
-use platform;
+use std::path::PathBuf;
 
 pub use self::servo::BrowserId;
 pub use self::servo::compositing::compositor_thread::EventLoopWaker;
@@ -58,18 +58,11 @@ pub struct Servo {
 
 impl Servo {
 
-    pub fn configure() -> Result<(), &'static str> {
-
-        let path = match platform::get_resources_path() {
-            Some(path) => path.join("servo_resources"),
-            None => panic!("Can't find resources directory"),
-        };
-
+    pub fn configure(path: PathBuf) {
         let path = path.to_str().unwrap().to_string();
         set_resources_path(Some(path));
-
+        // FIXME: I forgot… is that necessary now?
         opts::set_defaults(opts::default_opts());
-        Ok(())
     }
 
     pub fn version(&self) -> String {

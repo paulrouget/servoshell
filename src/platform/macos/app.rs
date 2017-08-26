@@ -8,13 +8,15 @@ use cocoa::foundation::*;
 use objc::declare::ClassDecl;
 use objc::runtime::{Class, Object, Sel};
 use std::os::raw::c_void;
-use super::window;
+use std::env;
+use std::path::PathBuf;
 use app::{AppEvent, AppCommand};
 use servo::ServoCursor;
 use state::AppState;
 use super::utils::{self, get_state};
+use super::{window, view, toolbar, bookmarks};
 
-pub fn register() {
+fn register() {
     let superclass = Class::get("NSResponder").unwrap();
     let mut class = ClassDecl::new("NSShellApplicationDelegate", superclass).unwrap();
     class.add_ivar::<*mut c_void>("event_queue");
@@ -76,7 +78,13 @@ pub struct App {
 
 impl App {
 
-    pub fn load() -> Result<App, &'static str> {
+    pub fn new() -> Result<App, &'static str> {
+
+        register();
+        view::register();
+        window::register();
+        toolbar::register();
+        bookmarks::register();
 
         let state = AppState {
             current_window_index: None,
@@ -121,6 +129,35 @@ impl App {
         let app = App {nsapp: nsapp};
 
         Ok(app)
+    }
+
+    // Where to find servo_resources/ and nibs/
+    pub fn get_res_parent() -> Option<PathBuf> {
+        // Try current directory. Used for example with "cargo run"
+        let p = env::current_dir().unwrap();
+
+        if p.join("servo_resources/").exists() {
+            return Some(p)
+        }
+
+        // Maybe we run from an app bundle
+        let p = env::current_exe().unwrap();
+        let p = p.parent().unwrap();
+        let p = p.parent().unwrap().join("Resources");
+
+        if p.join("servo_resources/").exists() {
+            return Some(p)
+        }
+
+        None
+    }
+
+    pub fn get_nibs_path() -> Option<PathBuf> {
+        Self::get_res_parent().map(|p| p.join("nibs"))
+    }
+
+    pub fn get_resources_path() -> Option<PathBuf> {
+        Self::get_res_parent().map(|p| p.join("servo_resources"))
     }
 
     pub fn state(&self) -> &AppState {

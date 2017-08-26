@@ -38,9 +38,7 @@ fn main() {
 
     info!("starting");
 
-    platform::init();
-
-    let app = App::load().unwrap();
+    let app = App::new().unwrap();
     let window = app.create_window().unwrap();
 
     app.mut_state().current_window_index = Some(0);
@@ -48,7 +46,8 @@ fn main() {
 
     let view = Rc::new(window.create_view().unwrap());
 
-    Servo::configure().unwrap();
+    Servo::configure(App::get_resources_path().unwrap());
+
     let servo = {
         let geometry = view.get_geometry();
         let waker = window.create_event_loop_waker();
