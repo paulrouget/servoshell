@@ -352,7 +352,7 @@ impl Window {
         }
     }
 
-    pub fn state_changed(&self) {
+    pub fn render(&self) {
 
         // FIXME: long function is long
 

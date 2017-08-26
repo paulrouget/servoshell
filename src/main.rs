@@ -401,8 +401,8 @@ fn main() {
             }
 
             if ui_invalidated {
-                app.state_changed();
-                window.state_changed();
+                app.render();
+                window.render();
             }
 
             servo.sync(force_sync);

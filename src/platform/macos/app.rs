@@ -176,7 +176,7 @@ impl App {
         }
     }
 
-    pub fn state_changed(&self) {
+    pub fn render(&self) {
         self.update_cursor();
     }
 
