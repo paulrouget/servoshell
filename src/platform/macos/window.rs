@@ -646,7 +646,7 @@ impl Window {
         }
     }
 
-    pub fn update_theme(&self) {
+    fn update_theme(&self) {
         let was_dark = {
             // FIXME. Use state diff
             unsafe {
