@@ -121,6 +121,14 @@ impl App {
         Ok(app)
     }
 
+    pub fn state(&self) -> &mut AppState {
+        unsafe {
+            let delegate: id = msg_send![self.nsapp, delegate];
+            let ivar: *mut c_void = *(&*delegate).get_ivar("state");
+            &mut *(ivar as *mut AppState)
+        }
+    }
+
     pub fn state_changed(&self) {
         // Only the menu will be affected, and they are automatically
         // updated via validate_ui

@@ -23,7 +23,6 @@ use std::os::raw::c_void;
 use std::{ffi, str};
 use view::{ElementState, Key, KeyState, KeyModifiers, MouseButton, ViewEvent, TouchPhase, MouseScrollDelta};
 use view::{SHIFT, CONTROL, ALT, SUPER};
-use super::get_state;
 use super::utils;
 
 pub fn register() {
@@ -213,7 +212,7 @@ impl View {
             let content_frame: NSRect = msg_send![content_view, frame];
             let visible_rect: NSRect = msg_send![nswindow, contentLayoutRect];
 
-            let tabheight = if get_state().windows[0].browsers.len() > 1 {
+            let tabheight = if utils::get_state().windows[0].browsers.len() > 1 {
                 // FIXME
                 35.0
             } else {

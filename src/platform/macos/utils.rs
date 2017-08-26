@@ -2,7 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+use state::AppState;
 use cocoa::base::*;
+use cocoa::appkit::*;
 use cocoa::foundation::*;
 use objc::runtime::Object;
 use std::os::raw::c_void;
@@ -102,3 +104,13 @@ pub fn get_view<F>(nsview: id, predicate: &F) -> Option<id> where F: Fn(id) -> b
         return None
     }
 }
+
+
+pub fn get_state<'a>() -> &'a mut AppState {
+    unsafe {
+        let delegate: id = msg_send![NSApp(), delegate];
+        let ivar: *mut c_void = *(&*delegate).get_ivar("state");
+        &mut *(ivar as *mut AppState)
+    }
+}
+

@@ -6,7 +6,7 @@ use cocoa::foundation::*;
 use cocoa::base::*;
 use objc::declare::ClassDecl;
 use objc::runtime::{Class, Object, Sel};
-use super::get_state;
+use super::utils::get_state;
 
 pub fn register() {
 

@@ -10,13 +10,12 @@ use objc::runtime::{Class, Object, Sel};
 use std::f64;
 use std::ffi::CStr;
 use std::os::raw::c_void;
-use super::utils;
+use super::utils::{self, get_state};
 use window::{WindowEvent, WindowCommand};
 use view::View;
 use libc;
 use servo::{EventLoopWaker, ServoCursor};
 use state::{DebugOptions, WindowState};
-use super::get_state;
 use super::logs::ShellLog;
 
 #[link(name = "MMTabBarView", kind = "framework")]
