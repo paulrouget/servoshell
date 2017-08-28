@@ -239,12 +239,14 @@ impl View {
         utils::get_event_queue(nsobject).drain(..).collect()
     }
 
+    // FIXME: should be controlled by state
     pub fn enter_fullscreen(&self) {
         unsafe {
             msg_send![self.nsview, enterFullScreenMode:nil withOptions:nil];
         }
     }
 
+    // FIXME: should be controlled by state
     pub fn exit_fullscreen(&self) {
         unsafe {
             msg_send![self.nsview, exitFullScreenModeWithOptions:nil];

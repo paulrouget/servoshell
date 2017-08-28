@@ -4,6 +4,10 @@
 
 pub use self::platform::*;
 
-#[cfg(target_os = "macos")]
-#[path="macos/mod.rs"]
+#[cfg(feature = "with-cocoa")]
+#[path="cocoa/mod.rs"]
+mod platform;
+
+#[cfg(feature = "with-glutin")]
+#[path="glutin/mod.rs"]
 mod platform;
