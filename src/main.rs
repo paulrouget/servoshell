@@ -5,16 +5,28 @@
 #![feature(box_syntax)]
 #![feature(link_args)]
 
-#[macro_use]
-extern crate objc;
 
 #[macro_use]
 extern crate log;
 
+#[cfg(feature = "with-cocoa")]
 extern crate libc;
+#[cfg(feature = "with-cocoa")]
 extern crate cocoa;
-extern crate gleam;
+#[cfg(feature = "with-cocoa")]
 extern crate objc_foundation;
+#[cfg(feature = "with-cocoa")]
+#[macro_use]
+extern crate objc;
+
+#[cfg(feature = "with-glutin")]
+extern crate glutin;
+#[cfg(feature = "with-glutin")]
+extern crate winit;
+#[cfg(feature = "with-glutin")]
+extern crate tinyfiledialogs;
+
+extern crate gleam;
 extern crate open;
 
 mod app;
@@ -89,6 +101,8 @@ fn main() {
                servo_events.is_empty() {
                    break
             }
+
+            println!("LOOP: {:?}, {:?}, {:?},", app_events, win_events, view_events);
 
             // FIXME: it's really annoying we need this
             let mut force_sync = false;
@@ -300,10 +314,11 @@ fn main() {
                         view.update_drawable();
                     }
                     ViewEvent::MouseWheel(delta, phase) => {
-                        let (x, y) = match delta {
+                        let (mut x, mut y) = match delta {
                             view::MouseScrollDelta::PixelDelta(x, y) => (x, y),
                             _ => (0.0, 0.0),
                         };
+                        if y.abs() >= x.abs() { x = 0.0; } else { y = 0.0; }
                         servo.perform_scroll(0, 0, x, y, phase);
                     }
                     ViewEvent::MouseMoved(x, y) => {
