@@ -3,6 +3,19 @@
 This is a sandbox project. Prototyping and experimenting with embedding Servo.
 The code compiles and run, but it's messy and memory management is non existent.
 
+## Build
+
+You need cargo nightly. Cargo will most likely complain about missing toolchain.
+Install it but no needs to make it the default.
+
+You need to pick which version of the UI you want. Either cocoa widgets (only MacOS),
+or the fallback Glutin port (Windows, MacOS and Linux).
+
+- `git clone --recursive` or `git submodule update --init --recursive` if already cloned.
+- `cargo build --features=with-cocoa` or `cargo build --features=with-glutin`
+- `cargo run`
+
+
 ## Screenshots
 
 ![tabs](https://github.com/paulrouget/servoshell/blob/master/screenshots/tabs.png?raw=true "regular")
