@@ -237,6 +237,9 @@ impl GlutinWindow {
 
     pub fn glutin_event_to_view_event(&mut self, event: &glutin::WindowEvent) -> Option<ViewEvent> {
         match *event {
+            glutin::WindowEvent::Resized(..) => {
+                Some(ViewEvent::GeometryDidChange)
+            }
             glutin::WindowEvent::MouseMoved{device_id: _device_id, position: (x, y)} => {
                 Some(ViewEvent::MouseMoved(x as i32, y as i32))
             }
@@ -401,8 +404,9 @@ impl View {
     pub fn get_geometry(&self) -> DrawableGeometry {
         let windows = self.windows.borrow();
         let win = windows.get(&self.id).unwrap();
+        let size = win.glutin_window.get_inner_size().expect("Failed to get window inner size.");
         DrawableGeometry {
-            view_size: win.glutin_window.get_inner_size().expect("Failed to get window inner size."),
+            view_size: size,
             margins: (0, 0, 0, 0),
             position: win.glutin_window.get_position().expect("Failed to get window position."),
             hidpi_factor: win.glutin_window.hidpi_factor(),
@@ -410,6 +414,10 @@ impl View {
     }
 
     pub fn update_drawable(&self) {
+        let windows = self.windows.borrow();
+        let win = windows.get(&self.id).unwrap();
+        let (w, h) = win.glutin_window.get_inner_size().expect("Failed to get window inner size.");
+        win.glutin_window.resize(w, h);
     }
 
     // FIXME: should be controlled by state
@@ -421,7 +429,7 @@ impl View {
         self.windows.borrow().get(&self.id).unwrap().glutin_window.swap_buffers().unwrap();
     }
 
-    pub fn set_live_resize_callback<F>(&self, callback: &F) where F: FnMut() {
+    pub fn set_live_resize_callback<F>(&self, _callback: &F) where F: FnMut() {
         // FIXME
     }
 
