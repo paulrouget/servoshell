@@ -418,6 +418,9 @@ fn main() {
                     ServoEvent::Key(..) => {
                         // FIXME
                     }
+                    ServoEvent::OpenInDefaultBrowser(url) => {
+                        open::that(url).ok();
+                    }
                 }
             }
 

@@ -34,6 +34,11 @@ use view::DrawableGeometry;
 use std::rc::Rc;
 use std::cell::{Cell, RefCell};
 
+const SHELL_ISSUE_ALIAS: &'static str = "servoshell://issue/servoshell";
+const SERVO_ISSUE_ALIAS: &'static str = "servoshell://issue/servo";
+const SHELL_ISSUE_URL: &'static str = "http://github.com/paulrouget/servoshell/issues/new";
+const SERVO_ISSUE_URL: &'static str  = "http://github.com/servo/servo/issues/new";
+
 pub enum ServoEvent {
     SetWindowInnerSize(u32, u32),
     SetWindowPosition(i32, i32),
@@ -47,6 +52,7 @@ pub enum ServoEvent {
     CursorChanged(ServoCursor),
     FaviconChanged(BrowserId, ServoUrl),
     Key(Option<char>, Key, KeyModifiers),
+    OpenInDefaultBrowser(&'static str),
 }
 
 pub struct Servo {
@@ -283,8 +289,18 @@ impl WindowMethods for ServoCallbacks {
         false
     }
 
-    fn allow_navigation(&self, _id: BrowserId, _url: ServoUrl, chan: ipc::IpcSender<bool>) {
-        chan.send(true).ok();
+    fn allow_navigation(&self, _id: BrowserId, url: ServoUrl, chan: ipc::IpcSender<bool>) {
+        if url.as_str() == SHELL_ISSUE_ALIAS {
+            let event = ServoEvent::OpenInDefaultBrowser(SHELL_ISSUE_URL);
+            self.event_queue.borrow_mut().push(event);
+            chan.send(false).ok();
+        } else if url.as_str() == SERVO_ISSUE_ALIAS {
+            let event = ServoEvent::OpenInDefaultBrowser(SERVO_ISSUE_URL);
+            self.event_queue.borrow_mut().push(event);
+            chan.send(false).ok();
+        } else {
+            chan.send(true).ok();
+        }
     }
 
     fn create_event_loop_waker(&self) -> Box<EventLoopWaker> {
