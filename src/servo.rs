@@ -232,6 +232,7 @@ impl Servo {
     }
 
     pub fn reset_zoom(&self) {
+        // FIXME: Why is that useful? Compared to Zoom(1)
         self.events_for_servo.borrow_mut().push(WindowEvent::ResetZoom);
     }
 
