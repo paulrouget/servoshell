@@ -78,11 +78,39 @@ impl App {
         vec![]
     }
 
+    fn should_exit(&self, event: &glutin::WindowEvent) -> bool {
+        // Exit if window is closed or if Cmd/Ctrl Q
+        match *event {
+            glutin::WindowEvent::Closed => {
+                return true
+            },
+            _ => { }
+        }
+
+        if let glutin::WindowEvent::KeyboardInput {
+            device_id: _,
+            input: glutin::KeyboardInput {
+                state: glutin::ElementState::Pressed,
+                scancode: _,
+                virtual_keycode: Some(glutin::VirtualKeyCode::Q),
+                modifiers,
+            }
+        } = *event {
+            if cmd_or_ctrl(modifiers) {
+                return true
+            }
+        }
+        false
+    }
+
     pub fn run<F>(&self, mut callback: F) where F: FnMut() {
         self.event_loop.borrow_mut().run_forever(|e| {
             let mut call_callback = false;
             match e {
                 glutin::Event::WindowEvent {event, window_id} => {
+                    if self.should_exit(&event) {
+                        return glutin::ControlFlow::Break;
+                    }
                     let mut windows = self.windows.borrow_mut();
                     match windows.get_mut(&window_id) {
                         Some(window) => {
@@ -121,7 +149,6 @@ impl App {
             if call_callback {
                 callback();
             }
-            // FIXME: ControlFlow::Break
             glutin::ControlFlow::Continue
         });
         callback()
