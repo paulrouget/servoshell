@@ -11,10 +11,16 @@ Install it but no needs to make it the default.
 You need to pick which version of the UI you want. Either cocoa widgets (only MacOS),
 or the fallback Glutin port (Windows, MacOS and Linux).
 
-- `git clone --recursive` or `git submodule update --init --recursive` if already cloned.
-- `cargo build --release --features=with-cocoa` or `cargo build --release --features=with-glutin`
-- `cargo run --release`
+1. `git clone --recursive` or `git submodule update --init --recursive` if already cloned.
+2. `cargo build --release --features=with-cocoa` or `cargo build --release --features=with-glutin`
+3. `cargo run --release`
 
+## How to update Servo
+
+1. change `rev` in `Cargo.toml`
+2. update `rust-toolchain`
+3. copy servo/Cargo.lock to servoshell/Cargo.lock
+4. copy servo/resources to servoshell/servo_resources
 
 ## Screenshots
 
@@ -23,10 +29,3 @@ or the fallback Glutin port (Windows, MacOS and Linux).
 ![dark theme](https://github.com/paulrouget/servoshell/blob/master/screenshots/dark-theme.png?raw=true "dark theme")
 ![options](https://github.com/paulrouget/servoshell/blob/master/screenshots/options.png?raw=true "options")
 ![debug](https://github.com/paulrouget/servoshell/blob/master/screenshots/debug.png?raw=true "debug")
-
-## How to update Servo
-
-1. change `rev` in `Cargo.toml`
-2. update `rust-toolchain`
-3. copy servo/Cargo.lock to servoshell/Cargo.lock
-4. copy servo/resources to servoshell/servo_resources
