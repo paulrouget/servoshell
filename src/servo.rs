@@ -68,7 +68,12 @@ impl Servo {
         let path = path.to_str().unwrap().to_string();
         set_resources_path(Some(path));
         // FIXME: I forgot… is that necessary now?
-        opts::set_defaults(opts::default_opts());
+        let mut opts = opts::default_opts();
+        opts.enable_text_antialiasing = true;
+        opts.enable_text_antialiasing = true;
+        opts.enable_subpixel_text_antialiasing = true;
+        opts.enable_canvas_antialiasing = true;
+        opts::set_defaults(opts);
     }
 
     pub fn version(&self) -> String {
