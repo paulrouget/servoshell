@@ -1,16 +1,28 @@
+<!DOCTYPE html>
+
+<meta charset="utf8">
 <title>ServoShell Home</title>
+
 <style>
-  img {
-    width: 128px;
+  img { width: 128px }
+  .cmdorctrl::after { content: "Ctrl " }
+  .platform_MacIntel .cmdorctrl::after { content: "Cmd " }
+  header { text-align: center; }
+  body {
+    width: 300px;
+    margin: auto;
+    font-family: arial;
+    background: #FAFAFA;
   }
 </style>
-<h1>Servo Shell</h1>
-<script>
-  document.body.classList.add("platform_" + window.navigator.platform);
-</script>
-<img src="icons/128x128@2x.png">
-<p><a href="servoshell://issue/servo">Report a Servo issue</a></p>
-<p><a href="servoshell://issue/servoshell">Report a ServoShell issue</a></p>
+
+<header>
+  <h1>Servo Shell</h1>
+  <img src="icons/128x128@2x.png">
+  <p><a href="servoshell://issue/servo">Report a Servo issue</a></p>
+  <p><a href="servoshell://issue/servoshell">Report a ServoShell issue</a></p>
+</header>
+
 <p>Key bindings:</p>
 <ul>
   <li><span class="cmdorctrl"></span>R: Reload
@@ -24,6 +36,8 @@
   <li><span class="cmdorctrl"></span>Q: Quit
 </ul>
 <style>
-  .cmdorctrl::after { content: "Ctrl " }
-  .platform_MacIntel .cmdorctrl::after { content: "Cmd " }
 </style>
+
+<script>
+  document.body.classList.add("platform_" + window.navigator.platform);
+</script>
