@@ -4,10 +4,10 @@
 
 pub use self::platform::*;
 
-#[cfg(feature = "with-cocoa")]
+#[cfg(all(not(feature = "force-glutin"), target_os = "macos"))]
 #[path="cocoa/mod.rs"]
 mod platform;
 
-#[cfg(feature = "with-glutin")]
+#[cfg(any(feature = "force-glutin", not(target_os = "macos")))]
 #[path="glutin/mod.rs"]
 mod platform;

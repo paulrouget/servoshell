@@ -12,8 +12,14 @@ You need to pick which version of the UI you want. Either cocoa widgets (only Ma
 or the fallback Glutin port (Windows, MacOS and Linux).
 
 1. `git clone --recursive` or `git submodule update --init --recursive` if already cloned.
-2. `cargo build --release --features=with-cocoa` or `cargo build --release --features=with-glutin`
-3. `cargo run --release --features=with-cocoa` or `cargo run --release --features=with-glutin`
+2. `cargo build --release`
+3. `cargo run --release`
+
+There are 2 versions of the UI:
+1. Full UI: Tabs + urlbar interface. Cocoa based (only MacOS).
+2. Minimal UI: No controls. Driven by keybindings (Windows and Linux).
+
+The minimal UI can be enabled on MacOS via `--features=force-glutin`.
 
 ## How to update Servo
 

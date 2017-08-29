@@ -9,21 +9,21 @@
 #[macro_use]
 extern crate log;
 
-#[cfg(feature = "with-cocoa")]
+#[cfg(all(not(feature = "force-glutin"), target_os = "macos"))]
 extern crate libc;
-#[cfg(feature = "with-cocoa")]
+#[cfg(all(not(feature = "force-glutin"), target_os = "macos"))]
 extern crate cocoa;
-#[cfg(feature = "with-cocoa")]
+#[cfg(all(not(feature = "force-glutin"), target_os = "macos"))]
 extern crate objc_foundation;
-#[cfg(feature = "with-cocoa")]
+#[cfg(all(not(feature = "force-glutin"), target_os = "macos"))]
 #[macro_use]
 extern crate objc;
 
-#[cfg(feature = "with-glutin")]
+#[cfg(any(feature = "force-glutin", not(target_os = "macos")))]
 extern crate glutin;
-#[cfg(feature = "with-glutin")]
+#[cfg(any(feature = "force-glutin", not(target_os = "macos")))]
 extern crate winit;
-#[cfg(feature = "with-glutin")]
+#[cfg(any(feature = "force-glutin", not(target_os = "macos")))]
 extern crate tinyfiledialogs;
 
 extern crate gleam;
