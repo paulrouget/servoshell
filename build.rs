@@ -13,9 +13,9 @@ fn main() {
 
 fn build_mmtabbarview() {
     Command::new("xcodebuild")
-        .args(&["-project", "./macos/MMTabBarView/MMTabBarView/MMTabBarView.xcodeproj"])
+        .args(&["-project", "./src/platform/cocoa/MMTabBarView/MMTabBarView/MMTabBarView.xcodeproj"])
         .args(&["-configuration", "Release"])
-        .args(&["SYMROOT=../../../target/MMTabBarView/"])
+        .args(&["SYMROOT=../../../../../target/MMTabBarView/"])
         .status()
         .expect("xcodebuild failed");
     println!("cargo:rustc-link-search=framework=target/MMTabBarView/Release/");
@@ -34,8 +34,8 @@ fn build_nibs() {
             .ok()
             .expect("ibtool failed");
     }
-    let nibs_dir = Path::new("nibs");
+    let nibs_dir = Path::new("target/nibs");
     fs::create_dir_all(&nibs_dir).unwrap();
-    ibtool("macos/xib/App.xib", nibs_dir);
-    ibtool("macos/xib/Window.xib", nibs_dir);
+    ibtool("src/platform/cocoa/xib/App.xib", nibs_dir);
+    ibtool("src/platform/cocoa/xib/Window.xib", nibs_dir);
 }

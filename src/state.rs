@@ -5,6 +5,7 @@
 use view;
 use servo::{BrowserId, ServoCursor};
 
+#[derive(Clone)]
 pub struct AppState {
     pub current_window_index: Option<usize>,
     pub windows: Vec<WindowState>,
@@ -12,6 +13,7 @@ pub struct AppState {
     pub cursor: ServoCursor,
 }
 
+#[derive(Clone)]
 pub struct WindowState {
     pub current_browser_index: Option<usize>,
     pub browsers: Vec<BrowserState>,
@@ -23,6 +25,7 @@ pub struct WindowState {
     pub options_open: bool,
 }
 
+#[derive(Clone)]
 pub struct BrowserState {
     pub id: BrowserId,
     pub last_mouse_point: (i32, i32),
@@ -38,6 +41,7 @@ pub struct BrowserState {
     pub is_loading: bool,
 }
 
+#[derive(Clone)]
 pub struct DebugOptions {
     pub show_fragment_borders: bool,
     pub parallel_display_list_building: bool,

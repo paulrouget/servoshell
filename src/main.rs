@@ -40,6 +40,7 @@ use app::{App, AppEvent, AppCommand};
 use window::{Window, WindowEvent, WindowCommand};
 use view::ViewEvent;
 use servo::ServoEvent;
+use std::cell::RefCell;
 use std::rc::Rc;
 use std::env::args;
 use servo::{Servo, ServoUrl, WebRenderDebugOption};
@@ -52,11 +53,6 @@ fn main() {
 
     let app = App::new().unwrap();
     let window = app.create_window().unwrap();
-
-    let mut state = App::get_init_state();
-
-    state.current_window_index = Some(0);
-    state.windows.push(Window::get_init_state());
 
     let view = Rc::new(window.create_view().unwrap());
 
@@ -80,12 +76,24 @@ fn main() {
     let browser = servo.create_browser(&url);
     servo.select_browser(browser.id);
 
+    let mut state = App::get_init_state();
+    state.current_window_index = Some(0);
+    state.windows.push(Window::get_init_state());
     state.windows[0].current_browser_index = Some(0);
     state.windows[0].browsers.push(browser);
+    app.render(&state);
+    // FIXME: no mut!
+    window.render(&mut state.windows[0]);
 
     info!("Servo version: {}", servo.version());
 
+    // Use a RefCell, otherwise the handle_events callback needs to be a FnMut, making things a bit hard
+    // FIXME: do not use a RefCell
+    let state = RefCell::new(state);
+
     let handle_events = || {
+
+        let mut state = state.borrow_mut();
 
         // Loop until no events are available anymore.
         loop {
@@ -101,8 +109,6 @@ fn main() {
                servo_events.is_empty() {
                    break
             }
-
-            println!("LOOP: {:?}, {:?}, {:?},", app_events, win_events, view_events);
 
             // FIXME: it's really annoying we need this
             let mut force_sync = false;

@@ -1,4 +1,4 @@
 name = "ServoShell"
 identifier = "org.servo.servoshell"
 icon = ["shell_resources/icons/32x32.png", "shell_resources/icons/128x128.png", "shell_resources/icons/128x128@2x.png"]
-resources = ["servo_resources/", "shell_resources/", "nibs/"]
+resources = ["servo_resources/", "shell_resources/", "target/nibs/"]
