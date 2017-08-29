@@ -56,11 +56,14 @@ fn main() {
         Servo::new(geometry, view.clone(), waker)
     };
 
+    let home_url = App::get_resources_path().unwrap().parent().unwrap().join("shell_resources").join("home.html");
+    let home_url = ServoUrl::from_file_path(&home_url).unwrap().into_string();
+
     // Skip first argument (executable), and find the first
     // argument that doesn't start with `-`
     let url = args().skip(1).find(|arg| {
         !arg.starts_with("-")
-    }).unwrap_or("https://blog.servo.org/".to_owned());
+    }).unwrap_or(home_url);
 
     let browser = servo.create_browser(&url);
     servo.select_browser(browser.id);
