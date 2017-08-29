@@ -1,17 +1,29 @@
+<title>ServoShell Home</title>
 <style>
   img {
     width: 128px;
   }
 </style>
 <h1>Servo Shell</h1>
+<script>
+  document.body.classList.add("platform_" + window.navigator.platform);
+</script>
 <img src="icons/128x128@2x.png">
-<pre>
-  Cmd/Ctrl R: Reload
-  Cmd Left/Right: Go back/forward in history
-  Cmd/Ctrl L: Search or enter a new URL
-  Cmd/Ctrl +/-/=: Zoom
-  Cmd/Ctrl T: new tab
-  Cmd/Ctrl W: close tab
-  Ctrl (shift) tab: next/previous tab
-  Cmd/Ctrl 1..9: Select tab
-</pre>
+<p><a href="servoshell://issue/servo">Report a Servo issue</a></p>
+<p><a href="servoshell://issue/servoshell">Report a ServoShell issue</a></p>
+<p>Key bindings:</p>
+<ul>
+  <li><span class="cmdorctrl"></span>R: Reload
+  <li><span class="cmdorctrl"></span>Left/Right: Go back/forward in history
+  <li><span class="cmdorctrl"></span>L: Search or enter a new URL
+  <li><span class="cmdorctrl"></span>+/-/=: Zoom
+  <li><span class="cmdorctrl"></span>T: new tab
+  <li><span class="cmdorctrl"></span>W: close tab
+  <li>Ctrl (shift) tab: next/previous tab
+  <li><span class="cmdorctrl"></span>1..9: Select tab
+  <li><span class="cmdorctrl"></span>Q: Quit
+</ul>
+<style>
+  .cmdorctrl::after { content: "Ctrl " }
+  .platform_MacIntel .cmdorctrl::after { content: "Cmd " }
+</style>
