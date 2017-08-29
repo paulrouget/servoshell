@@ -13,6 +13,8 @@ pub enum WindowEvent {
     DidEnterFullScreen,
     DidExitFullScreen,
     WillClose,
+    OptionsClosed,
+    UrlbarFocusChanged(bool),
     DoCommand(WindowCommand),
 }
 

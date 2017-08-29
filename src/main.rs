@@ -159,6 +159,12 @@ fn main() {
                     WindowEvent::WillClose => {
                         // FIXME
                     }
+                    WindowEvent::OptionsClosed => {
+                        state.windows[0].options_open = false;
+                    }
+                    WindowEvent::UrlbarFocusChanged(focused) => {
+                        state.windows[0].urlbar_focused = focused;
+                    }
                     WindowEvent::DoCommand(cmd) => {
                         let idx = state.windows[0].current_browser_index.unwrap();
                         let bid = state.windows[0].browsers[idx].id;
@@ -212,6 +218,7 @@ fn main() {
 
                             WindowCommand::Load(request) => {
                                 state.windows[0].browsers[idx].user_input = Some(request.clone());
+                                state.windows[0].urlbar_focused = false;
                                 let url = ServoUrl::parse(&request).or_else(|error| {
                                     // FIXME: weak
                                     if request.ends_with(".com") || request.ends_with(".org") || request.ends_with(".net") {
@@ -426,8 +433,7 @@ fn main() {
 
             if ui_invalidated {
                 app.render(&state);
-                // FIXME: no mut!
-                window.render(&mut state.windows[0]);
+                window.render(&state.windows[0]);
             }
 
             servo.sync(force_sync);

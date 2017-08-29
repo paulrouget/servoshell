@@ -13,7 +13,7 @@ use std::path::PathBuf;
 use app::{AppEvent, AppCommand};
 use servo::ServoCursor;
 use state::AppState;
-use super::utils::{self, get_state};
+use super::utils;
 use super::{window, view, toolbar, bookmarks};
 
 fn register() {
@@ -86,13 +86,6 @@ impl App {
         toolbar::register();
         bookmarks::register();
 
-        let state = AppState {
-            current_window_index: None,
-            windows: Vec::new(),
-            dark_theme: false,
-            cursor: ServoCursor::Default,
-        };
-
         let instances = match utils::load_nib("App.nib") {
             Ok(instances) => instances,
             Err(msg) => return Err(msg),
@@ -117,18 +110,24 @@ impl App {
         let event_queue: Vec<AppEvent> = Vec::new();
         let event_queue_ptr = Box::into_raw(Box::new(event_queue));
 
-        let state_ptr = Box::into_raw(Box::new(state));
-
         unsafe {
             let delegate: id = msg_send![class("NSShellApplicationDelegate"), alloc];
             (*delegate).set_ivar("event_queue", event_queue_ptr as *mut c_void);
-            (*delegate).set_ivar("state", state_ptr as *mut c_void);
             msg_send![nsapp, setDelegate:delegate];
         }
 
         let app = App {nsapp: nsapp};
 
         Ok(app)
+    }
+
+    pub fn get_init_state() -> AppState {
+        AppState {
+            current_window_index: None,
+            windows: Vec::new(),
+            dark_theme: false,
+            cursor: ServoCursor::Default,
+        }
     }
 
     // Where to find servo_resources/ and nibs/
@@ -161,30 +160,24 @@ impl App {
         Self::get_res_parent().map(|p| p.join("servo_resources"))
     }
 
-    pub fn state(&self) -> &AppState {
-        unsafe {
-            let delegate: id = msg_send![self.nsapp, delegate];
-            let ivar: *const c_void = *(&*delegate).get_ivar("state");
-            &*(ivar as *const AppState)
-        }
+    pub fn render(&self, state: &AppState) {
+        self.copy_state(state);
+        self.update_cursor(state.cursor);
     }
 
-    pub fn mut_state(&self) -> &mut AppState {
+    pub fn copy_state(&self, state: &AppState) {
+        // FIXME: how inefficient is this?
+        let state_ptr = Box::into_raw(Box::new(state.clone()));
         unsafe {
-            let delegate: id = msg_send![self.nsapp, delegate];
-            let ivar: *mut c_void = *(&*delegate).get_ivar("state");
-            &mut *(ivar as *mut AppState)
+            let delegate: id = msg_send![NSApp(), delegate];
+            (*delegate).set_ivar("state", state_ptr as *mut c_void);
         }
-    }
-
-    pub fn render(&self) {
-        self.update_cursor();
     }
 
     // From winit
-    pub fn update_cursor(&self) {
+    pub fn update_cursor(&self, cursor: ServoCursor) {
 
-        let cursor_name = match get_state().cursor {
+        let cursor_name = match cursor {
             ServoCursor::Default => "arrowCursor",
             ServoCursor::Pointer => "pointingHandCursor",
             ServoCursor::ContextMenu => "contextualMenuCursor",

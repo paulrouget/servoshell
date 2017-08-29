@@ -351,7 +351,7 @@ pub struct View {
 
 impl Window {
 
-    pub fn render(&self, state: &mut WindowState) {
+    pub fn render(&self, state: &WindowState) {
         // FIXME: mut WindowState
         let text = state.browsers.iter().enumerate().fold("|".to_owned(), |f, (idx, b)| {
             let title = b.title.as_ref().and_then(|t| {
@@ -375,7 +375,7 @@ impl Window {
                 }
                 None => { },
             }
-            state.urlbar_focused = false;
+            windows.get_mut(&self.id).unwrap().window_events.push(WindowEvent::UrlbarFocusChanged(false));
         }
     }
 

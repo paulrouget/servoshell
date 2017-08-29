@@ -10,7 +10,7 @@ use objc::runtime::{Class, Object, Sel};
 use std::f64;
 use std::ffi::CStr;
 use std::os::raw::c_void;
-use super::utils::{self, get_mut_state, get_state};
+use super::utils::{self, get_state};
 use window::{WindowEvent, WindowCommand};
 use view::View;
 use libc;
@@ -85,6 +85,10 @@ pub fn register() {
                     Some(WindowEvent::DidExitFullScreen)
                 } else if NSString::isEqualToString(name, "NSWindowWillCloseNotification") {
                     Some(WindowEvent::WillClose)
+                } else if NSString::isEqualToString(name, "NSPopoverWillCloseNotification") {
+                    Some(WindowEvent::OptionsClosed)
+                } else if NSString::isEqualToString(name, "NSControlTextDidEndEditingNotification") {
+                    Some(WindowEvent::UrlbarFocusChanged(false))
                 } else {
                     None
                 }
@@ -255,6 +259,8 @@ pub fn register() {
             class.add_method(sel!(windowDidEnterFullScreen:), record_notification as extern fn(&Object, Sel, id));
             class.add_method(sel!(windowDidExitFullScreen:), record_notification as extern fn(&Object, Sel, id));
             class.add_method(sel!(windowWillClose:), record_notification as extern fn(&Object, Sel, id));
+            class.add_method(sel!(popoverWillClose:), record_notification as extern fn(&Object, Sel, id));
+            class.add_method(sel!(controlTextDidEndEditing:), record_notification as extern fn(&Object, Sel, id));
 
             class.add_method(sel!(shellStop:), record_command as extern fn(&Object, Sel, id));
             class.add_method(sel!(shellReload:), record_command as extern fn(&Object, Sel, id));
@@ -305,6 +311,11 @@ pub struct Window {
 impl Window {
     pub fn new(nswindow: id, nspopover: id) -> Window {
 
+        let win = Window {
+            nswindow: nswindow,
+            nspopover: nspopover,
+        };
+
         unsafe {
             // FIXME: release and set delegate to nil
             let delegate: id = msg_send![class("NSShellWindowDelegate"), alloc];
@@ -315,6 +326,15 @@ impl Window {
             msg_send![nswindow, setDelegate:delegate];
 
             msg_send![nspopover, setBehavior:1]; // NSPopoverBehaviorTransient
+            msg_send![nspopover, setDelegate:delegate];
+
+            {
+                // Add delegate to urlbar textfield
+                let item = win.get_toolbar_item("urlbar").unwrap();
+                let view = msg_send![item, view];
+                let field = utils::get_view_by_id(view, "shellToolbarViewUrlbarTextfield").unwrap();
+                msg_send![field, setDelegate:delegate];
+            }
 
             nswindow.setTitleVisibility_(NSWindowTitleVisibility::NSWindowTitleHidden);
             nswindow.setAcceptsMouseMovedEvents_(YES);
@@ -343,18 +363,18 @@ impl Window {
             let text_container: id = msg_send![textview, textContainer];
             msg_send![text_container, setWidthTracksTextView:NO];
             msg_send![text_container, setContainerSize:NSSize::new(f64::MAX, f64::MAX)];
+
             (*delegate).set_ivar("rendering", false);
         }
 
-        Window {
-            nswindow: nswindow,
-            nspopover: nspopover,
-        }
+        win
     }
 
-    pub fn render(&self) {
+    pub fn render(&self, _state: &WindowState) {
 
         // FIXME: long function is long
+
+        let idx = get_state().windows[0].current_browser_index.unwrap();
 
         self.update_theme();
 
@@ -447,7 +467,6 @@ impl Window {
 
         // Update urlbar
         let item = self.get_toolbar_item("urlbar").unwrap();
-        let idx = get_state().windows[0].current_browser_index.unwrap();
         // FIXME: alloc everytime is bad. Use diff
         unsafe {
             let view = msg_send![item, view];
@@ -459,10 +478,10 @@ impl Window {
 
             if get_state().windows[0].urlbar_focused {
                 msg_send![field, becomeFirstResponder];
-                // FIXME: Don't do that!!! We should get a message from the widget
-                get_mut_state().windows[0].urlbar_focused = false;
             }
         }
+
+        // FIXME: focus browser
 
         // FIXME, very ugly
         // Update tabbar
@@ -505,7 +524,6 @@ impl Window {
         }
 
         unsafe {
-            let idx = get_state().windows[0].current_browser_index.unwrap();
             msg_send![tabview, selectTabViewItemAtIndex:idx];
         }
 
@@ -520,7 +538,6 @@ impl Window {
                 msg_send![item, setLabel:nsstring];
             }
         }
-
 
         // FIXME: This is too basic. If we want animations and proper sidebar support,
         // we need to have access to "animator()" which, afaiu, comes only
@@ -553,8 +570,6 @@ impl Window {
                 let button: id = msg_send![item, view];
                 let bounds = NSView::bounds(button);
                 msg_send![self.nspopover, showRelativeToRect:bounds ofView:button preferredEdge:3];
-                // FIXME: Don't do that!!! We should get a message from the widget
-                get_mut_state().windows[0].options_open = false;
             }
         }
 

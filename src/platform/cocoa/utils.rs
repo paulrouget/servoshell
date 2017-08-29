@@ -105,19 +105,10 @@ pub fn get_view<F>(nsview: id, predicate: &F) -> Option<id> where F: Fn(id) -> b
     }
 }
 
-
 pub fn get_state<'a>() -> &'a AppState {
     unsafe {
         let delegate: id = msg_send![NSApp(), delegate];
         let ivar: *const c_void = *(&*delegate).get_ivar("state");
         &*(ivar as *const AppState)
-    }
-}
-
-pub fn get_mut_state<'a>() -> &'a mut AppState {
-    unsafe {
-        let delegate: id = msg_send![NSApp(), delegate];
-        let ivar: *mut c_void = *(&*delegate).get_ivar("state");
-        &mut *(ivar as *mut AppState)
     }
 }
