@@ -358,6 +358,7 @@ impl Window {
             status: None,
             urlbar_focused: false,
             options_open: false,
+            title: "ServoShell".to_owned(),
             debug_options: DebugOptions {
                 show_fragment_borders: false,
                 parallel_display_list_building: false,

@@ -23,6 +23,7 @@ pub struct WindowState {
     pub status: Option<String>,
     pub urlbar_focused: bool,
     pub options_open: bool,
+    pub title: String,
 }
 
 #[derive(Clone)]

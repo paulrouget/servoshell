@@ -573,6 +573,7 @@ impl Window {
             status: None,
             urlbar_focused: false,
             options_open: false,
+            title: "ServoShell".to_owned(), // FIXME: not rendered yet
             debug_options: DebugOptions {
                 show_fragment_borders: false,
                 parallel_display_list_building: false,
@@ -626,14 +627,6 @@ impl Window {
                 }
             }
             None
-        }
-    }
-
-    pub fn set_title(&self, title: &str) {
-        // FIXME: never called
-        unsafe {
-            let title = NSString::alloc(nil).init_str(title);
-            msg_send![self.nswindow, setTitle:title]
         }
     }
 
