@@ -9,7 +9,7 @@ build = "build.rs"
 gleam = "0.4"
 open = "1.1.1"
 log = "0.3"
-libservo = { git = "https://github.com/servo/servo", rev = "4743696189" }
+libservo = { git = "https://github.com/servo/servo", rev = "5062dc5914" }
 objc = {version = "0.2", optional = true}
 objc-foundation = {version = "0.1", optional = true}
 core-foundation = {version = "0.3", optional = true}
