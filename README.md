@@ -12,8 +12,8 @@ You need to pick which version of the UI you want. Either cocoa widgets (only Ma
 or the fallback Glutin port (Windows, MacOS and Linux).
 
 - `git clone --recursive` or `git submodule update --init --recursive` if already cloned.
-- `cargo build --features=with-cocoa` or `cargo build --features=with-glutin`
-- `cargo run`
+- `cargo build --release --features=with-cocoa` or `cargo build --release --features=with-glutin`
+- `cargo run --release`
 
 
 ## Screenshots
