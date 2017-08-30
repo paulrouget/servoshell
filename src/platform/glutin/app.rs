@@ -15,6 +15,7 @@ use std::rc::Rc;
 use std::sync::Arc;
 use super::GlutinWindow;
 use super::utils;
+use view::KeyModifiers;
 use window::{Window, WindowEvent};
 
 pub struct WinitEventLoopWaker {
@@ -193,8 +194,8 @@ impl App {
             gl,
             glutin_window,
             event_loop_waker: self.event_loop_waker.clone(),
-            pending_key_event_char: Cell::new(None),
-            pressed_key_map: vec![],
+            key_modifiers: Cell::new(KeyModifiers::empty()),
+            last_pressed_key: Cell::new(None),
             view_events: vec![],
             window_events: vec![],
         });

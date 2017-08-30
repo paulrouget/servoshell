@@ -19,7 +19,7 @@ pub use self::view::View;
 pub use self::window::Window;
 
 use gleam::gl;
-use view::{KeyModifiers, KeyState, ViewEvent, TouchPhase, ElementState, MouseButton, MouseScrollDelta};
+use view::{Key, KeyModifiers, KeyState, ViewEvent, TouchPhase, ElementState, MouseButton, MouseScrollDelta};
 use view::{SHIFT, CONTROL, ALT, SUPER};
 use window::{WindowCommand, WindowEvent};
 
@@ -27,8 +27,8 @@ pub struct GlutinWindow {
     gl: Rc<gl::Gl>,
     glutin_window: glutin::GlWindow,
     event_loop_waker: Box<EventLoopWaker>,
-    pending_key_event_char: Cell<Option<char>>,
-    pressed_key_map: Vec<(glutin::ScanCode, char)>,
+    key_modifiers: Cell<KeyModifiers>,
+    last_pressed_key: Cell<Option<Key>>,
     view_events: Vec<ViewEvent>,
     window_events: Vec<WindowEvent>,
 }
@@ -37,12 +37,12 @@ impl GlutinWindow {
 
     pub fn glutin_event_to_command(&self, event: &glutin::WindowEvent) -> Option<WindowCommand> {
         match *event {
-            glutin::WindowEvent::KeyboardInput{ device_id: _device_id, input: glutin::KeyboardInput {
+            glutin::WindowEvent::KeyboardInput{ input: glutin::KeyboardInput {
                 state: glutin::ElementState::Pressed,
-                scancode: _,
                 virtual_keycode,
-                modifiers
-            }} => {
+                modifiers,
+                ..
+            }, ..} => {
                 match (virtual_keycode, utils::cmd_or_ctrl(modifiers), modifiers.ctrl, modifiers.shift) {
                     (Some(glutin::VirtualKeyCode::R), true, _, _) => Some(WindowCommand::Reload),
                     (Some(glutin::VirtualKeyCode::Left), true, _, _) => Some(WindowCommand::NavigateBack),
@@ -76,10 +76,10 @@ impl GlutinWindow {
             glutin::WindowEvent::Resized(..) => {
                 Some(ViewEvent::GeometryDidChange)
             }
-            glutin::WindowEvent::MouseMoved{device_id: _device_id, position: (x, y)} => {
+            glutin::WindowEvent::MouseMoved{position: (x, y), ..} => {
                 Some(ViewEvent::MouseMoved(x as i32, y as i32))
             }
-            glutin::WindowEvent::MouseWheel{device_id: _device_id, delta, phase} => {
+            glutin::WindowEvent::MouseWheel{delta, phase, ..} => {
                 let delta = match delta {
                     // FIXME: magic value
                     glutin::MouseScrollDelta::LineDelta(dx, dy) => MouseScrollDelta::LineDelta(dx, dy),
@@ -94,7 +94,7 @@ impl GlutinWindow {
                 };
                 Some(ViewEvent::MouseWheel(delta, phase))
             }
-            glutin::WindowEvent::MouseInput{device_id: _device_id, state, button: glutin::MouseButton::Left} => {
+            glutin::WindowEvent::MouseInput{state, button: glutin::MouseButton::Left, ..} => {
                 let state = match state {
                     glutin::ElementState::Released => ElementState::Released,
                     glutin::ElementState::Pressed => ElementState::Pressed,
@@ -102,46 +102,53 @@ impl GlutinWindow {
                 Some(ViewEvent::MouseInput(state, MouseButton::Left))
             }
             glutin::WindowEvent::ReceivedCharacter(ch) => {
-                if !ch.is_control() {
-                    self.pending_key_event_char.set(Some(ch));
-                }
-                None
-            }
-            glutin::WindowEvent::KeyboardInput{ device_id: _device_id, input: glutin::KeyboardInput {
-                state, scancode, virtual_keycode: Some(virtual_keycode), modifiers}
-            } => {
 
-                // FIXME: that might not work on Windows. Check Servo's ports
-                let ch = match state {
-                    glutin::ElementState::Pressed => {
-                        let ch = self.pending_key_event_char.get().and_then(|ch| {
-                            if utils::is_printable(virtual_keycode) {
-                                Some(ch)
-                            } else {
-                                None
+                let mods = self.key_modifiers.get();
+
+                // FIXME: cleanup
+                let event = if let Some(last_pressed_key) = self.last_pressed_key.get() {
+                    Some(ViewEvent::KeyEvent(Some(ch), last_pressed_key, KeyState::Pressed, mods))
+                } else {
+                    if !ch.is_control() {
+                        match utils::char_to_script_key(ch) {
+                            Some(key) => {
+                                Some(ViewEvent::KeyEvent(Some(ch),
+                                    key,
+                                    KeyState::Pressed,
+                                    mods))
                             }
-                        });
-                        self.pending_key_event_char.set(None);
-                        if let Some(ch) = ch { self.pressed_key_map.push((scancode, ch)); }
-                        ch
-                    }
-                    glutin::ElementState::Released => {
-                        let idx = self.pressed_key_map.iter().position(|&(code, _)| code == scancode);
-                        idx.map(|idx| self.pressed_key_map.swap_remove(idx).1)
+                            None => None
+                        }
+                    } else {
+                        None
                     }
                 };
+                self.last_pressed_key.set(None);
+                event
+            }
+            glutin::WindowEvent::KeyboardInput{ input: glutin::KeyboardInput {
+                state, virtual_keycode: Some(virtual_keycode), modifiers, ..}, ..
+            } => {
+
+                let mut servo_mods = KeyModifiers::empty();
+                if modifiers.shift { servo_mods.insert(SHIFT); }
+                if modifiers.ctrl { servo_mods.insert(CONTROL); }
+                if modifiers.alt { servo_mods.insert(ALT); }
+                if modifiers.logo { servo_mods.insert(SUPER); }
+
+                self.key_modifiers.set(servo_mods);
 
                 if let Ok(key) = utils::glutin_key_to_script_key(virtual_keycode) {
                     let state = match state {
                         glutin::ElementState::Pressed => KeyState::Pressed,
                         glutin::ElementState::Released => KeyState::Released,
                     };
-                    let mut servo_mods = KeyModifiers::empty();
-                    if modifiers.shift { servo_mods.insert(SHIFT); }
-                    if modifiers.ctrl { servo_mods.insert(CONTROL); }
-                    if modifiers.alt { servo_mods.insert(ALT); }
-                    if modifiers.logo { servo_mods.insert(SUPER); }
-                    Some(ViewEvent::KeyEvent(ch, key, state, servo_mods))
+                    if state == KeyState::Pressed {
+                        if utils::is_printable(virtual_keycode) {
+                            self.last_pressed_key.set(Some(key));
+                        }
+                    }
+                    Some(ViewEvent::KeyEvent(None, key, state, self.key_modifiers.get()))
                 } else {
                     None
                 }
