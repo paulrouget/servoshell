@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="12121" systemVersion="16F73" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="12121" systemVersion="16G29" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="12121"/>
     </dependencies>
@@ -381,12 +381,12 @@
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <menu key="submenu" title="History" id="Ydd-iV-zEk">
                         <items>
-                            <menuItem title="Back" keyEquivalent="[" id="dh1-BQ-rhQ">
+                            <menuItem title="Back" keyEquivalent="" id="dh1-BQ-rhQ">
                                 <connections>
                                     <action selector="shellNavigateBack:" target="-1" id="kDk-ZR-2SD"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Forward" keyEquivalent="]" id="gSu-cW-jMy">
+                            <menuItem title="Forward" keyEquivalent="" id="gSu-cW-jMy">
                                 <connections>
                                     <action selector="shellNavigateForward:" target="-1" id="g1t-e0-MUk"/>
                                 </connections>
