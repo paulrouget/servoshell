@@ -246,6 +246,7 @@ fn main() {
                                 servo.update_geometry(view.get_geometry());
                                 state.windows[0].current_browser_index = Some(idx + 1);
                                 state.windows[0].browsers.push(browser);
+                                state.windows[0].urlbar_focused = true;
                                 ui_invalidated = true;
                             },
                             WindowCommand::CloseTab => {
