@@ -4,40 +4,38 @@
 <title>ServoShell Home</title>
 
 <style>
-  img { width: 128px }
-  .cmdorctrl::after { content: "Ctrl " }
-  .platform_MacIntel .cmdorctrl::after { content: "Cmd " }
-  header { text-align: center; }
-  body {
-    width: 300px;
-    margin: auto;
-    font-family: arial;
-    background: #FAFAFA;
-  }
+  body { margin: 50px 0 0 50px; font-family: Helvetica; }
+  body, h1 { font-weight: lighter; }
+  dl { width: 400px; overflow: hidden; padding: 0; margin: 0 }
+  dt, dd { float: left; padding: 0; margin: 0 }
+  dt { width: 150px; }
+  dd { width: 250px; }
 </style>
 
-<header>
-  <h1>Servo Shell</h1>
-  <img src="icons/128x128@2x.png">
-  <p><a href="servoshell://issue/servo">Report a Servo issue</a></p>
-  <p><a href="servoshell://issue/servoshell">Report a ServoShell issue</a></p>
-</header>
-
-<p>Key bindings:</p>
-<ul>
-  <li><span class="cmdorctrl"></span>R: Reload
-  <li><span class="cmdorctrl"></span>Left/Right: Go back/forward in history
-  <li><span class="cmdorctrl"></span>L: Search or enter a new URL
-  <li><span class="cmdorctrl"></span>+/-/=: Zoom
-  <li><span class="cmdorctrl"></span>T: new tab
-  <li><span class="cmdorctrl"></span>W: close tab
-  <li>Ctrl (shift) tab: next/previous tab
-  <li><span class="cmdorctrl"></span>1..9: Select tab
-  <li><span class="cmdorctrl"></span>Q: Quit
-</ul>
-<style>
-</style>
+<h1>ServoShell</h1>
+<p><a href="servoshell://issue/servo">Report a Servo issue</a></p>
+<p><a href="servoshell://issue/servoshell">Report a ServoShell issue</a></p>
+<dl>
+  <dt><span class="cmdorctrl"></span>T</dt><dd>new tab</dd>
+  <dt><span class="cmdorctrl"></span>W</dt><dd>close tab</dd>
+  <dt><span class="cmdorctrl"></span>R</dt><dd>reload</dd>
+  <dt><span class="cmdorctrl"></span>Left/Right</dt><dd>go back/forward in history</dd>
+  <dt><span class="cmdorctrl"></span>L</dt><dd>search or enter a new url</dd>
+  <dt><span class="cmdorctrl"></span>+/-/=</dt><dd>zoom</dd>
+  <dt>Ctrl (shift) tab</dt><dd>next/previous tab</dd>
+  <dt><span class="cmdorctrl"></span>1..9</dt><dd>select tab</dd>
+  <dt><span class="cmdorctrl"></span>Q</dt><dd>quit</dd>
+</dl>
 
 <script>
-  document.body.classList.add("platform_" + window.navigator.platform);
+  var cmdorctrl;
+  if (navigator.platform == "Mac") {
+    cmdorctrl = "Cmd ";
+  } else {
+    cmdorctrl = "Ctrl ";
+  }
+  var spans = document.querySelectorAll(".cmdorctrl");
+  for (var i = 0; i < spans.length; i++) {
+    spans[i].textContent = cmdorctrl;
+  }
 </script>
