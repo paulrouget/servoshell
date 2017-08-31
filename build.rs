@@ -12,13 +12,15 @@ fn main() {
 }
 
 fn build_mmtabbarview() {
-    Command::new("xcodebuild")
-        .args(&["-project", "./src/platform/cocoa/MMTabBarView/MMTabBarView/MMTabBarView.xcodeproj"])
-        .args(&["-configuration", "Release"])
-        .args(&["SYMROOT=../../../../../target/MMTabBarView/"])
-        .status()
-        .expect("xcodebuild failed");
-    println!("cargo:rustc-link-search=framework=target/MMTabBarView/Release/");
+    if cfg!(all(not(feature = "force-glutin"), target_os = "macos")) {
+        Command::new("xcodebuild")
+            .args(&["-project", "./src/platform/cocoa/MMTabBarView/MMTabBarView/MMTabBarView.xcodeproj"])
+            .args(&["-configuration", "Release"])
+            .args(&["SYMROOT=../../../../../target/MMTabBarView/"])
+            .status()
+            .expect("xcodebuild failed");
+        println!("cargo:rustc-link-search=framework=target/MMTabBarView/Release/");
+    }
 }
 
 fn build_nibs() {
