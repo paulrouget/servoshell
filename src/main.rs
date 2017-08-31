@@ -82,8 +82,7 @@ fn main() {
     state.windows[0].current_browser_index = Some(0);
     state.windows[0].browsers.push(browser);
     app.render(&state);
-    // FIXME: no mut!
-    window.render(&mut state.windows[0]);
+    window.render(&state.windows[0]);
 
     info!("Servo version: {}", servo.version());
 
