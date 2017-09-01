@@ -9,7 +9,7 @@ build = "build.rs"
 gleam = "0.4"
 open = "1.1.1"
 log = "0.3"
-libservo = { git = "https://github.com/servo/servo", rev = "7e363d60bb" }
+libservo = { git = "https://github.com/servo/servo", rev = "f7d238d1f3" }
 glutin = "0.9"
 winit = "0.7"
 tinyfiledialogs = "2.0"

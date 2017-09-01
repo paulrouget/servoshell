@@ -5,28 +5,23 @@ The code compiles and run, but it's messy and memory management is non existent.
 
 ## Build
 
-You need cargo nightly. Cargo will most likely complain about missing toolchain.
-Install it but no needs to make it the default.
-
-You need to pick which version of the UI you want. Either cocoa widgets (only MacOS),
-or the fallback Glutin port (Windows, MacOS and Linux).
-
 1. `git clone --recursive` or `git submodule update --init --recursive` if already cloned.
-2. `cargo build --release`
-3. `cargo run --release`
+2. `rustup install \`cat rust-toolchain\``
+3. `cargo build --release`
+4. `cargo run --release`
 
 There are 2 versions of the UI:
 1. Full UI: Tabs + urlbar interface. Cocoa based (only MacOS).
 2. Minimal UI: No controls. Driven by keybindings (Windows and Linux).
 
-The minimal UI can be enabled on MacOS via `--features=force-glutin`.
+The minimal UI can be compiled on MacOS with `--features=force-glutin`.
 
 ## How to update Servo
 
 1. change `rev` in `Cargo.toml`
-2. update `rust-toolchain`
-3. copy servo/Cargo.lock to servoshell/Cargo.lock
-4. copy servo/resources to servoshell/servo_resources
+2. copy `rust-toolchain` to `servoshell/rust-toolchain`
+3. copy `servo/Cargo.lock` to `servoshell/Cargo.lock`
+4. copy `servo/resources` to `servoshell/servo_resources`
 
 ## Screenshots
 
