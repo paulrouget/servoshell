@@ -20,8 +20,6 @@ extern crate objc;
 #[cfg(any(feature = "force-glutin", not(target_os = "macos")))]
 extern crate glutin;
 #[cfg(any(feature = "force-glutin", not(target_os = "macos")))]
-extern crate winit;
-#[cfg(any(feature = "force-glutin", not(target_os = "macos")))]
 extern crate tinyfiledialogs;
 
 extern crate gleam;
