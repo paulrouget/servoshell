@@ -14,8 +14,6 @@ extern crate libc;
 #[cfg(all(not(feature = "force-glutin"), target_os = "macos"))]
 extern crate cocoa;
 #[cfg(all(not(feature = "force-glutin"), target_os = "macos"))]
-extern crate objc_foundation;
-#[cfg(all(not(feature = "force-glutin"), target_os = "macos"))]
 #[macro_use]
 extern crate objc;
 
