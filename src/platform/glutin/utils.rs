@@ -337,3 +337,14 @@ pub fn char_to_script_key(c: char) -> Option<Key> {
         _ => None
     }
 }
+
+#[cfg(target_os = "windows")]
+pub fn windows_hidpi_factor() -> f32 {
+    use user32;
+    use winapi;
+    use gdi32;
+
+    let hdc = unsafe { user32::GetDC(::std::ptr::null_mut()) };
+    let ppi = unsafe { gdi32::GetDeviceCaps(hdc, winapi::wingdi::LOGPIXELSY) };
+    ppi as f32 / 96.0
+}
