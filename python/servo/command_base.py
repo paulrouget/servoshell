@@ -358,7 +358,7 @@ class CommandBase(object):
         if android:
             base_path = path.join(base_path, self.config["android"]["target"])
 
-        binary_name = "servo" + BIN_SUFFIX
+        binary_name = "servoshell" + BIN_SUFFIX
         release_path = path.join(base_path, "release", binary_name)
         dev_path = path.join(base_path, "debug", binary_name)
 
@@ -536,7 +536,7 @@ class CommandBase(object):
         return env
 
     def servo_crate(self):
-        return path.join(self.context.topdir, "ports", "servo")
+        return path.join(self.context.topdir)
 
     def servo_features(self):
         """Return a list of optional features to enable for the Servo crate"""

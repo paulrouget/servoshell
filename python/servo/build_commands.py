@@ -319,14 +319,18 @@ class MachCommands(CommandBase):
             if sys.platform == "win32":
                 servo_exe_dir = path.join(base_path, "debug" if dev else "release")
                 # On windows, copy in our manifest
-                shutil.copy(path.join(self.get_top_dir(), "components", "servo", "servo.exe.manifest"),
-                            servo_exe_dir)
+                manifest_path = path.join(self.get_top_dir(),
+                                      "src",
+                                      "platform",
+                                      "windows",
+                                      "servoshell.exe.manifest")
+                shutil.copy(manifest_path, servo_exe_dir)
 
                 msvc_x64 = "64" if "x86_64" in (target or host_triple()) else ""
                 # on msvc builds, use editbin to change the subsystem to windows, but only
                 # on release builds -- on debug builds, it hides log output
                 if not dev:
-                    call(["editbin", "/nologo", "/subsystem:windows", path.join(servo_exe_dir, "servo.exe")],
+                    call(["editbin", "/nologo", "/subsystem:windows", path.join(servo_exe_dir, "servoshell.exe")],
                          verbose=verbose)
                 # on msvc, we need to copy in some DLLs in to the servo.exe dir
                 for ssl_lib in ["libcryptoMD.dll", "libsslMD.dll"]:
