@@ -18,7 +18,7 @@ SEARCH_PATHS = [
 MACH_MODULES = [
     os.path.join('python', 'servo', 'bootstrap_commands.py'),
     os.path.join('python', 'servo', 'build_commands.py'),
-    os.path.join('python', 'servo', 'testing_commands.py'),
+    # os.path.join('python', 'servo', 'testing_commands.py'),
     os.path.join('python', 'servo', 'post_build_commands.py'),
     os.path.join('python', 'servo', 'package_commands.py'),
     os.path.join('python', 'servo', 'devenv_commands.py'),
@@ -162,9 +162,9 @@ def _activate_virtualenv(topdir, is_firefox):
     # and it will check for conflicts.
     requirements_paths = [
         os.path.join("python", "requirements.txt"),
-        wpt_harness_path(is_firefox, topdir, "requirements.txt",),
-        wpt_harness_path(is_firefox, topdir, "requirements_firefox.txt"),
-        wpt_harness_path(is_firefox, topdir, "requirements_servo.txt"),
+        # wpt_harness_path(is_firefox, topdir, "requirements.txt",),
+        # wpt_harness_path(is_firefox, topdir, "requirements_firefox.txt"),
+        # wpt_harness_path(is_firefox, topdir, "requirements_servo.txt"),
     ]
 
     if need_pip_upgrade:
