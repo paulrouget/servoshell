@@ -24,6 +24,14 @@ extern crate winit;
 #[cfg(any(feature = "force-glutin", not(target_os = "macos")))]
 extern crate tinyfiledialogs;
 
+
+#[cfg(target_os = "windows")]
+extern crate winapi;
+#[cfg(target_os = "windows")]
+extern crate user32;
+#[cfg(target_os = "windows")]
+extern crate gdi32;
+
 extern crate gleam;
 extern crate open;
 
