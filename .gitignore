@@ -1,2 +1,6 @@
-target/
-nibs/
+/nibs
+/target
+/python/_virtualenv/
+/python/tidy/servo_tidy.egg-info/
+.cargo
+.servo
