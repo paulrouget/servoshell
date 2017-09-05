@@ -334,9 +334,11 @@ fn main() {
                         view.update_drawable();
                     }
                     ViewEvent::MouseWheel(delta, phase) => {
+                        // FIXME: magic value
+                        static LINE_HEIGHT: f32 = 38.0;
                         let (mut x, mut y) = match delta {
                             view::MouseScrollDelta::PixelDelta(x, y) => (x, y),
-                            _ => (0.0, 0.0),
+                            view::MouseScrollDelta::LineDelta(x, y) => (x, y * LINE_HEIGHT),
                         };
                         if y.abs() >= x.abs() { x = 0.0; } else { y = 0.0; }
                         servo.perform_scroll(0, 0, x, y, phase);
