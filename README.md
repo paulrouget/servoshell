@@ -5,15 +5,24 @@ The code compiles and run, but it's messy and memory management is non existent.
 
 ## Build
 
+There are 2 versions of the UI:
+1. Full UI: Tabs + urlbar interface. Cocoa based (only MacOS).
+2. Minimal UI: No controls. Driven by keybindings (Windows, Linux, Mac).
+
+The minimal UI can be compiled on MacOS with `--features=force-glutin`.
+
+### Linux and Mac
+
 1. ``rustup install `cat rust-toolchain` ``
 2. `cargo build --release`
 3. `cargo run --release`
 
-There are 2 versions of the UI:
-1. Full UI: Tabs + urlbar interface. Cocoa based (only MacOS).
-2. Minimal UI: No controls. Driven by keybindings (Windows and Linux).
+### Windows
 
-The minimal UI can be compiled on MacOS with `--features=force-glutin`.
+Make sure you installed all the [dependencies necessary to build Servo](https://github.com/servo/servo#on-windows-msvc).
+
+1. `mach build -r`
+2. `mach run -r`
 
 ## How to update Servo
 
