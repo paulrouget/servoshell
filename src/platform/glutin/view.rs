@@ -8,6 +8,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 use super::GlutinWindow;
+use super::utils;
 use view::{DrawableGeometry, ViewEvent};
 
 pub struct View {
@@ -22,12 +23,19 @@ impl View {
     pub fn get_geometry(&self) -> DrawableGeometry {
         let windows = self.windows.borrow();
         let win = windows.get(&self.id).unwrap();
-        let size = win.glutin_window.get_inner_size().expect("Failed to get window inner size.");
+        let (mut width, mut height) = win.glutin_window.get_inner_size().expect("Failed to get window inner size.");
+
+        if cfg!(target_os = "windows") {
+            let factor = utils::windows_hidpi_factor();
+            width /= factor as u32;
+            height /= factor as u32;
+        }
+
         DrawableGeometry {
-            view_size: size,
+            view_size: (width, height),
             margins: (0, 0, 0, 0),
             position: win.glutin_window.get_position().expect("Failed to get window position."),
-            hidpi_factor: win.glutin_window.hidpi_factor(),
+            hidpi_factor: self.hidpi_factor(),
         }
     }
 
@@ -64,6 +72,18 @@ impl View {
 
     pub fn swap_buffers(&self) {
         self.windows.borrow().get(&self.id).unwrap().glutin_window.swap_buffers().unwrap();
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    fn hidpi_factor(&self) -> f32 {
+        let windows = self.windows.borrow();
+        let win = windows.get(&self.id).unwrap();
+        win.glutin_window.hidpi_factor()
+    }
+
+    #[cfg(target_os = "windows")]
+    fn hidpi_factor(&self) -> f32 {
+        utils::windows_hidpi_factor()
     }
 }
 

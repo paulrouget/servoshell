@@ -170,8 +170,14 @@ impl App {
     }
 
     pub fn create_window(&self) -> Result<Window, &'static str> {
+        let factor = if cfg!(target_os = "windows") {
+            utils::windows_hidpi_factor()
+        } else {
+            1.0
+        };
         let window = glutin::WindowBuilder::new()
-            .with_dimensions(1024, 768);
+            .with_dimensions(1024 * factor as u32,
+                             768 * factor as u32);
         let context = glutin::ContextBuilder::new()
             .with_gl(glutin::GlRequest::Specific(glutin::Api::OpenGl, (3, 2)))
             .with_vsync(true);
@@ -203,5 +209,3 @@ impl App {
         Ok(Window::new(id, self.windows.clone()))
     }
 }
-
-
