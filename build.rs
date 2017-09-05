@@ -14,12 +14,17 @@ fn main() {
 }
 
 fn build_mmtabbarview() {
-    Command::new("xcodebuild")
+    if !Path::new("./src/platform/cocoa/MMTabBarView/.git").exists() {
+        let _ = Command::new("git").args(&["submodule", "update", "--init"]).status();
+    }
+    let status = Command::new("xcodebuild")
         .args(&["-project", "./src/platform/cocoa/MMTabBarView/MMTabBarView/MMTabBarView.xcodeproj"])
         .args(&["-configuration", "Release"])
         .args(&["SYMROOT=../../../../../target/MMTabBarView/"])
         .status()
-        .expect("xcodebuild failed");
+        .expect("failed to execute xcodebuild");
+    assert!(status.success(), "xcodebuild failed");
+
     println!("cargo:rustc-link-search=framework=target/MMTabBarView/Release/");
 }
 
@@ -28,13 +33,13 @@ fn build_nibs() {
         let out = out_dir.to_str().unwrap();
         let filename = Path::new(src).file_name().unwrap();
         let out_file = filename.to_str().unwrap().replace("xib", "nib");
-        Command::new("ibtool")
+        let status = Command::new("ibtool")
             .arg(src)
             .arg("--compile")
             .arg(&format!("{}/{}", out, out_file))
             .status()
-            .ok()
-            .expect("ibtool failed");
+            .expect("failed to execute ibtool");
+        assert!(status.success(), "ibtool failed");
     }
     let nibs_dir = Path::new("target/nibs");
     fs::create_dir_all(&nibs_dir).unwrap();

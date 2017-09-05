@@ -5,10 +5,9 @@ The code compiles and run, but it's messy and memory management is non existent.
 
 ## Build
 
-1. `git clone --recursive` or `git submodule update --init --recursive` if already cloned.
-2. ``rustup install `cat rust-toolchain` ``
-3. `cargo build --release`
-4. `cargo run --release`
+1. ``rustup install `cat rust-toolchain` ``
+2. `cargo build --release`
+3. `cargo run --release`
 
 There are 2 versions of the UI:
 1. Full UI: Tabs + urlbar interface. Cocoa based (only MacOS).
