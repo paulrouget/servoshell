@@ -344,7 +344,10 @@ class PackageCommands(CommandBase):
 
             print("Copying files")
             dir_to_resources = path.join(dir_to_temp, 'resources')
-            shutil.copytree(path.join(dir_to_root, 'resources'), dir_to_resources)
+
+            shutil.copytree(path.join(dir_to_root, 'shell_resources'), path.join(dir_to_resources, 'shell_resources'))
+            shutil.copytree(path.join(dir_to_root, 'servo_resources'), path.join(dir_to_resources, 'servo_resources'))
+
             shutil.copy(binary_path, dir_to_temp)
 
             print("Creating tarball")
