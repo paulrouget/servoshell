@@ -353,11 +353,11 @@ class PackageCommands(CommandBase):
             print("Creating tarball")
             tar_path = path.join(target_dir, 'servoshell.tar.gz')
 
-            archive_deterministically(dir_to_temp, tar_path, prepend_path='servo/')
+            archive_deterministically(dir_to_temp, tar_path, prepend_path='servoshell/')
 
             print("Cleaning up")
             delete(dir_to_temp)
-            print("Packaged Servo into " + tar_path)
+            print("Packaged ServoShell into " + tar_path)
 
     @Command('install',
              description='Install Servo (currently, Android and Windows only)',
