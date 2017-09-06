@@ -49,11 +49,19 @@ use std::rc::Rc;
 use std::env::args;
 use servo::{Servo, ServoUrl, WebRenderDebugOption};
 
+const PKG_VERSION: &'static str = env!("CARGO_PKG_VERSION");
+const PKG_NAME: &'static str = env!("CARGO_PKG_NAME");
+
 fn main() {
 
     let logs = platform::Logger::init();
 
     info!("starting");
+
+    args().find(|arg| arg == "--version").map(|_| {
+        println!("{} {}", PKG_NAME, PKG_VERSION);
+        std::process::exit(0);
+    });
 
     let app = App::new().unwrap();
     let window = app.create_window().unwrap();
