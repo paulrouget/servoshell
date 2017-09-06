@@ -69,6 +69,12 @@ impl App {
             return Some(p.join("servo_resources/"));
         }
 
+        // Maybe in /resources/
+        let p = p.join("resources").join("servo_resources");
+        if p.exists() {
+            return Some(p);
+        }
+
         // Maybe we run from an app bundle
         let p = env::current_exe().unwrap();
         let p = p.parent().unwrap();

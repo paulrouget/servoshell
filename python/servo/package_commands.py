@@ -219,11 +219,9 @@ class PackageCommands(CommandBase):
             if path.exists(dir_to_dmg):
                 print("Cleaning up from previous packaging")
                 delete(dir_to_dmg)
-            browserhtml_path = get_browserhtml_path(binary_path)
 
             print("Copying files")
             shutil.copytree(path.join(dir_to_root, 'resources'), dir_to_resources)
-            shutil.copytree(browserhtml_path, path.join(dir_to_resources, 'browserhtml'))
             shutil.copy2(path.join(dir_to_root, 'Info.plist'), path.join(dir_to_app, 'Contents', 'Info.plist'))
 
             content_dir = path.join(dir_to_app, 'Contents', 'MacOS')
@@ -256,13 +254,12 @@ class PackageCommands(CommandBase):
             delete(template_path)
 
             print("Writing run-servo")
-            bhtml_path = path.join('${0%/*}', '..', 'Resources', 'browserhtml', 'index.html')
             runservo = os.open(
                 path.join(content_dir, 'run-servo'),
                 os.O_WRONLY | os.O_CREAT,
                 int("0755", 8)
             )
-            os.write(runservo, '#!/bin/bash\nexec ${0%/*}/servo ' + bhtml_path)
+            os.write(runservo, '#!/bin/bash\nexec ${0%/*}/servoshell')
             os.close(runservo)
 
             print("Creating dmg")
@@ -314,32 +311,29 @@ class PackageCommands(CommandBase):
                 print("Cleaning up from previous packaging")
                 delete(dir_to_msi)
             os.makedirs(dir_to_msi)
-            browserhtml_path = get_browserhtml_path(binary_path)
 
             print("Copying files")
             dir_to_temp = path.join(dir_to_msi, 'temp')
             dir_to_temp_servo = path.join(dir_to_temp, 'servo')
             dir_to_resources = path.join(dir_to_temp_servo, 'resources')
-            shutil.copytree(path.join(dir_to_root, 'resources'), dir_to_resources)
-            shutil.copytree(browserhtml_path, path.join(dir_to_temp_servo, 'browserhtml'))
+            shutil.copytree(path.join(dir_to_root, 'shell_resources'), path.join(dir_to_resources, 'shell_resources'))
+            shutil.copytree(path.join(dir_to_root, 'servo_resources'), path.join(dir_to_resources, 'servo_resources'))
             shutil.copy(binary_path, dir_to_temp_servo)
             shutil.copy("{}.manifest".format(binary_path), dir_to_temp_servo)
             copy_windows_dependencies(target_dir, dir_to_temp_servo)
 
-            change_prefs(dir_to_resources, "windows")
-
             # generate Servo.wxs
             import mako.template
-            template_path = path.join(dir_to_root, "support", "windows", "Servo.wxs.mako")
+            template_path = path.join(dir_to_root, "src", "platform", "windows", "ServoShell.wxs.mako")
             template = mako.template.Template(open(template_path).read())
-            wxs_path = path.join(dir_to_msi, "Servo.wxs")
+            wxs_path = path.join(dir_to_msi, "ServoShell.wxs")
             open(wxs_path, "w").write(template.render(
                 exe_path=target_dir,
                 dir_to_temp=dir_to_temp_servo,
                 resources_path=dir_to_resources))
 
             # run candle and light
-            print("Creating MSI")
+            print("Creating MSI: " + wxs_path)
             try:
                 with cd(dir_to_msi):
                     subprocess.check_call(['candle', wxs_path])
@@ -353,17 +347,16 @@ class PackageCommands(CommandBase):
             except subprocess.CalledProcessError as e:
                 print("WiX light exited with return value %d" % e.returncode)
                 return e.returncode
-            print("Packaged Servo into " + path.join(dir_to_msi, "Servo.msi"))
+            print("Packaged ServoShell into " + path.join(dir_to_msi, "ServoShell.msi"))
 
             print("Creating ZIP")
-            shutil.make_archive(path.join(dir_to_msi, "Servo"), "zip", dir_to_temp)
-            print("Packaged Servo into " + path.join(dir_to_msi, "Servo.zip"))
+            shutil.make_archive(path.join(dir_to_msi, "ServoShell"), "zip", dir_to_temp)
+            print("Packaged ServoShell into " + path.join(dir_to_msi, "ServoShell.zip"))
 
             print("Cleaning up")
             delete(dir_to_temp)
         else:
             dir_to_temp = path.join(target_dir, 'packaging-temp')
-            browserhtml_path = get_browserhtml_path(binary_path)
             if path.exists(dir_to_temp):
                 # TODO(aneeshusa): lock dir_to_temp to prevent simultaneous builds
                 print("Cleaning up from previous packaging")
@@ -372,7 +365,6 @@ class PackageCommands(CommandBase):
             print("Copying files")
             dir_to_resources = path.join(dir_to_temp, 'resources')
             shutil.copytree(path.join(dir_to_root, 'resources'), dir_to_resources)
-            shutil.copytree(browserhtml_path, path.join(dir_to_temp, 'browserhtml'))
             shutil.copy(binary_path, dir_to_temp)
 
             change_prefs(dir_to_resources, "linux")
