@@ -319,11 +319,7 @@ class MachCommands(CommandBase):
             if sys.platform == "win32":
                 servo_exe_dir = path.join(base_path, "debug" if dev else "release")
                 # On windows, copy in our manifest
-                manifest_path = path.join(self.get_top_dir(),
-                                      "src",
-                                      "platform",
-                                      "windows",
-                                      "servoshell.exe.manifest")
+                manifest_path = path.join(self.get_top_dir(), "support", "windows", "servoshell.exe.manifest")
                 shutil.copy(manifest_path, servo_exe_dir)
 
                 msvc_x64 = "64" if "x86_64" in (target or host_triple()) else ""

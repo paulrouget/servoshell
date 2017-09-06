@@ -152,8 +152,7 @@ impl App {
     }
 
     pub fn get_nibs_path() -> Option<PathBuf> {
-        // FIXME: Cargo bundle add the "target" directory
-        Self::get_res_parent().map(|p| p.join("target").join("nibs"))
+        Self::get_res_parent().map(|p| p.join("nibs"))
     }
 
     pub fn get_resources_path() -> Option<PathBuf> {

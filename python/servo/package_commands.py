@@ -44,13 +44,13 @@ PACKAGES = {
         'target/armv7-linux-androideabi/release/servo.apk',
     ],
     'linux': [
-        'target/release/servo-tech-demo.tar.gz',
+        'target/release/servoshell.tar.gz',
     ],
     'mac': [
-        'target/release/servo-tech-demo.dmg',
+        'target/release/servoshell.dmg',
     ],
     'macbrew': [
-        'target/release/brew/servo.tar.gz',
+        'target/release/brew/servoshell.tar.gz',
     ],
     'windows-msvc': [
         r'target\release\msi\Servo.msi',
@@ -112,7 +112,7 @@ def copy_dependencies(binary_path, lib_path):
     relative_path = path.relpath(lib_path, path.dirname(binary_path)) + "/"
 
     # Update binary libraries
-    binary_dependencies = set(otool(binary_path))
+    binary_dependencies = [lib for lib in set(otool(binary_path)) if not lib.startswith("@rpath")]
     change_non_system_libraries_path(binary_dependencies, relative_path, binary_path)
 
     # Update dependencies libraries
@@ -212,26 +212,31 @@ class PackageCommands(CommandBase):
                 print("Packaging Android exited with return value %d" % e.returncode)
                 return e.returncode
         elif is_macosx():
-            print("Creating Servo.app")
+            print("Creating ServoShell.app")
             dir_to_dmg = path.join(target_dir, 'dmg')
-            dir_to_app = path.join(dir_to_dmg, 'Servo.app')
+            dir_to_app = path.join(dir_to_dmg, 'ServoShell.app')
             dir_to_resources = path.join(dir_to_app, 'Contents', 'Resources')
             if path.exists(dir_to_dmg):
                 print("Cleaning up from previous packaging")
                 delete(dir_to_dmg)
 
+            mmtabbar_path = path.join(self.get_target_dir(), 'MMTabBarView', 'Release', 'MMTabBarView.framework')
+            if path.exists(mmtabbar_path):
+                dir_to_framework = path.join(dir_to_app, 'Contents', 'Frameworks', 'MMTabBarView.framework')
+                shutil.copytree(mmtabbar_path, dir_to_framework)
+                nibs_path = path.join(self.get_target_dir(), 'nibs')
+                shutil.copytree(nibs_path, dir_to_resources + '/nibs')
+
             print("Copying files")
-            shutil.copytree(path.join(dir_to_root, 'resources'), dir_to_resources)
-            shutil.copy2(path.join(dir_to_root, 'Info.plist'), path.join(dir_to_app, 'Contents', 'Info.plist'))
+            shutil.copytree(path.join(dir_to_root, 'servo_resources'), path.join(dir_to_resources, 'servo_resources'))
+            shutil.copytree(path.join(dir_to_root, 'shell_resources'), path.join(dir_to_resources, 'shell_resources'))
 
             content_dir = path.join(dir_to_app, 'Contents', 'MacOS')
             os.makedirs(content_dir)
             shutil.copy2(binary_path, content_dir)
 
-            change_prefs(dir_to_resources, "macosx")
-
             print("Finding dylibs and relinking")
-            copy_dependencies(path.join(content_dir, 'servo'), content_dir)
+            copy_dependencies(path.join(content_dir, 'servoshell'), content_dir)
 
             print("Adding version to Credits.rtf")
             version_command = [binary_path, '--version']
@@ -241,30 +246,27 @@ class PackageCommands(CommandBase):
                                  universal_newlines=True)
             version, stderr = p.communicate()
             if p.returncode != 0:
-                raise Exception("Error occurred when getting Servo version: " + stderr)
-            version = "Nightly version: " + version
+                raise Exception("Error occurred when getting ServoShell version: " + stderr)
 
             import mako.template
-            template_path = path.join(dir_to_resources, 'Credits.rtf.mako')
+
+            template_path = path.join(dir_to_root, "support", "macos", "Credits.rtf.mako")
             credits_path = path.join(dir_to_resources, 'Credits.rtf')
             with open(template_path) as template_file:
                 template = mako.template.Template(template_file.read())
                 with open(credits_path, "w") as credits_file:
                     credits_file.write(template.render(version=version))
-            delete(template_path)
 
-            print("Writing run-servo")
-            runservo = os.open(
-                path.join(content_dir, 'run-servo'),
-                os.O_WRONLY | os.O_CREAT,
-                int("0755", 8)
-            )
-            os.write(runservo, '#!/bin/bash\nexec ${0%/*}/servoshell')
-            os.close(runservo)
+            template_path = path.join(dir_to_root, "support", "macos", "Info.plist.mako")
+            plist_path = path.join(dir_to_app, 'Contents', 'Info.plist')
+            with open(template_path) as template_file:
+                template = mako.template.Template(template_file.read())
+                with open(plist_path, "w") as plist_file:
+                    plist_file.write(template.render(version=version))
 
             print("Creating dmg")
             os.symlink('/Applications', path.join(dir_to_dmg, 'Applications'))
-            dmg_path = path.join(target_dir, "servo-tech-demo.dmg")
+            dmg_path = path.join(target_dir, "servoshell.dmg")
 
             if path.exists(dmg_path):
                 print("Deleting existing dmg")
@@ -283,28 +285,6 @@ class PackageCommands(CommandBase):
             delete(dir_to_dmg)
             print("Packaged Servo into " + dmg_path)
 
-            print("Creating brew package")
-            dir_to_brew = path.join(target_dir, 'brew_tmp')
-            dir_to_tar = path.join(target_dir, 'brew')
-            if not path.exists(dir_to_tar):
-                os.makedirs(dir_to_tar)
-            tar_path = path.join(dir_to_tar, "servo.tar.gz")
-            if path.exists(dir_to_brew):
-                print("Cleaning up from previous packaging")
-                delete(dir_to_brew)
-            if path.exists(tar_path):
-                print("Deleting existing package")
-                os.remove(tar_path)
-            shutil.copytree(path.join(dir_to_root, 'resources'), path.join(dir_to_brew, 'resources'))
-            os.makedirs(path.join(dir_to_brew, 'bin'))
-            shutil.copy2(binary_path, path.join(dir_to_brew, 'bin', 'servo'))
-            # Note that in the context of Homebrew, libexec is reserved for private use by the formula
-            # and therefore is not symlinked into HOMEBREW_PREFIX.
-            os.makedirs(path.join(dir_to_brew, 'libexec'))
-            copy_dependencies(path.join(dir_to_brew, 'bin', 'servo'), path.join(dir_to_brew, 'libexec'))
-            archive_deterministically(dir_to_brew, tar_path, prepend_path='servo/')
-            delete(dir_to_brew)
-            print("Packaged Servo into " + tar_path)
         elif is_windows():
             dir_to_msi = path.join(target_dir, 'msi')
             if path.exists(dir_to_msi):
@@ -324,7 +304,7 @@ class PackageCommands(CommandBase):
 
             # generate Servo.wxs
             import mako.template
-            template_path = path.join(dir_to_root, "src", "platform", "windows", "ServoShell.wxs.mako")
+            template_path = path.join(dir_to_root, "support ", "windows", "ServoShell.wxs.mako")
             template = mako.template.Template(open(template_path).read())
             wxs_path = path.join(dir_to_msi, "ServoShell.wxs")
             open(wxs_path, "w").write(template.render(
@@ -367,10 +347,8 @@ class PackageCommands(CommandBase):
             shutil.copytree(path.join(dir_to_root, 'resources'), dir_to_resources)
             shutil.copy(binary_path, dir_to_temp)
 
-            change_prefs(dir_to_resources, "linux")
-
             print("Creating tarball")
-            tar_path = path.join(target_dir, 'servo-tech-demo.tar.gz')
+            tar_path = path.join(target_dir, 'servoshell.tar.gz')
 
             archive_deterministically(dir_to_temp, tar_path, prepend_path='servo/')
 
