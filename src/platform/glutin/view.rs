@@ -8,7 +8,6 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 use super::GlutinWindow;
-use super::utils;
 use view::{DrawableGeometry, ViewEvent};
 
 pub struct View {
@@ -25,11 +24,13 @@ impl View {
         let win = windows.get(&self.id).unwrap();
         let (mut width, mut height) = win.glutin_window.get_inner_size().expect("Failed to get window inner size.");
 
-        if cfg!(target_os = "windows") {
-            let factor = utils::windows_hidpi_factor();
-            width /= factor as u32;
-            height /= factor as u32;
-        }
+        #[cfg(target_os = "windows")]
+        let factor = super::utils::windows_hidpi_factor();
+        #[cfg(not(target_os = "windows"))]
+        let factor = 1.0;
+
+        width /= factor as u32;
+        height /= factor as u32;
 
         DrawableGeometry {
             view_size: (width, height),

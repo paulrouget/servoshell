@@ -176,11 +176,12 @@ impl App {
     }
 
     pub fn create_window(&self) -> Result<Window, &'static str> {
-        let factor = if cfg!(target_os = "windows") {
-            utils::windows_hidpi_factor()
-        } else {
-            1.0
-        };
+
+        #[cfg(target_os = "windows")]
+        let factor = utils::windows_hidpi_factor();
+        #[cfg(not(target_os = "windows"))]
+        let factor = 1.0;
+
         let window = glutin::WindowBuilder::new()
             .with_dimensions(1024 * factor as u32,
                              768 * factor as u32);
