@@ -78,7 +78,7 @@ pub struct App {
 
 impl App {
 
-    pub fn new() -> Result<App, &'static str> {
+    pub fn new() -> Result<App, String> {
 
         register();
         view::register();
@@ -96,7 +96,7 @@ impl App {
         });
 
         let nsapp: id = match nsapp {
-            None => return Err("Couldn't not find NSApplication instance in nib file"),
+            None => return Err("Couldn't not find NSApplication instance in nib file".to_owned()),
             Some(id) => id,
         };
 
@@ -152,7 +152,14 @@ impl App {
     }
 
     pub fn get_nibs_path() -> Option<PathBuf> {
-        Self::get_res_parent().map(|p| p.join("nibs"))
+        Self::get_res_parent().and_then(|p| {
+            let p = p.join("nibs");
+            if p.exists() {
+                Some(p)
+            } else {
+                None
+            }
+        })
     }
 
     pub fn get_resources_path() -> Option<PathBuf> {
@@ -273,7 +280,7 @@ impl App {
         }
     }
 
-    pub fn create_window(&self) -> Result<window::Window, &'static str> {
+    pub fn create_window(&self) -> Result<window::Window, String> {
         let (nswindow, nspopover) = match App::create_native_window() {
             Ok(w) => w,
             Err(msg) => return Err(msg),
@@ -282,7 +289,7 @@ impl App {
         Ok(window::Window::new(nswindow, nspopover))
     }
 
-    fn create_native_window() -> Result<(id, id), &'static str> {
+    fn create_native_window() -> Result<(id, id), String> {
         let instances = match utils::load_nib("Window.nib") {
             Ok(instances) => instances,
             Err(msg) => return Err(msg),
@@ -302,12 +309,12 @@ impl App {
         }
 
         let nswindow = match nswindow {
-            None => return Err("Couldn't not find NSShellWindow instance in nib file"),
+            None => return Err("Couldn't not find NSShellWindow instance in nib file".to_owned()),
             Some(id) => id,
         };
 
         let nspopover = match nspopover {
-            None => return Err("Couldn't not find NSPopover instance in nib file"),
+            None => return Err("Couldn't not find NSPopover instance in nib file".to_owned()),
             Some(id) => id,
         };
 

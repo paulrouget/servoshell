@@ -40,7 +40,7 @@ pub struct App {
 }
 
 impl App {
-    pub fn new() -> Result<App, &'static str> {
+    pub fn new() -> Result<App, String> {
         let event_loop = glutin::EventsLoop::new();
         let event_loop_waker = box WinitEventLoopWaker {
             proxy: Arc::new(event_loop.create_proxy())
@@ -175,7 +175,7 @@ impl App {
         callback()
     }
 
-    pub fn create_window(&self) -> Result<Window, &'static str> {
+    pub fn create_window(&self) -> Result<Window, String> {
 
         #[cfg(target_os = "windows")]
         let factor = utils::windows_hidpi_factor();

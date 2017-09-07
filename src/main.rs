@@ -63,8 +63,8 @@ fn main() {
         std::process::exit(0);
     });
 
-    let app = App::new().unwrap();
-    let window = app.create_window().unwrap();
+    let app = App::new().expect("Can't create application");
+    let window = app.create_window().expect("Can't create application");
 
     let view = Rc::new(window.create_view().unwrap());
 
