@@ -153,12 +153,17 @@ impl App {
 
     pub fn get_nibs_path() -> Option<PathBuf> {
         Self::get_res_parent().and_then(|p| {
+            // In app bundle
+            if p.join("nibs").exists() {
+                return Some(p.join("nibs"))
+            }
+            // cargo run
+            let p = p.join("target");
             let p = p.join("nibs");
             if p.exists() {
-                Some(p)
-            } else {
-                None
+                return Some(p);
             }
+            None
         })
     }
 
