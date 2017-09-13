@@ -6,7 +6,6 @@ description = "A basic servo-based browser"
 build = "build.rs"
 
 [dependencies]
-gleam = "0.4"
 open = "1.1.1"
 log = "0.3"
 libservo = { git = "https://github.com/servo/servo", rev = "6051e5ed02" }

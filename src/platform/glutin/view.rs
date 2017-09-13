@@ -2,13 +2,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use gleam::gl;
 use glutin::{self, GlContext};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 use super::GlutinWindow;
-use view::{DrawableGeometry, ViewEvent};
+use view::{gl, DrawableGeometry, ViewEvent};
 
 pub struct View {
     id: glutin::WindowId,

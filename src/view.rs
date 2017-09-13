@@ -8,6 +8,7 @@ pub use platform::View;
 
 pub use servo::{Key, KeyState, KeyModifiers};
 pub use servo::{SHIFT, CONTROL, ALT, SUPER};
+pub use servo::gl;
 
 #[derive(Debug, Copy, Clone)]
 pub struct DrawableGeometry {

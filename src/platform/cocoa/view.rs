@@ -11,7 +11,6 @@ use cocoa::appkit;
 use cocoa::appkit::*;
 use cocoa::foundation::*;
 use cocoa::base::*;
-use gleam::gl;
 use objc::declare::ClassDecl;
 use objc::runtime::{Class, Object, Sel};
 use std::rc::Rc;
@@ -21,7 +20,7 @@ use self::core_foundation::string::CFString;
 use self::core_foundation::bundle::{CFBundleGetBundleWithIdentifier, CFBundleGetFunctionPointerForName};
 use std::os::raw::c_void;
 use std::{ffi, str};
-use view::{ElementState, Key, KeyState, KeyModifiers, MouseButton, ViewEvent, TouchPhase, MouseScrollDelta};
+use view::{gl, ElementState, Key, KeyState, KeyModifiers, MouseButton, ViewEvent, TouchPhase, MouseScrollDelta};
 use view::{SHIFT, CONTROL, ALT, SUPER};
 use super::utils;
 

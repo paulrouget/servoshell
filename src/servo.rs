@@ -16,11 +16,11 @@ use self::servo::script_traits::{LoadData, MouseButton, TouchEventType};
 use self::servo::style_traits::DevicePixel;
 use self::servo::net_traits::net_error_list::NetError;
 use self::servo::webrender_api;
-use gleam::gl;
 use state::BrowserState;
 use std::path::PathBuf;
 
 pub use self::servo::BrowserId;
+pub use self::servo::gl;
 pub use self::servo::compositing::compositor_thread::EventLoopWaker;
 pub use self::servo::style_traits::cursor::Cursor as ServoCursor;
 pub use self::servo::servo_url::ServoUrl;

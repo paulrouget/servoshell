@@ -18,9 +18,9 @@ pub use self::logs::Logger;
 pub use self::view::View;
 pub use self::window::Window;
 
-use gleam::gl;
 use view::{Key, KeyModifiers, KeyState, ViewEvent, TouchPhase, ElementState, MouseButton, MouseScrollDelta};
 use view::{SHIFT, CONTROL, ALT, SUPER};
+use view::gl;
 use window::{WindowCommand, WindowEvent};
 
 pub struct GlutinWindow {

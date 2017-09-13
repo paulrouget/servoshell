@@ -30,7 +30,6 @@ extern crate user32;
 #[cfg(target_os = "windows")]
 extern crate gdi32;
 
-extern crate gleam;
 extern crate open;
 
 mod app;
