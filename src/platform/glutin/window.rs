@@ -9,10 +9,10 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 use super::GlutinWindow;
-use super::logs::TermLog;
+use logs::ShellLog;
 use tinyfiledialogs;
-use view::View;
-use window::{WindowCommand, WindowEvent};
+use view::{View, ViewMethods};
+use window::{WindowCommand, WindowEvent, WindowMethods};
 
 pub struct Window {
     id: glutin::WindowId,
@@ -23,7 +23,10 @@ impl Window {
     pub fn new(id: glutin::WindowId, windows: Rc<RefCell<HashMap<glutin::WindowId, GlutinWindow>>>) -> Window {
         Window { id, windows }
     }
-    pub fn render(&self, state: &WindowState) {
+}
+
+impl WindowMethods for Window {
+    fn render(&self, state: &WindowState) {
         // FIXME: mut WindowState
         let text = state.browsers.iter().enumerate().fold("|".to_owned(), |f, (idx, b)| {
             let title = b.title.as_ref().and_then(|t| {
@@ -51,7 +54,7 @@ impl Window {
         }
     }
 
-    pub fn get_init_state() -> WindowState {
+    fn get_init_state(&self) -> WindowState {
         WindowState {
             current_browser_index: None,
             browsers: Vec::new(),
@@ -74,23 +77,23 @@ impl Window {
         }
     }
 
-    pub fn create_view(&self) -> Result<View, &'static str> {
-        Ok(View::new(self.id, self.windows.clone()))
+    fn new_view(&self) -> Result<Rc<ViewMethods>, &'static str> {
+        Ok(Rc::new(View::new(self.id, self.windows.clone())))
     }
 
-    pub fn create_event_loop_waker(&self) -> Box<EventLoopWaker> {
+    fn new_event_loop_waker(&self) -> Box<EventLoopWaker> {
         let mut windows = self.windows.borrow_mut();
         windows.get_mut(&self.id).unwrap().event_loop_waker.clone()
     }
 
-    pub fn get_events(&self) -> Vec<WindowEvent> {
+    fn get_events(&self) -> Vec<WindowEvent> {
         let mut windows = self.windows.borrow_mut();
         let win = windows.get_mut(&self.id).unwrap();
         let events = win.window_events.drain(..).collect();
         events
     }
 
-    pub fn append_logs(&self, _logs: &Vec<TermLog>) {
+    fn append_logs(&self, _logs: &Vec<ShellLog>) {
     }
 }
 

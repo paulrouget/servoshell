@@ -20,7 +20,7 @@ use self::core_foundation::string::CFString;
 use self::core_foundation::bundle::{CFBundleGetBundleWithIdentifier, CFBundleGetFunctionPointerForName};
 use std::os::raw::c_void;
 use std::{ffi, str};
-use view::{gl, ElementState, Key, KeyState, KeyModifiers, MouseButton, ViewEvent, TouchPhase, MouseScrollDelta};
+use view::{gl, ElementState, Key, KeyState, KeyModifiers, MouseButton, ViewEvent, TouchPhase, MouseScrollDelta, ViewMethods};
 use view::{SHIFT, CONTROL, ALT, SUPER};
 use super::utils;
 
@@ -166,91 +166,12 @@ pub struct View {
 }
 
 impl View {
-
     pub fn new(nsview: id) -> View {
         let (context, gl) = View::init_gl(nsview);
         View {
             nsview: nsview,
             context: context,
             gl: gl.clone(),
-        }
-    }
-
-    pub fn gl(&self) -> Rc<gl::Gl> {
-        self.gl.clone()
-    }
-
-    pub fn set_live_resize_callback<F>(&self, callback: &F) where F: Fn() {
-        // FIXME: If I don't specify the type, segfault… why???
-        let ptr: *mut &Fn() = Box::into_raw(Box::new(callback));
-        unsafe {
-            (*self.nsview).set_ivar("live_resize_callback", ptr as *mut c_void);
-        }
-    }
-
-    pub fn swap_buffers(&self) {
-        unsafe {
-            msg_send![self.context, flushBuffer];
-        }
-    }
-
-    pub fn update_drawable(&self) {
-        unsafe {
-            msg_send![self.context, update];
-        }
-    }
-
-    pub fn get_geometry(&self) -> DrawableGeometry {
-        unsafe {
-            let nswindow: id = msg_send![self.nsview, window];
-            let content_view: id = msg_send![nswindow, contentView];
-
-            let hidpi_factor: CGFloat = msg_send![nswindow, backingScaleFactor];
-
-            let view_frame: NSRect = msg_send![self.nsview, frame];
-            let content_frame: NSRect = msg_send![content_view, frame];
-            let visible_rect: NSRect = msg_send![nswindow, contentLayoutRect];
-
-            let tabview = utils::get_view_by_id(nswindow, "tabview").unwrap();
-            let count: usize = msg_send![tabview, numberOfTabViewItems];
-            let tabheight = if count > 1 {
-                // FIXME
-                35.0
-            } else {
-                0.0
-            };
-
-            let bottom = 0;
-            let top = (content_frame.size.height - visible_rect.size.height + tabheight) as u32;
-            let left = 0;
-            let right = 0;
-
-            DrawableGeometry {
-                view_size: (view_frame.size.width as u32, view_frame.size.height as u32),
-                margins: (top, right, bottom, left),
-                position: (0, 0),
-                hidpi_factor: hidpi_factor as f32,
-            }
-        }
-    }
-
-    pub fn get_events(&self) -> Vec<ViewEvent> {
-        // FIXME: we should allow only one GeometryDidChange
-        let nsobject = unsafe { &*self.nsview};
-        utils::get_event_queue(nsobject).drain(..).collect()
-    }
-
-    // FIXME: should be controlled by state
-    pub fn enter_fullscreen(&self) {
-        unsafe {
-            msg_send![self.nsview, enterFullScreenMode:nil withOptions:nil];
-        }
-    }
-
-    // FIXME: should be controlled by state
-    pub fn exit_fullscreen(&self) {
-        unsafe {
-            msg_send![self.nsview, exitFullScreenModeWithOptions:nil];
         }
     }
 
@@ -300,6 +221,87 @@ impl View {
         gl.finish();
 
         (ctx, gl)
+    }
+}
+
+impl ViewMethods for View {
+
+    fn gl(&self) -> Rc<gl::Gl> {
+        self.gl.clone()
+    }
+
+    fn set_live_resize_callback(&self, callback: &Fn()) {
+        // FIXME: If I don't specify the type, segfault… why???
+        let ptr: *mut &Fn() = Box::into_raw(Box::new(callback));
+        unsafe {
+            (*self.nsview).set_ivar("live_resize_callback", ptr as *mut c_void);
+        }
+    }
+
+    fn swap_buffers(&self) {
+        unsafe {
+            msg_send![self.context, flushBuffer];
+        }
+    }
+
+    fn update_drawable(&self) {
+        unsafe {
+            msg_send![self.context, update];
+        }
+    }
+
+    fn get_geometry(&self) -> DrawableGeometry {
+        unsafe {
+            let nswindow: id = msg_send![self.nsview, window];
+            let content_view: id = msg_send![nswindow, contentView];
+
+            let hidpi_factor: CGFloat = msg_send![nswindow, backingScaleFactor];
+
+            let view_frame: NSRect = msg_send![self.nsview, frame];
+            let content_frame: NSRect = msg_send![content_view, frame];
+            let visible_rect: NSRect = msg_send![nswindow, contentLayoutRect];
+
+            let tabview = utils::get_view_by_id(nswindow, "tabview").unwrap();
+            let count: usize = msg_send![tabview, numberOfTabViewItems];
+            let tabheight = if count > 1 {
+                // FIXME
+                35.0
+            } else {
+                0.0
+            };
+
+            let bottom = 0;
+            let top = (content_frame.size.height - visible_rect.size.height + tabheight) as u32;
+            let left = 0;
+            let right = 0;
+
+            DrawableGeometry {
+                view_size: (view_frame.size.width as u32, view_frame.size.height as u32),
+                margins: (top, right, bottom, left),
+                position: (0, 0),
+                hidpi_factor: hidpi_factor as f32,
+            }
+        }
+    }
+
+    fn get_events(&self) -> Vec<ViewEvent> {
+        // FIXME: we should allow only one GeometryDidChange
+        let nsobject = unsafe { &*self.nsview};
+        utils::get_event_queue(nsobject).drain(..).collect()
+    }
+
+    // FIXME: should be controlled by state
+    fn enter_fullscreen(&self) {
+        unsafe {
+            msg_send![self.nsview, enterFullScreenMode:nil withOptions:nil];
+        }
+    }
+
+    // FIXME: should be controlled by state
+    fn exit_fullscreen(&self) {
+        unsafe {
+            msg_send![self.nsview, exitFullScreenModeWithOptions:nil];
+        }
     }
 }
 

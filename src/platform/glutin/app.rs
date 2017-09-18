@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use app::AppEvent;
+use app::{AppEvent, AppMethods};
 use glutin::{self, GlContext};
 use servo::{ServoCursor, EventLoopWaker};
 use state::AppState;
@@ -15,7 +15,7 @@ use std::sync::Arc;
 use super::GlutinWindow;
 use super::utils;
 use view::{gl, KeyModifiers};
-use window::{Window, WindowEvent};
+use window::{Window, WindowEvent, WindowMethods};
 
 pub struct WinitEventLoopWaker {
     proxy: Arc<glutin::EventsLoopProxy>
@@ -39,64 +39,6 @@ pub struct App {
 }
 
 impl App {
-    pub fn new() -> Result<App, String> {
-        let event_loop = glutin::EventsLoop::new();
-        let event_loop_waker = box WinitEventLoopWaker {
-            proxy: Arc::new(event_loop.create_proxy())
-        };
-        let windows = Rc::new(RefCell::new(HashMap::new()));
-        Ok(App {
-            windows,
-            event_loop: RefCell::new(event_loop),
-            event_loop_waker,
-        })
-    }
-
-    pub fn get_init_state() -> AppState {
-        AppState {
-            current_window_index: None,
-            windows: Vec::new(),
-            dark_theme: false,
-            cursor: ServoCursor::Default,
-        }
-    }
-
-    pub fn get_resources_path() -> Option<PathBuf> {
-        // Try current directory. Used for example with "cargo run"
-        let p = env::current_dir().unwrap();
-        if p.join("servo_resources/").exists() {
-            return Some(p.join("servo_resources/"));
-        }
-
-        // Maybe in /resources/
-        let p = p.join("resources").join("servo_resources");
-        if p.exists() {
-            return Some(p);
-        }
-
-        // Maybe we run from an app bundle
-        let p = env::current_exe().unwrap();
-        let p = p.parent().unwrap();
-        let p = p.parent().unwrap().join("Resources");
-
-        if p.join("servo_resources/").exists() {
-            return Some(p.join("servo_resources/"));
-        }
-
-        None
-    }
-
-    pub fn render(&self, state: &AppState) {
-        let cursor = utils::servo_cursor_to_glutin_cursor(state.cursor);
-        let windows = self.windows.borrow();
-        for (_, window) in windows.iter() {
-            window.glutin_window.set_cursor(cursor);
-        };
-    }
-
-    pub fn get_events(&self) -> Vec<AppEvent> {
-        vec![]
-    }
 
     fn should_exit(&self, event: &glutin::WindowEvent) -> bool {
         // Exit if window is closed or if Cmd/Ctrl Q
@@ -123,7 +65,110 @@ impl App {
         false
     }
 
-    pub fn run<F>(&self, mut callback: F) where F: FnMut() {
+}
+
+impl AppMethods for App {
+    fn new<'a>() -> Result<App, &'a str> {
+        let event_loop = glutin::EventsLoop::new();
+        let event_loop_waker = box WinitEventLoopWaker {
+            proxy: Arc::new(event_loop.create_proxy())
+        };
+        let windows = Rc::new(RefCell::new(HashMap::new()));
+        Ok(App {
+            windows,
+            event_loop: RefCell::new(event_loop),
+            event_loop_waker,
+        })
+    }
+
+    fn get_init_state() -> AppState {
+        AppState {
+            current_window_index: None,
+            windows: Vec::new(),
+            dark_theme: false,
+            cursor: ServoCursor::Default,
+        }
+    }
+
+    fn get_resources_path() -> Option<PathBuf> {
+        // Try current directory. Used for example with "cargo run"
+        let p = env::current_dir().unwrap();
+        if p.join("servo_resources/").exists() {
+            return Some(p.join("servo_resources/"));
+        }
+
+        // Maybe in /resources/
+        let p = p.join("resources").join("servo_resources");
+        if p.exists() {
+            return Some(p);
+        }
+
+        // Maybe we run from an app bundle
+        let p = env::current_exe().unwrap();
+        let p = p.parent().unwrap();
+        let p = p.parent().unwrap().join("Resources");
+
+        if p.join("servo_resources/").exists() {
+            return Some(p.join("servo_resources/"));
+        }
+
+        None
+    }
+
+    fn render(&self, state: &AppState) {
+        let cursor = utils::servo_cursor_to_glutin_cursor(state.cursor);
+        let windows = self.windows.borrow();
+        for (_, window) in windows.iter() {
+            window.glutin_window.set_cursor(cursor);
+        };
+    }
+
+    fn get_events(&self) -> Vec<AppEvent> {
+        vec![]
+    }
+
+    fn new_window<'a>(&self) -> Result<Box<WindowMethods>, &'a str> {
+
+        #[cfg(target_os = "windows")]
+        let factor = utils::windows_hidpi_factor();
+        #[cfg(not(target_os = "windows"))]
+        let factor = 1.0;
+
+        let window = glutin::WindowBuilder::new()
+            .with_dimensions(1024 * factor as u32,
+                             768 * factor as u32);
+        let context = glutin::ContextBuilder::new()
+            .with_gl(glutin::GlRequest::Specific(glutin::Api::OpenGl, (3, 2)))
+            .with_vsync(true);
+        let glutin_window = glutin::GlWindow::new(window, context, &*self.event_loop.borrow_mut()).unwrap();
+
+        let gl = unsafe {
+            glutin_window.context().make_current().expect("Couldn't make window current");
+            gl::GlFns::load_with(|s| glutin_window.context().get_proc_address(s) as *const _)
+        };
+
+        gl.clear_color(1.0, 1.0, 1.0, 1.0);
+        gl.clear(gl::COLOR_BUFFER_BIT);
+        gl.finish();
+
+        glutin_window.show();
+
+        let id = glutin_window.id();
+
+        self.windows.borrow_mut().insert(id, GlutinWindow {
+            gl,
+            glutin_window,
+            event_loop_waker: self.event_loop_waker.clone(),
+            key_modifiers: Cell::new(KeyModifiers::empty()),
+            last_pressed_key: Cell::new(None),
+            view_events: vec![],
+            window_events: vec![],
+        });
+
+        Ok(Box::new(Window::new(id, self.windows.clone())))
+    }
+
+    fn run<T>(&self, callback: T) where T: Fn() {
         self.event_loop.borrow_mut().run_forever(|e| {
             let mut call_callback = false;
             match e {
@@ -172,46 +217,5 @@ impl App {
             glutin::ControlFlow::Continue
         });
         callback()
-    }
-
-    pub fn create_window(&self) -> Result<Window, String> {
-
-        #[cfg(target_os = "windows")]
-        let factor = utils::windows_hidpi_factor();
-        #[cfg(not(target_os = "windows"))]
-        let factor = 1.0;
-
-        let window = glutin::WindowBuilder::new()
-            .with_dimensions(1024 * factor as u32,
-                             768 * factor as u32);
-        let context = glutin::ContextBuilder::new()
-            .with_gl(glutin::GlRequest::Specific(glutin::Api::OpenGl, (3, 2)))
-            .with_vsync(true);
-        let glutin_window = glutin::GlWindow::new(window, context, &*self.event_loop.borrow_mut()).unwrap();
-
-        let gl = unsafe {
-            glutin_window.context().make_current().expect("Couldn't make window current");
-            gl::GlFns::load_with(|s| glutin_window.context().get_proc_address(s) as *const _)
-        };
-
-        gl.clear_color(1.0, 1.0, 1.0, 1.0);
-        gl.clear(gl::COLOR_BUFFER_BIT);
-        gl.finish();
-
-        glutin_window.show();
-
-        let id = glutin_window.id();
-
-        self.windows.borrow_mut().insert(id, GlutinWindow {
-            gl,
-            glutin_window,
-            event_loop_waker: self.event_loop_waker.clone(),
-            key_modifiers: Cell::new(KeyModifiers::empty()),
-            last_pressed_key: Cell::new(None),
-            view_events: vec![],
-            window_events: vec![],
-        });
-
-        Ok(Window::new(id, self.windows.clone()))
     }
 }

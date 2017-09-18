@@ -10,11 +10,12 @@ use objc::runtime::{Class, Object, Sel};
 use std::os::raw::c_void;
 use std::env;
 use std::path::PathBuf;
-use app::{AppEvent, AppCommand};
+use app::{AppEvent, AppCommand, AppMethods};
 use servo::ServoCursor;
 use state::AppState;
 use super::utils;
 use super::{window, view, toolbar, bookmarks};
+use window::WindowMethods;
 
 fn register() {
     let superclass = Class::get("NSResponder").unwrap();
@@ -77,61 +78,8 @@ pub struct App {
 }
 
 impl App {
-
-    pub fn new() -> Result<App, String> {
-
-        register();
-        view::register();
-        window::register();
-        toolbar::register();
-        bookmarks::register();
-
-        let instances = match utils::load_nib("App.nib") {
-            Ok(instances) => instances,
-            Err(msg) => return Err(msg),
-        };
-
-        let nsapp = instances.into_iter().find(|i| {
-            utils::id_is_instance_of(*i, "NSApplication")
-        });
-
-        let nsapp: id = match nsapp {
-            None => return Err("Couldn't not find NSApplication instance in nib file".to_owned()),
-            Some(id) => id,
-        };
-
-        unsafe {
-            nsapp.setActivationPolicy_(NSApplicationActivationPolicyRegular);
-            let current_app = NSRunningApplication::currentApplication(nil);
-            current_app.activateWithOptions_(NSApplicationActivateIgnoringOtherApps);
-        }
-
-        // FIXME: release and set delegate to nil
-        let event_queue: Vec<AppEvent> = Vec::new();
-        let event_queue_ptr = Box::into_raw(Box::new(event_queue));
-
-        unsafe {
-            let delegate: id = msg_send![class("NSShellApplicationDelegate"), alloc];
-            (*delegate).set_ivar("event_queue", event_queue_ptr as *mut c_void);
-            msg_send![nsapp, setDelegate:delegate];
-        }
-
-        let app = App {nsapp: nsapp};
-
-        Ok(app)
-    }
-
-    pub fn get_init_state() -> AppState {
-        AppState {
-            current_window_index: None,
-            windows: Vec::new(),
-            dark_theme: false,
-            cursor: ServoCursor::Default,
-        }
-    }
-
     // Where to find servo_resources/ and nibs/
-    pub fn get_res_parent() -> Option<PathBuf> {
+    fn get_res_parent() -> Option<PathBuf> {
         // Try current directory. Used for example with "cargo run"
         let p = env::current_dir().unwrap();
 
@@ -167,16 +115,7 @@ impl App {
         })
     }
 
-    pub fn get_resources_path() -> Option<PathBuf> {
-        Self::get_res_parent().map(|p| p.join("servo_resources"))
-    }
-
-    pub fn render(&self, state: &AppState) {
-        self.copy_state(state);
-        self.update_cursor(state.cursor);
-    }
-
-    pub fn copy_state(&self, state: &AppState) {
+    fn copy_state(&self, state: &AppState) {
         // FIXME: how inefficient is this?
         let state_ptr = Box::into_raw(Box::new(state.clone()));
         unsafe {
@@ -186,7 +125,7 @@ impl App {
     }
 
     // From winit
-    pub fn update_cursor(&self, cursor: ServoCursor) {
+    fn update_cursor(&self, cursor: ServoCursor) {
 
         let cursor_name = match cursor {
             ServoCursor::Default => "arrowCursor",
@@ -234,7 +173,104 @@ impl App {
         }
     }
 
-    pub fn get_events(&self) -> Vec<AppEvent> {
+    fn create_native_window<'a>() -> Result<(id, id), &'a str> {
+        let instances = match utils::load_nib("Window.nib") {
+            Ok(instances) => instances,
+            Err(msg) => return Err(msg),
+        };
+
+        let mut nspopover: Option<id> = None;
+        let mut nswindow: Option<id> = None;
+        for i in instances {
+            let class = utils::get_classname(i);
+            info!("Found class: {}", class);
+            if utils::id_is_instance_of(i, "NSShellWindow") {
+                nswindow = Some(i);
+            }
+            if utils::id_is_instance_of(i, "NSPopover") {
+                nspopover = Some(i);
+            }
+        }
+
+        let nswindow = match nswindow {
+            None => return Err(&"Couldn't not find NSShellWindow instance in nib file"),
+            Some(id) => id,
+        };
+
+        let nspopover = match nspopover {
+            None => return Err(&"Couldn't not find NSPopover instance in nib file"),
+            Some(id) => id,
+        };
+
+        Ok((nswindow, nspopover))
+    }
+}
+
+
+impl AppMethods for App {
+
+    fn new<'a>() -> Result<App, &'a str> {
+
+        register();
+        view::register();
+        window::register();
+        toolbar::register();
+        bookmarks::register();
+
+        let instances = match utils::load_nib("App.nib") {
+            Ok(instances) => instances,
+            Err(msg) => return Err(msg),
+        };
+
+        let nsapp = instances.into_iter().find(|i| {
+            utils::id_is_instance_of(*i, "NSApplication")
+        });
+
+        let nsapp: id = match nsapp {
+            None => return Err(&"Couldn't not find NSApplication instance in nib file"),
+            Some(id) => id,
+        };
+
+        unsafe {
+            nsapp.setActivationPolicy_(NSApplicationActivationPolicyRegular);
+            let current_app = NSRunningApplication::currentApplication(nil);
+            current_app.activateWithOptions_(NSApplicationActivateIgnoringOtherApps);
+        }
+
+        // FIXME: release and set delegate to nil
+        let event_queue: Vec<AppEvent> = Vec::new();
+        let event_queue_ptr = Box::into_raw(Box::new(event_queue));
+
+        unsafe {
+            let delegate: id = msg_send![class("NSShellApplicationDelegate"), alloc];
+            (*delegate).set_ivar("event_queue", event_queue_ptr as *mut c_void);
+            msg_send![nsapp, setDelegate:delegate];
+        }
+
+        let app = App {nsapp: nsapp};
+
+        Ok(app)
+    }
+
+    fn get_init_state() -> AppState {
+        AppState {
+            current_window_index: None,
+            windows: Vec::new(),
+            dark_theme: false,
+            cursor: ServoCursor::Default,
+        }
+    }
+
+    fn get_resources_path() -> Option<PathBuf> {
+        Self::get_res_parent().map(|p| p.join("servo_resources"))
+    }
+
+    fn render(&self, state: &AppState) {
+        self.copy_state(state);
+        self.update_cursor(state.cursor);
+    }
+
+    fn get_events(&self) -> Vec<AppEvent> {
         let nsobject = unsafe {
             let delegate: id = msg_send![self.nsapp, delegate];
             &*delegate
@@ -243,7 +279,7 @@ impl App {
     }
 
     // Equivalent of NSApp.run()
-    pub fn run<F>(&self, mut callback: F) where F: FnMut() {
+    fn run<F>(&self, mut callback: F) where F: FnMut() {
 
         unsafe { msg_send![self.nsapp, finishLaunching] };
 
@@ -285,44 +321,13 @@ impl App {
         }
     }
 
-    pub fn create_window(&self) -> Result<window::Window, String> {
+    fn new_window<'a>(&self) -> Result<Box<WindowMethods>, &'a str> {
         let (nswindow, nspopover) = match App::create_native_window() {
             Ok(w) => w,
-            Err(msg) => return Err(msg),
+            Err(msg) => return Err(&msg),
         };
 
-        Ok(window::Window::new(nswindow, nspopover))
+        Ok(Box::new(window::Window::new(nswindow, nspopover)))
     }
 
-    fn create_native_window() -> Result<(id, id), String> {
-        let instances = match utils::load_nib("Window.nib") {
-            Ok(instances) => instances,
-            Err(msg) => return Err(msg),
-        };
-
-        let mut nspopover: Option<id> = None;
-        let mut nswindow: Option<id> = None;
-        for i in instances {
-            let class = utils::get_classname(i);
-            info!("Found class: {}", class);
-            if utils::id_is_instance_of(i, "NSShellWindow") {
-                nswindow = Some(i);
-            }
-            if utils::id_is_instance_of(i, "NSPopover") {
-                nspopover = Some(i);
-            }
-        }
-
-        let nswindow = match nswindow {
-            None => return Err("Couldn't not find NSShellWindow instance in nib file".to_owned()),
-            Some(id) => id,
-        };
-
-        let nspopover = match nspopover {
-            None => return Err("Couldn't not find NSPopover instance in nib file".to_owned()),
-            Some(id) => id,
-        };
-
-        Ok((nswindow, nspopover))
-    }
 }

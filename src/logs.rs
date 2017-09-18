@@ -25,14 +25,14 @@ pub struct Logger(Arc<ShellLogs>);
 
 impl Logger {
     pub fn init() -> Arc<ShellLogs> {
-        let mut a = None;
+        let mut rv = None;
         set_logger(|max_log_level| {
             max_log_level.set(LogLevelFilter::Info);
-            let me = Arc::new(ShellLogs(Mutex::new(Vec::new())));
-            a = Some(me.clone());
-            Box::new(Logger(me))
+            let logs = Arc::new(ShellLogs(Mutex::new(Vec::new())));
+            rv = Some(logs.clone());
+            Box::new(Logger(logs))
         }).unwrap();
-        a.unwrap()
+        rv.unwrap()
     }
 }
 

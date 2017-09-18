@@ -10,15 +10,17 @@ use objc::runtime::{Class, Object, Sel};
 use std::f64;
 use std::ffi::CStr;
 use std::os::raw::c_void;
+use std::rc::Rc;
 use super::utils::{self, get_state};
-use window::{WindowEvent, WindowCommand};
-use view::View;
+use window::{WindowEvent, WindowCommand, WindowMethods};
+use view::{View, ViewMethods};
 use libc;
 use servo::EventLoopWaker;
 use state::{DebugOptions, WindowState};
-use super::logs::ShellLog;
+use logs::ShellLog;
 
 #[link(name = "MMTabBarView", kind = "framework")]
+#[allow(unused_attributes)]
 #[link_args = "-rpath target/MMTabBarView/Release/ -rpath @executable_path/../Frameworks/"]
 extern { }
 
@@ -370,7 +372,80 @@ impl Window {
         win
     }
 
-    pub fn render(&self, _state: &WindowState) {
+    fn get_toolbar_item(&self, identifier: &str) -> Option<id> {
+        unsafe {
+            let toolbar: id = msg_send![self.nswindow, toolbar];
+            let items: id = msg_send![toolbar, items];
+            let count: NSInteger = msg_send![items, count];
+            for i in 0..count {
+                let item: id = msg_send![items, objectAtIndex:i];
+                let item_identifier: id = msg_send![item, itemIdentifier];
+                if NSString::isEqualToString(item_identifier, identifier) {
+                    return Some(item);
+                }
+            }
+            None
+        }
+    }
+
+    fn update_theme(&self) {
+        let was_dark = {
+            // FIXME. Use state diff
+            unsafe {
+                let appearance: id = msg_send![self.nswindow, appearance];
+                let name: id = msg_send![appearance, name];
+                name == NSAppearanceNameVibrantDark
+            }
+        };
+        let dark = get_state().dark_theme;
+
+        if (dark && was_dark) || (!dark && !was_dark) {
+            return
+        }
+
+        let (appearance, bordered, segment_style) = unsafe { if dark {
+            // 3 -> roundRect
+            (NSAppearanceNameVibrantDark, NO, 3)
+        } else {
+            // 0 -> automatic
+            (NSAppearanceNameVibrantLight, YES, 0)
+        }};
+
+        let item = self.get_toolbar_item("options").unwrap();
+        let topview = unsafe {
+            let view: id = msg_send![item, view];
+            let view: id = msg_send![view, superview];
+            msg_send![view, superview]
+        };
+        utils::get_view(topview, &|view| {
+            if utils::id_is_instance_of(view, "NSButton") {
+                unsafe {msg_send![view, setBordered:bordered]};
+            }
+            if utils::id_is_instance_of(view, "NSSegmentedControl") {
+                unsafe {msg_send![view, setSegmentStyle:segment_style]};
+            }
+            if utils::id_is_instance_of(view, "NSTextField") {
+                unsafe {
+                    let layer: id = msg_send![view, layer];
+                    msg_send![layer, setCornerRadius:3.0];
+                    let alpha = if dark {0.1} else {0.0};
+                    let color: id = msg_send![Class::get("NSColor").unwrap(), colorWithRed:1.0 green:1.0 blue:1.0 alpha:alpha];
+                    let color: id = msg_send![color, CGColor];
+                    msg_send![layer, setBackgroundColor:color];
+                }
+            }
+            false
+        });
+        unsafe {
+            let appearance: id = msg_send![class("NSAppearance"), appearanceNamed:appearance];
+            msg_send![self.nswindow, setAppearance:appearance];
+        }
+    }
+}
+
+impl WindowMethods for Window {
+
+    fn render(&self, _state: &WindowState) {
 
         // FIXME: long function is long
 
@@ -579,7 +654,7 @@ impl Window {
 
     }
 
-    pub fn get_init_state() -> WindowState {
+    fn get_init_state(&self) -> WindowState {
         WindowState {
             current_browser_index: None,
             browsers: Vec::new(),
@@ -602,15 +677,15 @@ impl Window {
         }
     }
 
-    pub fn create_view(&self) -> Result<View, &'static str> {
+    fn new_view(&self) -> Result<Rc<ViewMethods>, &'static str> {
         // FIXME: We should dynamically create a NSServoView,
         // and adds the constraints, instead on relying on IB's instance.
         utils::get_view_by_id(self.nswindow, "shellViewServo")
-            .map(|nsview| View::new(nsview))
-            .ok_or("Can't find NSServoView")
+            .map(|nsview| Rc::new(View::new(nsview)) as Rc<ViewMethods>)
+        .ok_or("Can't find NSServoView")
     }
 
-    pub fn append_logs(&self, logs: &Vec<ShellLog>) {
+    fn append_logs(&self, logs: &Vec<ShellLog>) {
         unsafe {
             let textview = utils::get_view_by_id(self.nswindow, "shellViewLogsTextView").unwrap();
             let textstorage: id = msg_send![textview, textStorage];
@@ -624,87 +699,18 @@ impl Window {
         }
     }
 
-    pub fn get_events(&self) -> Vec<WindowEvent> {
+    fn get_events(&self) -> Vec<WindowEvent> {
         let nsobject = unsafe { &*self.nswindow};
         utils::get_event_queue(nsobject).drain(..).collect()
     }
 
-    fn get_toolbar_item(&self, identifier: &str) -> Option<id> {
-        unsafe {
-            let toolbar: id = msg_send![self.nswindow, toolbar];
-            let items: id = msg_send![toolbar, items];
-            let count: NSInteger = msg_send![items, count];
-            for i in 0..count {
-                let item: id = msg_send![items, objectAtIndex:i];
-                let item_identifier: id = msg_send![item, itemIdentifier];
-                if NSString::isEqualToString(item_identifier, identifier) {
-                    return Some(item);
-                }
-            }
-            None
-        }
-    }
 
-    pub fn create_event_loop_waker(&self) -> Box<EventLoopWaker> {
+    fn new_event_loop_waker(&self) -> Box<EventLoopWaker> {
         let window_number: NSInteger = unsafe {
             msg_send![self.nswindow, windowNumber]
         };
         box MacOSEventLoopWaker {
             window_number: window_number,
-        }
-    }
-
-    fn update_theme(&self) {
-        let was_dark = {
-            // FIXME. Use state diff
-            unsafe {
-                let appearance: id = msg_send![self.nswindow, appearance];
-                let name: id = msg_send![appearance, name];
-                name == NSAppearanceNameVibrantDark
-            }
-        };
-        let dark = get_state().dark_theme;
-
-        if (dark && was_dark) || (!dark && !was_dark) {
-            return
-        }
-
-        let (appearance, bordered, segment_style) = unsafe { if dark {
-            // 3 -> roundRect
-            (NSAppearanceNameVibrantDark, NO, 3)
-        } else {
-            // 0 -> automatic
-            (NSAppearanceNameVibrantLight, YES, 0)
-        }};
-
-        let item = self.get_toolbar_item("options").unwrap();
-        let topview = unsafe {
-            let view: id = msg_send![item, view];
-            let view: id = msg_send![view, superview];
-            msg_send![view, superview]
-        };
-        utils::get_view(topview, &|view| {
-            if utils::id_is_instance_of(view, "NSButton") {
-                unsafe {msg_send![view, setBordered:bordered]};
-            }
-            if utils::id_is_instance_of(view, "NSSegmentedControl") {
-                unsafe {msg_send![view, setSegmentStyle:segment_style]};
-            }
-            if utils::id_is_instance_of(view, "NSTextField") {
-                unsafe {
-                    let layer: id = msg_send![view, layer];
-                    msg_send![layer, setCornerRadius:3.0];
-                    let alpha = if dark {0.1} else {0.0};
-                    let color: id = msg_send![Class::get("NSColor").unwrap(), colorWithRed:1.0 green:1.0 blue:1.0 alpha:alpha];
-                    let color: id = msg_send![color, CGColor];
-                    msg_send![layer, setBackgroundColor:color];
-                }
-            }
-            false
-        });
-        unsafe {
-            let appearance: id = msg_send![class("NSAppearance"), appearanceNamed:appearance];
-            msg_send![self.nswindow, setAppearance:appearance];
         }
     }
 }

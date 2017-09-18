@@ -5,7 +5,6 @@
 #![feature(box_syntax)]
 #![feature(link_args)]
 
-
 #[macro_use]
 extern crate log;
 
@@ -38,13 +37,13 @@ mod view;
 mod servo;
 mod platform;
 mod state;
+mod logs;
 
-use app::{App, AppEvent, AppCommand};
-use window::{Window, WindowEvent, WindowCommand};
-use view::ViewEvent;
+use app::{App, AppEvent, AppCommand, AppMethods};
+use window::{WindowEvent, WindowCommand};
+use view::{ViewEvent};
 use servo::ServoEvent;
 use std::cell::RefCell;
-use std::rc::Rc;
 use std::env::args;
 use servo::{Servo, ServoUrl, WebRenderDebugOption};
 
@@ -53,7 +52,7 @@ const PKG_NAME: &'static str = env!("CARGO_PKG_NAME");
 
 fn main() {
 
-    let logs = platform::Logger::init();
+    let logs = logs::Logger::init();
 
     info!("starting");
 
@@ -63,15 +62,15 @@ fn main() {
     });
 
     let app = App::new().expect("Can't create application");
-    let window = app.create_window().expect("Can't create application");
+    let window = app.new_window().expect("Can't create application");
 
-    let view = Rc::new(window.create_view().unwrap());
+    let view = window.new_view().unwrap();
 
     Servo::configure(App::get_resources_path().unwrap());
 
     let servo = {
         let geometry = view.get_geometry();
-        let waker = window.create_event_loop_waker();
+        let waker = window.new_event_loop_waker();
         Servo::new(geometry, view.clone(), waker)
     };
 
@@ -84,12 +83,12 @@ fn main() {
         !arg.starts_with("-")
     }).unwrap_or(home_url);
 
-    let browser = servo.create_browser(&url);
+    let browser = servo.new_browser(&url);
     servo.select_browser(browser.id);
 
     let mut state = App::get_init_state();
     state.current_window_index = Some(0);
-    state.windows.push(Window::get_init_state());
+    state.windows.push(window.get_init_state());
     state.windows[0].current_browser_index = Some(0);
     state.windows[0].browsers.push(browser);
     app.render(&state);
@@ -251,7 +250,7 @@ fn main() {
                                 ui_invalidated = true;
                             },
                             WindowCommand::NewTab => {
-                                let browser = servo.create_browser("about:blank");
+                                let browser = servo.new_browser("about:blank");
                                 servo.select_browser(browser.id);
                                 servo.update_geometry(view.get_geometry());
                                 state.windows[0].current_browser_index = Some(idx + 1);

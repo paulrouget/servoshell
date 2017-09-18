@@ -6,6 +6,12 @@
 
 pub use platform::Window;
 
+use state::WindowState;
+use view::ViewMethods;
+use servo::EventLoopWaker;
+use std::rc::Rc;
+use logs::ShellLog;
+
 #[derive(Clone, Debug)]
 pub enum WindowEvent {
     EventLoopAwaken,
@@ -46,4 +52,13 @@ pub enum WindowCommand {
     ToggleOptionWRProfiler,
     ToggleOptionWRTextureCacheDebug,
     ToggleOptionWRTargetDebug,
+}
+
+pub trait WindowMethods {
+    fn render(&self, state: &WindowState);
+    fn get_init_state(&self) -> WindowState;
+    fn new_view(&self) -> Result<Rc<ViewMethods>, &'static str>;
+    fn new_event_loop_waker(&self) -> Box<EventLoopWaker>;
+    fn get_events(&self) -> Vec<WindowEvent>;
+    fn append_logs(&self, logs: &Vec<ShellLog>);
 }

@@ -28,8 +28,7 @@ pub use self::servo::compositing::windowing::WebRenderDebugOption;
 pub use self::servo::msg::constellation_msg::{Key, KeyModifiers, KeyState};
 pub use self::servo::msg::constellation_msg::{SHIFT, CONTROL, ALT, SUPER};
 
-use view;
-use view::DrawableGeometry;
+use view::{self, DrawableGeometry};
 
 use std::rc::Rc;
 use std::cell::{Cell, RefCell};
@@ -75,7 +74,7 @@ impl Servo {
         servo_version()
     }
 
-    pub fn new(geometry: DrawableGeometry, view: Rc<view::View>, waker: Box<EventLoopWaker>) -> Servo {
+    pub fn new(geometry: DrawableGeometry, view: Rc<view::ViewMethods>, waker: Box<EventLoopWaker>) -> Servo {
         let callbacks = Rc::new(ServoCallbacks {
             event_queue: RefCell::new(Vec::new()),
             geometry: Cell::new(geometry),
@@ -92,7 +91,7 @@ impl Servo {
         }
     }
 
-    pub fn create_browser(&self, url: &str) -> BrowserState {
+    pub fn new_browser(&self, url: &str) -> BrowserState {
 
         // FIXME: unwrap
         let url = ServoUrl::parse(url).unwrap();
@@ -266,7 +265,7 @@ struct ServoCallbacks {
     pub geometry: Cell<DrawableGeometry>,
     event_queue: RefCell<Vec<ServoEvent>>,
     waker: Box<EventLoopWaker>,
-    view: Rc<view::View>,
+    view: Rc<view::ViewMethods>,
 }
 
 impl ServoCallbacks {

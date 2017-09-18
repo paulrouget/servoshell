@@ -7,7 +7,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 use super::GlutinWindow;
-use view::{gl, DrawableGeometry, ViewEvent};
+use view::{gl, DrawableGeometry, ViewEvent, ViewMethods};
 
 pub struct View {
     id: glutin::WindowId,
@@ -18,7 +18,22 @@ impl View {
     pub fn new(id: glutin::WindowId, windows: Rc<RefCell<HashMap<glutin::WindowId, GlutinWindow>>>) -> View {
         View { id, windows }
     }
-    pub fn get_geometry(&self) -> DrawableGeometry {
+
+    #[cfg(not(target_os = "windows"))]
+    fn hidpi_factor(&self) -> f32 {
+        let windows = self.windows.borrow();
+        let win = windows.get(&self.id).unwrap();
+        win.glutin_window.hidpi_factor()
+    }
+
+    #[cfg(target_os = "windows")]
+    fn hidpi_factor(&self) -> f32 {
+        super::utils::windows_hidpi_factor()
+    }
+}
+
+impl ViewMethods for View {
+    fn get_geometry(&self) -> DrawableGeometry {
         let windows = self.windows.borrow();
         let win = windows.get(&self.id).unwrap();
         let (mut width, mut height) = win.glutin_window.get_inner_size().expect("Failed to get window inner size.");
@@ -39,7 +54,7 @@ impl View {
         }
     }
 
-    pub fn update_drawable(&self) {
+    fn update_drawable(&self) {
         let windows = self.windows.borrow();
         let win = windows.get(&self.id).unwrap();
         let (w, h) = win.glutin_window.get_inner_size().expect("Failed to get window inner size.");
@@ -47,43 +62,30 @@ impl View {
     }
 
     // FIXME: should be controlled by state
-    pub fn enter_fullscreen(&self) {
+    fn enter_fullscreen(&self) {
     }
 
     // FIXME: should be controlled by state
-    pub fn exit_fullscreen(&self) {
+    fn exit_fullscreen(&self) {
         self.windows.borrow().get(&self.id).unwrap().glutin_window.swap_buffers().unwrap();
     }
 
-    pub fn set_live_resize_callback<F>(&self, _callback: &F) where F: FnMut() {
+    fn set_live_resize_callback(&self, _callback: &Fn()) {
         // FIXME
     }
 
-    pub fn gl(&self) -> Rc<gl::Gl> {
+    fn gl(&self) -> Rc<gl::Gl> {
         self.windows.borrow().get(&self.id).unwrap().gl.clone()
     }
 
-    pub fn get_events(&self) -> Vec<ViewEvent> {
+    fn get_events(&self) -> Vec<ViewEvent> {
         let mut windows = self.windows.borrow_mut();
         let win = windows.get_mut(&self.id).unwrap();
         let events = win.view_events.drain(..).collect();
         events
     }
 
-    pub fn swap_buffers(&self) {
+    fn swap_buffers(&self) {
         self.windows.borrow().get(&self.id).unwrap().glutin_window.swap_buffers().unwrap();
     }
-
-    #[cfg(not(target_os = "windows"))]
-    fn hidpi_factor(&self) -> f32 {
-        let windows = self.windows.borrow();
-        let win = windows.get(&self.id).unwrap();
-        win.glutin_window.hidpi_factor()
-    }
-
-    #[cfg(target_os = "windows")]
-    fn hidpi_factor(&self) -> f32 {
-        super::utils::windows_hidpi_factor()
-    }
 }
-

@@ -6,11 +6,9 @@ mod utils;
 mod app;
 mod window;
 mod view;
-mod logs;
 mod toolbar;
 mod bookmarks;
 
 pub use self::app::App;
 pub use self::window::Window;
 pub use self::view::View;
-pub use self::logs::Logger;

@@ -4,6 +4,8 @@
 
 #![cfg_attr(any(feature = "force-glutin", not(target_os = "macos")), allow(dead_code))]
 
+use std::rc::Rc;
+
 pub use platform::View;
 
 pub use servo::{Key, KeyState, KeyModifiers};
@@ -56,4 +58,15 @@ pub enum MouseButton {
 pub enum MouseScrollDelta {
 	LineDelta(f32, f32),
 	PixelDelta(f32, f32)
+}
+
+pub trait ViewMethods {
+    fn get_geometry(&self) -> DrawableGeometry;
+    fn update_drawable(&self);
+    fn enter_fullscreen(&self);
+    fn exit_fullscreen(&self);
+    fn set_live_resize_callback(&self, callback: &Fn());
+    fn gl(&self) -> Rc<gl::Gl>;
+    fn get_events(&self) -> Vec<ViewEvent>;
+    fn swap_buffers(&self);
 }

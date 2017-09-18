@@ -12,11 +12,11 @@ use std::ffi::CStr;
 use app::App;
 use libc;
 
-pub fn load_nib(filename: &str) -> Result<Vec<id>, String> {
+pub fn load_nib<'a>(filename: &str) -> Result<Vec<id>, &'a str> {
 
     let path = match App::get_nibs_path() {
         Some(path) => path,
-        None => return Err(format!("Can't find nib file: {}", filename))
+        None => return Err(&"Can't find nib file")
     };
     let path = path.join(filename);
     let path = path.to_str().unwrap();
@@ -32,7 +32,7 @@ pub fn load_nib(filename: &str) -> Result<Vec<id>, String> {
 
         let success: BOOL = msg_send![nsnib, instantiateWithOwner:nil topLevelObjects:&objects];
         if success == NO {
-            return Err("Can't load nib file".to_owned());
+            return Err(&"Can't load nib file")
         }
 
         let count: NSInteger = msg_send![objects, count];

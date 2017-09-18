@@ -8,13 +8,11 @@ use std::cell::Cell;
 use std::rc::Rc;
 
 mod app;
-mod logs;
 mod utils;
 mod view;
 mod window;
 
 pub use self::app::App;
-pub use self::logs::Logger;
 pub use self::view::View;
 pub use self::window::Window;
 
