@@ -83,7 +83,7 @@ impl View {
 
     #[cfg(target_os = "windows")]
     fn hidpi_factor(&self) -> f32 {
-        utils::windows_hidpi_factor()
+        super::utils::windows_hidpi_factor()
     }
 }
 
