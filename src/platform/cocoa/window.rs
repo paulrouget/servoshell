@@ -48,13 +48,12 @@ pub fn register() {
         }
 
         extern fn event_loop_awaken(this: &Object, _sel: Sel) {
-            // FIXME: wut?
             utils::get_event_queue(this).push(WindowEvent::EventLoopAwaken);
         }
 
         extern fn awake_from_nib(this: &mut Object, _sel: Sel) {
             let event_queue: Vec<WindowEvent> = Vec::new();
-            // FIXME: is that the best way to create a raw pointer?
+            // FIXME: never freed
             let event_queue_ptr = Box::into_raw(Box::new(event_queue));
             unsafe {
                 this.set_ivar("event_queue", event_queue_ptr as *mut c_void);
