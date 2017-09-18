@@ -6,9 +6,7 @@
 
 use state::AppState;
 use std::path::PathBuf;
-use window::WindowMethods;
-
-pub use platform::App;
+use traits::window::WindowMethods;
 
 #[derive(Clone, Debug)]
 pub enum AppEvent {

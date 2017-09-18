@@ -3,16 +3,17 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use glutin;
+use logs::ShellLog;
+use platform::View;
 use servo::EventLoopWaker;
 use state::{DebugOptions, WindowState};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 use super::GlutinWindow;
-use logs::ShellLog;
 use tinyfiledialogs;
-use view::{View, ViewMethods};
-use window::{WindowCommand, WindowEvent, WindowMethods};
+use traits::view::ViewMethods;
+use traits::window::{WindowCommand, WindowEvent, WindowMethods};
 
 pub struct Window {
     id: glutin::WindowId,

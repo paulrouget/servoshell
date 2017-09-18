@@ -4,10 +4,8 @@
 
 #![cfg_attr(any(feature = "force-glutin", not(target_os = "macos")), allow(dead_code))]
 
-pub use platform::Window;
-
 use state::WindowState;
-use view::ViewMethods;
+use traits::view::ViewMethods;
 use servo::EventLoopWaker;
 use std::rc::Rc;
 use logs::ShellLog;

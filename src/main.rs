@@ -31,21 +31,19 @@ extern crate gdi32;
 
 extern crate open;
 
-mod app;
-mod window;
-mod view;
-mod servo;
+mod traits;
 mod platform;
+mod servo;
 mod state;
 mod logs;
 
-use app::{App, AppEvent, AppCommand, AppMethods};
-use window::{WindowEvent, WindowCommand};
-use view::{ViewEvent};
-use servo::ServoEvent;
+use platform::App;
+use servo::{Servo, ServoEvent, ServoUrl, WebRenderDebugOption};
 use std::cell::RefCell;
 use std::env::args;
-use servo::{Servo, ServoUrl, WebRenderDebugOption};
+use traits::app::{AppEvent, AppCommand, AppMethods};
+use traits::view::*;
+use traits::window::{WindowEvent, WindowCommand};
 
 const PKG_VERSION: &'static str = env!("CARGO_PKG_VERSION");
 const PKG_NAME: &'static str = env!("CARGO_PKG_NAME");
@@ -61,12 +59,14 @@ fn main() {
         std::process::exit(0);
     });
 
+    let resources_path = App::get_resources_path().expect("Can't find resources path");
+
     let app = App::new().expect("Can't create application");
     let window = app.new_window().expect("Can't create application");
 
     let view = window.new_view().unwrap();
 
-    Servo::configure(App::get_resources_path().unwrap());
+    Servo::configure(resources_path.clone());
 
     let servo = {
         let geometry = view.get_geometry();
@@ -74,7 +74,7 @@ fn main() {
         Servo::new(geometry, view.clone(), waker)
     };
 
-    let home_url = App::get_resources_path().unwrap().parent().unwrap().join("shell_resources").join("home.html");
+    let home_url = resources_path.parent().unwrap().join("shell_resources").join("home.html");
     let home_url = ServoUrl::from_file_path(&home_url).unwrap().into_string();
 
     // Skip first argument (executable), and find the first
@@ -343,8 +343,8 @@ fn main() {
                         // FIXME: magic value
                         static LINE_HEIGHT: f32 = 38.0;
                         let (mut x, mut y) = match delta {
-                            view::MouseScrollDelta::PixelDelta(x, y) => (x, y),
-                            view::MouseScrollDelta::LineDelta(x, y) => (x, y * LINE_HEIGHT),
+                            MouseScrollDelta::PixelDelta(x, y) => (x, y),
+                            MouseScrollDelta::LineDelta(x, y) => (x, y * LINE_HEIGHT),
                         };
                         if y.abs() >= x.abs() { x = 0.0; } else { y = 0.0; }
                         servo.perform_scroll(0, 0, x, y, phase);
@@ -359,7 +359,7 @@ fn main() {
                         let last_mouse_down_button = state.last_mouse_down_button;
                         servo.perform_click(x, y, org_x, org_y, element_state, button, last_mouse_down_button);
                         state.last_mouse_down_point = (x, y);
-                        if element_state == view::ElementState::Pressed {
+                        if element_state == ElementState::Pressed {
                             state.last_mouse_down_button = Some(button);
                         }
                     }

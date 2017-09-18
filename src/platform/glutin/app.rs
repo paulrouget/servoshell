@@ -2,8 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use app::{AppEvent, AppMethods};
 use glutin::{self, GlContext};
+use platform::Window;
 use servo::{ServoCursor, EventLoopWaker};
 use state::AppState;
 use std::cell::{Cell, RefCell};
@@ -14,8 +14,9 @@ use std::rc::Rc;
 use std::sync::Arc;
 use super::GlutinWindow;
 use super::utils;
-use view::{gl, KeyModifiers};
-use window::{Window, WindowEvent, WindowMethods};
+use traits::app::{AppEvent, AppMethods};
+use traits::window::{WindowEvent, WindowMethods};
+use traits::view::{gl, KeyModifiers};
 
 pub struct WinitEventLoopWaker {
     proxy: Arc<glutin::EventsLoopProxy>

@@ -7,15 +7,14 @@ use cocoa::base::*;
 use cocoa::foundation::*;
 use objc::declare::ClassDecl;
 use objc::runtime::{Class, Object, Sel};
-use std::os::raw::c_void;
-use std::env;
-use std::path::PathBuf;
-use app::{AppEvent, AppCommand, AppMethods};
 use servo::ServoCursor;
 use state::AppState;
-use super::utils;
-use super::{window, view, toolbar, bookmarks};
-use window::WindowMethods;
+use std::env;
+use std::os::raw::c_void;
+use std::path::PathBuf;
+use super::{utils, window, view, toolbar, bookmarks};
+use traits::app::{AppEvent, AppCommand, AppMethods};
+use traits::window::WindowMethods;
 
 fn register() {
     let superclass = Class::get("NSResponder").unwrap();

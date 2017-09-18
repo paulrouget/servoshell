@@ -2,24 +2,21 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use glutin;
-use servo::EventLoopWaker;
-use std::cell::Cell;
-use std::rc::Rc;
-
 mod app;
 mod utils;
 mod view;
 mod window;
 
+use glutin;
+use servo::EventLoopWaker;
+use std::cell::Cell;
+use std::rc::Rc;
+use traits::view::*;
+use traits::window::{WindowCommand, WindowEvent};
+
 pub use self::app::App;
 pub use self::view::View;
 pub use self::window::Window;
-
-use view::{Key, KeyModifiers, KeyState, ViewEvent, TouchPhase, ElementState, MouseButton, MouseScrollDelta};
-use view::{SHIFT, CONTROL, ALT, SUPER};
-use view::gl;
-use window::{WindowCommand, WindowEvent};
 
 pub struct GlutinWindow {
     gl: Rc<gl::Gl>,

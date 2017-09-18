@@ -7,7 +7,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 use super::GlutinWindow;
-use view::{gl, DrawableGeometry, ViewEvent, ViewMethods};
+use traits::view::*;
 
 pub struct View {
     id: glutin::WindowId,

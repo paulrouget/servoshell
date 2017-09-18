@@ -5,24 +5,21 @@
 extern crate core_foundation;
 extern crate cgl;
 
-use view::DrawableGeometry;
-
-use cocoa::appkit;
 use cocoa::appkit::*;
-use cocoa::foundation::*;
+use cocoa::appkit;
 use cocoa::base::*;
+use cocoa::foundation::*;
 use objc::declare::ClassDecl;
 use objc::runtime::{Class, Object, Sel};
-use std::rc::Rc;
 use self::cgl::{CGLEnable, kCGLCECrashOnRemovedFunctions};
 use self::core_foundation::base::TCFType;
-use self::core_foundation::string::CFString;
 use self::core_foundation::bundle::{CFBundleGetBundleWithIdentifier, CFBundleGetFunctionPointerForName};
+use self::core_foundation::string::CFString;
 use std::os::raw::c_void;
+use std::rc::Rc;
 use std::{ffi, str};
-use view::{gl, ElementState, Key, KeyState, KeyModifiers, MouseButton, ViewEvent, TouchPhase, MouseScrollDelta, ViewMethods};
-use view::{SHIFT, CONTROL, ALT, SUPER};
 use super::utils;
+use traits::view::*;
 
 pub fn register() {
     let superclass = Class::get("NSView").unwrap();

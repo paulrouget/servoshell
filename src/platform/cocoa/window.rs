@@ -3,21 +3,22 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use cocoa::appkit::*;
-use cocoa::foundation::*;
 use cocoa::base::*;
+use cocoa::foundation::*;
+use libc;
+use logs::ShellLog;
 use objc::declare::ClassDecl;
 use objc::runtime::{Class, Object, Sel};
+use platform::View;
+use servo::EventLoopWaker;
+use state::{DebugOptions, WindowState};
 use std::f64;
 use std::ffi::CStr;
 use std::os::raw::c_void;
 use std::rc::Rc;
 use super::utils::{self, get_state};
-use window::{WindowEvent, WindowCommand, WindowMethods};
-use view::{View, ViewMethods};
-use libc;
-use servo::EventLoopWaker;
-use state::{DebugOptions, WindowState};
-use logs::ShellLog;
+use traits::view::ViewMethods;
+use traits::window::{WindowEvent, WindowCommand, WindowMethods};
 
 #[link(name = "MMTabBarView", kind = "framework")]
 #[allow(unused_attributes)]

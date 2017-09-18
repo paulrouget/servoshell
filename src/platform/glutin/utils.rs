@@ -4,7 +4,7 @@
 
 use glutin;
 use servo::ServoCursor;
-use view::Key;
+use traits::view::Key;
 
 pub fn glutin_key_to_script_key(key: glutin::VirtualKeyCode) -> Result<Key, ()> {
     match key {

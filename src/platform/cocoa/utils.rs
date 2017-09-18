@@ -2,15 +2,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use state::AppState;
-use cocoa::base::*;
 use cocoa::appkit::*;
+use cocoa::base::*;
 use cocoa::foundation::*;
-use objc::runtime::Object;
-use std::os::raw::c_void;
-use std::ffi::CStr;
-use app::App;
 use libc;
+use objc::runtime::Object;
+use platform::App;
+use state::AppState;
+use std::ffi::CStr;
+use std::os::raw::c_void;
 
 pub fn load_nib<'a>(filename: &str) -> Result<Vec<id>, &'a str> {
 

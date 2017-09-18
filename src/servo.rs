@@ -28,7 +28,7 @@ pub use self::servo::compositing::windowing::WebRenderDebugOption;
 pub use self::servo::msg::constellation_msg::{Key, KeyModifiers, KeyState};
 pub use self::servo::msg::constellation_msg::{SHIFT, CONTROL, ALT, SUPER};
 
-use view::{self, DrawableGeometry};
+use traits::view::{self, DrawableGeometry};
 
 use std::rc::Rc;
 use std::cell::{Cell, RefCell};
