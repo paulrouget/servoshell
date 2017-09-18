@@ -8,7 +8,7 @@ build = "build.rs"
 [dependencies]
 open = "1.1.1"
 log = "0.3"
-libservo = { git = "https://github.com/servo/servo", rev = "6051e5ed02" }
+libservo = { git = "https://github.com/servo/servo", rev = "bb998dbdf3" }
 glutin = "0.9"
 tinyfiledialogs = { git = "https://github.com/paulrouget/tinyfiledialogs-rs" , branch = "version_3"}
 
