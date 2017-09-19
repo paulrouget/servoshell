@@ -6,6 +6,11 @@
 #![feature(link_args)]
 
 #[macro_use]
+extern crate serde_derive;
+extern crate serde_json;
+extern crate treediff;
+
+#[macro_use]
 extern crate log;
 
 #[cfg(all(not(feature = "force-glutin"), target_os = "macos"))]
