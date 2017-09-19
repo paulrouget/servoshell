@@ -103,6 +103,9 @@ fn main() {
         // Loop until no events are available anymore.
         loop {
 
+            let before_app_state = app_state.clone();
+            let before_win_state = win_state.clone();
+
             let app_events = app.get_events();
             let win_events = window.get_events();
             let view_events = view.get_events();
@@ -117,7 +120,6 @@ fn main() {
 
             // FIXME: it's really annoying we need this
             let mut force_sync = false;
-            let mut ui_invalidated = false;
 
             for event in app_events {
                 match event {
@@ -139,7 +141,6 @@ fn main() {
                             }
                             AppCommand::ToggleOptionDarkTheme => {
                                 app_state.dark_theme = !app_state.dark_theme;
-                                ui_invalidated = true;
                             }
                         }
                     }
@@ -188,7 +189,6 @@ fn main() {
                             }
                             WindowCommand::OpenLocation => {
                                 win_state.urlbar_focused = true;
-                                ui_invalidated = true;
                             }
                             WindowCommand::OpenInDefaultBrowser => {
                                 if let Some(ref url) = win_state.browsers[idx].url {
@@ -196,29 +196,24 @@ fn main() {
                                 }
                             }
                             WindowCommand::ZoomIn => {
-                                ui_invalidated = true;
                                 win_state.browsers[idx].zoom *= 1.1;
                                 servo.zoom(win_state.browsers[idx].zoom);
                             }
                             WindowCommand::ZoomOut => {
-                                ui_invalidated = true;
                                 win_state.browsers[idx].zoom /= 1.1;
                                 servo.zoom(win_state.browsers[idx].zoom);
                             }
                             WindowCommand::ZoomToActualSize => {
-                                ui_invalidated = true;
                                 win_state.browsers[idx].zoom = 1.0;
                                 servo.reset_zoom();
                             }
 
                             WindowCommand::ToggleSidebar => {
                                 win_state.sidebar_is_open = !win_state.sidebar_is_open;
-                                ui_invalidated = true;
                             }
 
                             WindowCommand::ShowOptions => {
                                 win_state.options_open = !win_state.options_open;
-                                ui_invalidated = true;
                             }
 
                             WindowCommand::Load(request) => {
@@ -243,7 +238,6 @@ fn main() {
                             }
                             WindowCommand::ToggleOptionShowLogs => {
                                 win_state.logs_visible = !win_state.logs_visible;
-                                ui_invalidated = true;
                             },
                             WindowCommand::NewTab => {
                                 let browser = servo.new_browser("about:blank");
@@ -255,7 +249,6 @@ fn main() {
                                     // Focus urlbar, but only on cocoa
                                     win_state.urlbar_focused = true;
                                 }
-                                ui_invalidated = true;
                             },
                             WindowCommand::CloseTab => {
                                 if win_state.browsers.len() > 1 {
@@ -269,7 +262,6 @@ fn main() {
                                     servo.select_browser(new_id);
                                     servo.close_browser(id);
                                     win_state.browsers.remove(idx);
-                                    ui_invalidated = true;
                                 }
                             },
                             WindowCommand::PrevTab => {
@@ -281,7 +273,6 @@ fn main() {
                                 win_state.current_browser_index = Some(new_idx);
                                 let id = win_state.browsers[new_idx].id;
                                 servo.select_browser(id);
-                                ui_invalidated = true;
                             },
                             WindowCommand::NextTab => {
                                 let new_idx = if idx == win_state.browsers.len() - 1 {
@@ -292,14 +283,12 @@ fn main() {
                                 win_state.current_browser_index = Some(new_idx);
                                 let id = win_state.browsers[new_idx].id;
                                 servo.select_browser(id);
-                                ui_invalidated = true;
                             },
                             WindowCommand::SelectTab(idx) => {
                                 if win_state.current_browser_index != Some(idx) {
                                     win_state.current_browser_index = Some(idx);
                                     let id = win_state.browsers[idx].id;
                                     servo.select_browser(id);
-                                    ui_invalidated = true;
                                 }
                             },
                             WindowCommand::ToggleOptionFragmentBorders => { },
@@ -376,20 +365,17 @@ fn main() {
                         match win_state.browsers.iter_mut().find(|b| b.id == id) {
                             Some(browser) => {
                                 browser.title = title;
-                                ui_invalidated = true;
                             }
                             None => warn!("Got message for unkown browser:  {:?}", id)
                         }
                     }
                     ServoEvent::StatusChanged(status) => {
                         win_state.status = status;
-                        ui_invalidated = true;
                     }
                     ServoEvent::LoadStart(id) => {
                         match win_state.browsers.iter_mut().find(|b| b.id == id) {
                             Some(browser) => {
                                 browser.is_loading = true;
-                                ui_invalidated = true;
                             }
                             None => warn!("Got message for unkown browser:  {:?}", id)
                         }
@@ -398,7 +384,6 @@ fn main() {
                         match win_state.browsers.iter_mut().find(|b| b.id == id) {
                             Some(browser) => {
                                 browser.is_loading = false;
-                                ui_invalidated = true;
                             }
                             None => warn!("Got message for unkown browser:  {:?}", id)
                         }
@@ -413,14 +398,12 @@ fn main() {
                                 browser.url = Some(url);
                                 browser.can_go_back = current > 0;
                                 browser.can_go_forward = current < entries.len() - 1;
-                                ui_invalidated = true;
                             }
                             None => warn!("Got message for unkown browser:  {:?}", id)
                         }
                     }
                     ServoEvent::CursorChanged(cursor) => {
                         app_state.cursor = cursor;
-                        ui_invalidated = true;
                     }
                     ServoEvent::FaviconChanged(..) => {
                         // FIXME
@@ -434,7 +417,10 @@ fn main() {
                 }
             }
 
-            if ui_invalidated {
+            let app_has_changed = before_app_state == app_state;
+            let win_has_changed = before_win_state == win_state;
+
+            if app_has_changed || win_has_changed {
                 app.render(&app_state);
                 window.render(&win_state);
             }

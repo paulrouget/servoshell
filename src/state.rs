@@ -4,7 +4,7 @@
 
 use servo::{ServoCursor, BrowserId};
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct AppState {
     pub current_window_index: Option<usize>,
     pub dark_theme: bool,
@@ -21,7 +21,7 @@ impl AppState {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct WindowState {
     pub current_browser_index: Option<usize>,
     pub browsers: Vec<BrowserState>,
@@ -59,7 +59,7 @@ impl WindowState {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct BrowserState {
     pub id: BrowserId,
     pub zoom: f32,
@@ -72,7 +72,7 @@ pub struct BrowserState {
     pub is_loading: bool,
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct DebugOptions {
     pub show_fragment_borders: bool,
     pub parallel_display_list_building: bool,
