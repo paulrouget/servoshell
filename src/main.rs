@@ -62,15 +62,15 @@ fn main() {
     let resources_path = App::get_resources_path().expect("Can't find resources path");
 
     let app = App::new().expect("Can't create application");
-    let window = app.new_window().expect("Can't create application");
+    let win = app.new_window().expect("Can't create application");
 
-    let view = window.new_view().unwrap();
+    let view = win.new_view().unwrap();
 
     Servo::configure(resources_path.clone());
 
     let servo = {
         let geometry = view.get_geometry();
-        let waker = window.new_event_loop_waker();
+        let waker = win.new_event_loop_waker();
         Servo::new(geometry, view.clone(), waker)
     };
 
@@ -94,7 +94,7 @@ fn main() {
     win_state.browsers.push(browser);
 
     app.render(&app_state);
-    window.render(&win_state);
+    win.render(&win_state);
 
     info!("Servo version: {}", servo.version());
 
@@ -107,7 +107,7 @@ fn main() {
             let before_win_state = win_state.clone();
 
             let app_events = app.get_events();
-            let win_events = window.get_events();
+            let win_events = win.get_events();
             let view_events = view.get_events();
             let servo_events = servo.get_events();
 
@@ -419,10 +419,9 @@ fn main() {
 
             let app_has_changed = before_app_state == app_state;
             let win_has_changed = before_win_state == win_state;
-
             if app_has_changed || win_has_changed {
                 app.render(&app_state);
-                window.render(&win_state);
+                win.render(&win_state);
             }
 
             servo.sync(force_sync);
@@ -433,7 +432,7 @@ fn main() {
 
         // FIXME: logs will grow until pulled
         if win_state.logs_visible {
-            window.append_logs(&logs.get_logs());
+            win.append_logs(&logs.get_logs());
         }
     };
 
