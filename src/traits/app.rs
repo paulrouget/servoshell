@@ -29,5 +29,5 @@ pub trait AppMethods {
     fn get_resources_path() -> Option<PathBuf>;
     fn render(&self, state: &AppState);
     fn get_events(&self) -> Vec<AppEvent>;
-    fn run<T>(&self, callback: T) where T: Fn();
+    fn run<T>(&self, callback: T) where T: FnMut();
 }

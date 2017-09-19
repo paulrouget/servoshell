@@ -161,7 +161,7 @@ impl AppMethods for App {
         Ok(Box::new(Window::new(id, self.windows.clone())))
     }
 
-    fn run<T>(&self, callback: T) where T: Fn() {
+    fn run<T>(&self, mut callback: T) where T: FnMut() {
         self.event_loop.borrow_mut().run_forever(|e| {
             let mut call_callback = false;
             match e {

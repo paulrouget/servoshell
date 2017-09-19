@@ -63,7 +63,7 @@ pub trait ViewMethods {
     fn update_drawable(&self);
     fn enter_fullscreen(&self);
     fn exit_fullscreen(&self);
-    fn set_live_resize_callback(&self, callback: &Fn());
+    fn set_live_resize_callback(&self, callback: &FnMut());
     fn gl(&self) -> Rc<gl::Gl>;
     fn get_events(&self) -> Vec<ViewEvent>;
     fn swap_buffers(&self);

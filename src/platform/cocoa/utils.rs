@@ -8,7 +8,7 @@ use cocoa::foundation::*;
 use libc;
 use objc::runtime::Object;
 use platform::App;
-use state::AppState;
+use state::{AppState, WindowState};
 use std::ffi::CStr;
 use std::os::raw::c_void;
 
@@ -108,10 +108,18 @@ pub fn get_view<F>(nsview: id, predicate: &F) -> Option<id> where F: Fn(id) -> b
     }
 }
 
-pub fn get_state<'a>() -> &'a AppState {
+pub fn get_app_state<'a>() -> &'a AppState {
     unsafe {
         let delegate: id = msg_send![NSApp(), delegate];
-        let ivar: *const c_void = *(&*delegate).get_ivar("state");
+        let ivar: *const c_void = *(&*delegate).get_ivar("app_state");
         &*(ivar as *const AppState)
+    }
+}
+
+pub fn get_win_state<'a>() -> &'a WindowState {
+    unsafe {
+        let delegate: id = msg_send![NSApp(), delegate];
+        let ivar: *const c_void = *(&*delegate).get_ivar("win_state");
+        &*(ivar as *const WindowState)
     }
 }

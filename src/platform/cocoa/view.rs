@@ -226,9 +226,9 @@ impl ViewMethods for View {
         self.gl.clone()
     }
 
-    fn set_live_resize_callback(&self, callback: &Fn()) {
+    fn set_live_resize_callback(&self, callback: &FnMut()) {
         // FIXME: If I don't specify the type, segfault… why???
-        let ptr: *mut &Fn() = Box::into_raw(Box::new(callback));
+        let ptr: *mut &FnMut() = Box::into_raw(Box::new(callback));
         unsafe {
             (*self.nsview).set_ivar("live_resize_callback", ptr as *mut c_void);
         }

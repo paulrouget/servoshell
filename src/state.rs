@@ -7,7 +7,6 @@ use servo::{ServoCursor, BrowserId};
 #[derive(Clone)]
 pub struct AppState {
     pub current_window_index: Option<usize>,
-    pub windows: Vec<WindowState>,
     pub dark_theme: bool,
     pub cursor: ServoCursor,
 }
@@ -16,7 +15,6 @@ impl AppState {
     pub fn new() -> AppState {
         AppState {
             current_window_index: None,
-            windows: Vec::new(),
             dark_theme: false,
             cursor: ServoCursor::Default,
         }

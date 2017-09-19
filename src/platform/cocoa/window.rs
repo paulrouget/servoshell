@@ -16,7 +16,7 @@ use std::f64;
 use std::ffi::CStr;
 use std::os::raw::c_void;
 use std::rc::Rc;
-use super::utils::{self, get_state};
+use super::utils::{self, get_win_state, get_app_state};
 use traits::view::ViewMethods;
 use traits::window::{WindowEvent, WindowCommand, WindowMethods};
 
@@ -117,8 +117,8 @@ pub fn register() {
                     WindowCommand::ZoomIn
                 }
             } else if action == sel!(shellReloadStop:) {
-                let idx = get_state().windows[0].current_browser_index.unwrap();
-                if get_state().windows[0].browsers[idx].is_loading {
+                let idx = get_win_state().current_browser_index.unwrap();
+                if get_win_state().browsers[idx].is_loading {
                     WindowCommand::Stop
                 } else {
                     WindowCommand::Reload
@@ -161,8 +161,8 @@ pub fn register() {
         }
 
         extern fn validate_action(_this: &Object, _sel: Sel, action: Sel) -> BOOL {
-            let idx = get_state().windows[0].current_browser_index.unwrap();
-            let ref state = get_state().windows[0].browsers[idx];
+            let idx = get_win_state().current_browser_index.unwrap();
+            let ref state = get_win_state().browsers[idx];
             let enabled = if action == sel!(shellStop:) {
                 state.is_loading
             } else if action == sel!(shellReload:) {
@@ -205,11 +205,11 @@ pub fn register() {
         }
 
         extern fn get_state_for_action(_this: &Object, _sel: Sel, action: Sel) -> NSInteger {
-            let debug_options = &get_state().windows[0].debug_options;
+            let debug_options = &get_win_state().debug_options;
             let on = if action == sel!(shellToggleOptionDarkTheme:) {
-                get_state().dark_theme
+                get_app_state().dark_theme
             } else if action == sel!(shellToggleOptionShowLogs:) {
-                get_state().windows[0].logs_visible
+                get_win_state().logs_visible
             } else if action == sel!(shellToggleOptionFragmentBorders:) {
                 debug_options.show_fragment_borders
             } else if action == sel!(shellToggleOptionParallelDisplayListBuidling:) {
@@ -372,6 +372,15 @@ impl Window {
         win
     }
 
+    fn copy_state(&self, state: &WindowState) {
+        // FIXME: how inefficient is this?
+        let state_ptr = Box::into_raw(Box::new(state.clone()));
+        unsafe {
+            let delegate: id = msg_send![NSApp(), delegate];
+            (*delegate).set_ivar("win_state", state_ptr as *mut c_void);
+        }
+    }
+
     fn get_toolbar_item(&self, identifier: &str) -> Option<id> {
         unsafe {
             let toolbar: id = msg_send![self.nswindow, toolbar];
@@ -397,7 +406,7 @@ impl Window {
                 name == NSAppearanceNameVibrantDark
             }
         };
-        let dark = get_state().dark_theme;
+        let dark = get_app_state().dark_theme;
 
         if (dark && was_dark) || (!dark && !was_dark) {
             return
@@ -446,6 +455,8 @@ impl Window {
 impl WindowMethods for Window {
 
     fn render(&self, state: &WindowState) {
+
+        self.copy_state(state);
 
         // FIXME: long function is long
 

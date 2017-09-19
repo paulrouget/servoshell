@@ -6,7 +6,7 @@ use cocoa::base::*;
 use cocoa::foundation::*;
 use objc::declare::ClassDecl;
 use objc::runtime::{Class, Object, Sel};
-use super::utils::get_state;
+use super::utils::get_app_state;
 
 pub fn register() {
 
@@ -16,7 +16,7 @@ pub fn register() {
 
         extern fn draw(this: &Object, _sel: Sel, rect: NSRect, view: id) {
             unsafe {
-                let dark = get_state().dark_theme;
+                let dark = get_app_state().dark_theme;
                 if dark {
                     msg_send![this, drawInteriorWithFrame:rect inView:view];
                 } else {
@@ -38,7 +38,7 @@ pub fn register() {
 
         extern fn draw(this: &Object, _sel: Sel, rect: NSRect, view: id) {
             unsafe {
-                let dark = get_state().dark_theme;
+                let dark = get_app_state().dark_theme;
                 let superclass = Class::get("NSTextFieldCell").unwrap();
                 if dark {
                     msg_send![super(this, superclass), drawInteriorWithFrame:rect inView:view];

@@ -70,7 +70,7 @@ impl ViewMethods for View {
         self.windows.borrow().get(&self.id).unwrap().glutin_window.swap_buffers().unwrap();
     }
 
-    fn set_live_resize_callback(&self, _callback: &Fn()) {
+    fn set_live_resize_callback(&self, _callback: &FnMut()) {
         // FIXME
     }
 

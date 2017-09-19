@@ -20,7 +20,8 @@ fn register() {
     let superclass = Class::get("NSResponder").unwrap();
     let mut class = ClassDecl::new("NSShellApplicationDelegate", superclass).unwrap();
     class.add_ivar::<*mut c_void>("event_queue");
-    class.add_ivar::<*mut c_void>("state");
+    class.add_ivar::<*mut c_void>("app_state");
+    class.add_ivar::<*mut c_void>("win_state");
 
     extern fn did_finish_launching(this: &Object, _sel: Sel, _notification: id) {
         utils::get_event_queue(this).push(AppEvent::DidFinishLaunching)
@@ -119,7 +120,7 @@ impl App {
         let state_ptr = Box::into_raw(Box::new(state.clone()));
         unsafe {
             let delegate: id = msg_send![NSApp(), delegate];
-            (*delegate).set_ivar("state", state_ptr as *mut c_void);
+            (*delegate).set_ivar("app_state", state_ptr as *mut c_void);
         }
     }
 
