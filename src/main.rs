@@ -378,7 +378,7 @@ fn main() {
                                 browser.title = title;
                                 ui_invalidated = true;
                             }
-                            None => { /*FIXME*/ }
+                            None => warn!("Got message for unkown browser:  {:?}", id)
                         }
                     }
                     ServoEvent::StatusChanged(status) => {
@@ -391,7 +391,7 @@ fn main() {
                                 browser.is_loading = true;
                                 ui_invalidated = true;
                             }
-                            None => { /*FIXME*/ }
+                            None => warn!("Got message for unkown browser:  {:?}", id)
                         }
                     }
                     ServoEvent::LoadEnd(id) => {
@@ -400,7 +400,7 @@ fn main() {
                                 browser.is_loading = false;
                                 ui_invalidated = true;
                             }
-                            None => { /*FIXME*/ }
+                            None => warn!("Got message for unkown browser:  {:?}", id)
                         }
                     }
                     ServoEvent::HeadParsed(..) => {
@@ -415,7 +415,7 @@ fn main() {
                                 browser.can_go_forward = current < entries.len() - 1;
                                 ui_invalidated = true;
                             }
-                            None => { /*FIXME*/ }
+                            None => warn!("Got message for unkown browser:  {:?}", id)
                         }
                     }
                     ServoEvent::CursorChanged(cursor) => {
