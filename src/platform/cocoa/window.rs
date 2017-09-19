@@ -445,11 +445,11 @@ impl Window {
 
 impl WindowMethods for Window {
 
-    fn render(&self, _state: &WindowState) {
+    fn render(&self, state: &WindowState) {
 
         // FIXME: long function is long
 
-        let idx = get_state().windows[0].current_browser_index.unwrap();
+        let idx = state.current_browser_index.unwrap();
 
         self.update_theme();
 
@@ -536,7 +536,7 @@ impl WindowMethods for Window {
 
         // Show logs if necessary
         let logs = utils::get_view_by_id(self.nswindow, "shellViewLogs").unwrap();
-        let visible = get_state().windows[0].logs_visible;
+        let visible = state.logs_visible;
         let hidden = if visible {NO} else {YES};
         unsafe {msg_send![logs, setHidden:hidden]};
 
@@ -546,12 +546,12 @@ impl WindowMethods for Window {
         unsafe {
             let view = msg_send![item, view];
             let field = utils::get_view_by_id(view, "shellToolbarViewUrlbarTextfield").unwrap();
-            match get_state().windows[0].browsers[idx].url {
+            match state.browsers[idx].url {
                 Some(ref url) if url != "about:blank" => msg_send![field, setStringValue:NSString::alloc(nil).init_str(url)],
                 _ => msg_send![field, setStringValue:NSString::alloc(nil).init_str("")],
             };
 
-            if get_state().windows[0].urlbar_focused {
+            if state.urlbar_focused {
                 msg_send![field, becomeFirstResponder];
             }
         }
@@ -569,7 +569,7 @@ impl WindowMethods for Window {
             for i in (0..visual_count).rev() {
                 let item: id = msg_send![tabview, tabViewItemAtIndex:i];
                 let view_id: id = msg_send![item, identifier];
-                if !get_state().windows[0].browsers.iter().any(|b| {
+                if !state.browsers.iter().any(|b| {
                     // FIXME: store String
                     NSString::isEqualToString(view_id, &format!("{}", b.id))
                 }) {
@@ -580,12 +580,12 @@ impl WindowMethods for Window {
 
         let visual_count: usize = unsafe { msg_send![tabview, numberOfTabViewItems] };
 
-        let state_count = get_state().windows[0].browsers.len();
+        let state_count = state.browsers.len();
 
         if state_count == visual_count + 1 {
             // Need to add a tab
             // Always assume extra tab has been added at the end
-            let id = get_state().windows[0].browsers[state_count - 1].id;
+            let id = state.browsers[state_count - 1].id;
             unsafe {
                 let item: id = msg_send![class("NSTabViewItem"), alloc];
                 let identifier = NSString::alloc(nil).init_str(format!("{}", id).as_str());
@@ -606,7 +606,7 @@ impl WindowMethods for Window {
             for i in 0..state_count {
                 // FIXME: alloc…
                 let item: id = msg_send![tabview, tabViewItemAtIndex:i];
-                let nsstring = match get_state().windows[0].browsers[i].title {
+                let nsstring = match state.browsers[i].title {
                     Some(ref title) => NSString::alloc(nil).init_str(title),
                     None => NSString::alloc(nil).init_str("No Title"),
                 };
@@ -620,13 +620,13 @@ impl WindowMethods for Window {
         // https://developer.apple.com/reference/appkit/nssplitviewcontroller/1388905-togglesidebar
         let sidebar = utils::get_view_by_id(self.nswindow, "shellViewSidebar").unwrap();
         unsafe {
-            let hidden = if get_state().windows[0].sidebar_is_open {NO} else {YES};
+            let hidden = if state.sidebar_is_open {NO} else {YES};
             msg_send![sidebar, setHidden:hidden];
         }
 
         // FIXME: diff
         let textfield = utils::get_view_by_id(self.nswindow, "shellStatusLabel").unwrap();
-        match get_state().windows[0].status {
+        match state.status {
             Some(ref status) => {
                 unsafe {
                     msg_send![textfield, setHidden:NO];
@@ -640,7 +640,7 @@ impl WindowMethods for Window {
         }
 
         unsafe {
-            if get_state().windows[0].options_open {
+            if state.options_open {
                 let item = self.get_toolbar_item("options").unwrap();
                 let button: id = msg_send![item, view];
                 let bounds = NSView::bounds(button);
