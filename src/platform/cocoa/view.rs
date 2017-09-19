@@ -76,35 +76,34 @@ pub fn register() {
                     utils::get_event_queue(this).push(event);
                 },
                 NSMouseMoved => {
-                    let nswindow = nsevent.window();
-                    let window_point = nsevent.locationInWindow();
-                    let view_point: NSPoint = msg_send![this, convertPoint:window_point fromView:nil];
-                    let frame: NSRect = msg_send![this, frame];
-                    let hidpi_factor: CGFloat = msg_send![nswindow, backingScaleFactor];
-                    let hidpi_factor = hidpi_factor as f32;
-                    let x = (hidpi_factor * view_point.x as f32) as i32;
-                    let y = (hidpi_factor * (frame.size.height - view_point.y) as f32) as i32;
+                    let (x, y) = cursor_coordinates_in_view(this, nsevent);
                     let event = ViewEvent::MouseMoved(x, y);
                     utils::get_event_queue(this).push(event);
                 }
 
                 NSLeftMouseDown => {
-                    utils::get_event_queue(this).push(ViewEvent::MouseInput(ElementState::Pressed, MouseButton::Left))
+                    let (x, y) = cursor_coordinates_in_view(this, nsevent);
+                    utils::get_event_queue(this).push(ViewEvent::MouseInput(ElementState::Pressed, MouseButton::Left, x, y))
                 },
                 NSLeftMouseUp => {
-                    utils::get_event_queue(this).push(ViewEvent::MouseInput(ElementState::Released, MouseButton::Left))
+                    let (x, y) = cursor_coordinates_in_view(this, nsevent);
+                    utils::get_event_queue(this).push(ViewEvent::MouseInput(ElementState::Released, MouseButton::Left, x, y))
                 },
                 NSRightMouseDown => {
-                    utils::get_event_queue(this).push(ViewEvent::MouseInput(ElementState::Pressed, MouseButton::Right))
+                    let (x, y) = cursor_coordinates_in_view(this, nsevent);
+                    utils::get_event_queue(this).push(ViewEvent::MouseInput(ElementState::Pressed, MouseButton::Right, x, y))
                 },
                 NSRightMouseUp => {
-                    utils::get_event_queue(this).push(ViewEvent::MouseInput(ElementState::Released, MouseButton::Right))
+                    let (x, y) = cursor_coordinates_in_view(this, nsevent);
+                    utils::get_event_queue(this).push(ViewEvent::MouseInput(ElementState::Released, MouseButton::Right, x, y))
                 },
                 NSOtherMouseDown => {
-                    utils::get_event_queue(this).push(ViewEvent::MouseInput(ElementState::Pressed, MouseButton::Middle))
+                    let (x, y) = cursor_coordinates_in_view(this, nsevent);
+                    utils::get_event_queue(this).push(ViewEvent::MouseInput(ElementState::Pressed, MouseButton::Middle, x, y))
                 },
                 NSOtherMouseUp => {
-                    utils::get_event_queue(this).push(ViewEvent::MouseInput(ElementState::Released, MouseButton::Middle))
+                    let (x, y) = cursor_coordinates_in_view(this, nsevent);
+                    utils::get_event_queue(this).push(ViewEvent::MouseInput(ElementState::Released, MouseButton::Middle, x, y))
                 },
 
                 _ => {}
@@ -470,5 +469,19 @@ fn is_printable(key_code: Key) -> bool {
         RightBracket | GraveAccent | Tab | KpDecimal |
         KpDivide | KpMultiply | KpSubtract | KpAdd | KpEqual => true,
         _ => false,
+    }
+}
+
+fn cursor_coordinates_in_view(view: &Object, nsevent: id) -> (i32, i32) {
+    unsafe {
+        let nswindow = nsevent.window();
+        let window_point = nsevent.locationInWindow();
+        let view_point: NSPoint = msg_send![view, convertPoint:window_point fromView:nil];
+        let frame: NSRect = msg_send![view, frame];
+        let hidpi_factor: CGFloat = msg_send![nswindow, backingScaleFactor];
+        let hidpi_factor = hidpi_factor as f32;
+        let x = (hidpi_factor * view_point.x as f32) as i32;
+        let y = (hidpi_factor * (frame.size.height - view_point.y) as f32) as i32;
+        (x, y)
     }
 }

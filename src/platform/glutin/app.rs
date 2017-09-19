@@ -164,6 +164,7 @@ impl AppMethods for App {
             last_pressed_key: Cell::new(None),
             view_events: vec![],
             window_events: vec![],
+            mouse_coordinate: (0, 0),
         });
 
         Ok(Box::new(Window::new(id, self.windows.clone())))

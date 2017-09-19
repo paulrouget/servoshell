@@ -24,6 +24,7 @@ pub struct GlutinWindow {
     event_loop_waker: Box<EventLoopWaker>,
     key_modifiers: Cell<KeyModifiers>,
     last_pressed_key: Cell<Option<Key>>,
+    mouse_coordinate: (i32, i32),
     view_events: Vec<ViewEvent>,
     window_events: Vec<WindowEvent>,
 }
@@ -72,6 +73,7 @@ impl GlutinWindow {
                 Some(ViewEvent::GeometryDidChange)
             }
             glutin::WindowEvent::MouseMoved{position: (x, y), ..} => {
+                self.mouse_coordinate = (x as i32, y as i32);
                 Some(ViewEvent::MouseMoved(x as i32, y as i32))
             }
             glutin::WindowEvent::MouseWheel{delta, phase, ..} => {
@@ -94,7 +96,7 @@ impl GlutinWindow {
                     glutin::ElementState::Released => ElementState::Released,
                     glutin::ElementState::Pressed => ElementState::Pressed,
                 };
-                Some(ViewEvent::MouseInput(state, MouseButton::Left))
+                Some(ViewEvent::MouseInput(state, MouseButton::Left, self.mouse_coordinate.0, self.mouse_coordinate.1))
             }
             glutin::WindowEvent::ReceivedCharacter(ch) => {
 

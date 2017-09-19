@@ -27,7 +27,7 @@ pub struct DrawableGeometry {
 pub enum ViewEvent {
     GeometryDidChange,
     MouseWheel(MouseScrollDelta, TouchPhase),
-    MouseInput(ElementState, MouseButton),
+    MouseInput(ElementState, MouseButton, i32, i32),
     MouseMoved(i32, i32),
     KeyEvent(Option<char>, Key, KeyState, KeyModifiers),
 }

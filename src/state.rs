@@ -2,8 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use traits::view;
-use servo::{BrowserId, ServoCursor};
+use servo::{ServoCursor, BrowserId};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -29,9 +28,6 @@ pub struct WindowState {
 #[derive(Clone)]
 pub struct BrowserState {
     pub id: BrowserId,
-    pub last_mouse_point: (i32, i32),
-    pub last_mouse_down_point: (i32, i32),
-    pub last_mouse_down_button: Option<view::MouseButton>,
     pub zoom: f32,
     pub url: Option<String>,
     pub title: Option<String>,

@@ -54,11 +54,18 @@ pub enum ServoEvent {
     OpenInDefaultBrowser(&'static str),
 }
 
+struct LastMouseDown {
+    button: view::MouseButton,
+    x: i32,
+    y: i32,
+}
+
 pub struct Servo {
     // FIXME: it's annoying that event for servo are named "WindowEvent"
     events_for_servo: RefCell<Vec<WindowEvent>>,
     servo: RefCell<servo::Servo<ServoCallbacks>>,
     callbacks: Rc<ServoCallbacks>,
+    mouse_down: RefCell<Option<LastMouseDown>>,
 }
 
 impl Servo {
@@ -88,6 +95,7 @@ impl Servo {
             events_for_servo: RefCell::new(Vec::new()),
             servo: RefCell::new(servo),
             callbacks: callbacks,
+            mouse_down: RefCell::new(None),
         }
     }
 
@@ -104,9 +112,6 @@ impl Servo {
 
         BrowserState {
             id: id,
-            last_mouse_point: (0, 0),
-            last_mouse_down_point: (0, 0),
-            last_mouse_down_button: None,
             zoom: 1.0,
             url: None,
             title: None,
@@ -190,13 +195,10 @@ impl Servo {
     pub fn perform_click(&self,
                  x: i32,
                  y: i32,
-                 org_x: i32,
-                 org_y: i32,
                  element_state: view::ElementState,
-                 mouse_button: view::MouseButton,
-                 mouse_down_button: Option<view::MouseButton>) {
+                 mouse_button: view::MouseButton) {
+
         let (x, y) = self.substract_margins(x, y);
-        let (org_x, org_y) = self.substract_margins(org_x, org_y);
         let max_pixel_dist = 10f64;
         let button = match mouse_button {
             view::MouseButton::Left => MouseButton::Left,
@@ -205,13 +207,14 @@ impl Servo {
         };
         let event = match element_state {
             view::ElementState::Pressed => {
+                *self.mouse_down.borrow_mut() = Some(LastMouseDown {x, y, button: mouse_button});
                 MouseWindowEvent::MouseDown(button, TypedPoint2D::new(x as f32, y as f32))
             }
             view::ElementState::Released => {
                 let mouse_up_event = MouseWindowEvent::MouseUp(button, TypedPoint2D::new(x as f32, y as f32));
-                match mouse_down_button {
+                match *self.mouse_down.borrow() {
                     None => mouse_up_event,
-                    Some(but) if mouse_button == but => {
+                    Some(LastMouseDown { button: org_button, x: org_x, y: org_y}) if org_button == mouse_button => {
                         // Same button
                         let pixel_dist = Point2D::new(org_x, org_y) - Point2D::new(x, y);
                         let pixel_dist =

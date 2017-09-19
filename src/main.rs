@@ -350,18 +350,10 @@ fn main() {
                         servo.perform_scroll(0, 0, x, y, phase);
                     }
                     ViewEvent::MouseMoved(x, y) => {
-                        state.last_mouse_point = (x, y);
                         servo.perform_mouse_move(x, y);
                     }
-                    ViewEvent::MouseInput(element_state, button) => {
-                        let (x, y) = state.last_mouse_point;
-                        let (org_x, org_y) = state.last_mouse_down_point;
-                        let last_mouse_down_button = state.last_mouse_down_button;
-                        servo.perform_click(x, y, org_x, org_y, element_state, button, last_mouse_down_button);
-                        state.last_mouse_down_point = (x, y);
-                        if element_state == ElementState::Pressed {
-                            state.last_mouse_down_button = Some(button);
-                        }
+                    ViewEvent::MouseInput(element_state, button, x, y) => {
+                        servo.perform_click(x, y, element_state, button);
                     }
                     ViewEvent::KeyEvent(c, key, keystate, modifiers) => {
                         servo.send_key(state.id, c, key, keystate, modifiers);
