@@ -4,7 +4,7 @@
 
 use glutin::{self, GlContext};
 use platform::Window;
-use servo::{ServoCursor, EventLoopWaker};
+use servo:: EventLoopWaker;
 use state::AppState;
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
@@ -80,15 +80,6 @@ impl AppMethods for App {
             event_loop: RefCell::new(event_loop),
             event_loop_waker,
         })
-    }
-
-    fn get_init_state() -> AppState {
-        AppState {
-            current_window_index: None,
-            windows: Vec::new(),
-            dark_theme: false,
-            cursor: ServoCursor::Default,
-        }
     }
 
     fn get_resources_path() -> Option<PathBuf> {

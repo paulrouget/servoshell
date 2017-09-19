@@ -6,7 +6,7 @@ use glutin;
 use logs::ShellLog;
 use platform::View;
 use servo::EventLoopWaker;
-use state::{DebugOptions, WindowState};
+use state::WindowState;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -52,29 +52,6 @@ impl WindowMethods for Window {
                 None => { },
             }
             windows.get_mut(&self.id).unwrap().window_events.push(WindowEvent::UrlbarFocusChanged(false));
-        }
-    }
-
-    fn get_init_state(&self) -> WindowState {
-        WindowState {
-            current_browser_index: None,
-            browsers: Vec::new(),
-            sidebar_is_open: false,
-            logs_visible: false,
-            status: None,
-            urlbar_focused: false,
-            options_open: false,
-            title: "ServoShell".to_owned(),
-            debug_options: DebugOptions {
-                show_fragment_borders: false,
-                parallel_display_list_building: false,
-                show_parallel_layout: false,
-                convert_mouse_to_touch: false,
-                show_tiles_borders: false,
-                wr_profiler: false,
-                wr_texture_cache_debug: false,
-                wr_render_target_debug: false,
-            },
         }
     }
 

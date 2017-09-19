@@ -251,15 +251,6 @@ impl AppMethods for App {
         Ok(app)
     }
 
-    fn get_init_state() -> AppState {
-        AppState {
-            current_window_index: None,
-            windows: Vec::new(),
-            dark_theme: false,
-            cursor: ServoCursor::Default,
-        }
-    }
-
     fn get_resources_path() -> Option<PathBuf> {
         Self::get_res_parent().map(|p| p.join("servo_resources"))
     }

@@ -54,7 +54,6 @@ pub enum WindowCommand {
 
 pub trait WindowMethods {
     fn render(&self, state: &WindowState);
-    fn get_init_state(&self) -> WindowState;
     fn new_view(&self) -> Result<Rc<ViewMethods>, &'static str>;
     fn new_event_loop_waker(&self) -> Box<EventLoopWaker>;
     fn get_events(&self) -> Vec<WindowEvent>;

@@ -12,6 +12,17 @@ pub struct AppState {
     pub cursor: ServoCursor,
 }
 
+impl AppState {
+    pub fn new() -> AppState {
+        AppState {
+            current_window_index: None,
+            windows: Vec::new(),
+            dark_theme: false,
+            cursor: ServoCursor::Default,
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct WindowState {
     pub current_browser_index: Option<usize>,
@@ -23,6 +34,31 @@ pub struct WindowState {
     pub urlbar_focused: bool,
     pub options_open: bool,
     pub title: String,
+}
+
+impl WindowState {
+    pub fn new() -> WindowState {
+        WindowState {
+            current_browser_index: None,
+            browsers: Vec::new(),
+            sidebar_is_open: false,
+            logs_visible: false,
+            status: None,
+            urlbar_focused: false,
+            options_open: false,
+            title: "ServoShell".to_owned(),
+            debug_options: DebugOptions {
+                show_fragment_borders: false,
+                parallel_display_list_building: false,
+                show_parallel_layout: false,
+                convert_mouse_to_touch: false,
+                show_tiles_borders: false,
+                wr_profiler: false,
+                wr_texture_cache_debug: false,
+                wr_render_target_debug: false,
+            },
+        }
+    }
 }
 
 #[derive(Clone)]

@@ -41,6 +41,7 @@ use platform::App;
 use servo::{Servo, ServoEvent, ServoUrl, WebRenderDebugOption};
 use std::cell::RefCell;
 use std::env::args;
+use state::{AppState, WindowState};
 use traits::app::{AppEvent, AppCommand, AppMethods};
 use traits::view::*;
 use traits::window::{WindowEvent, WindowCommand};
@@ -86,9 +87,9 @@ fn main() {
     let browser = servo.new_browser(&url);
     servo.select_browser(browser.id);
 
-    let mut state = App::get_init_state();
+    let mut state = AppState::new();
     state.current_window_index = Some(0);
-    state.windows.push(window.get_init_state());
+    state.windows.push(WindowState::new());
     state.windows[0].current_browser_index = Some(0);
     state.windows[0].browsers.push(browser);
     app.render(&state);

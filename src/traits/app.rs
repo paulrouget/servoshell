@@ -26,7 +26,6 @@ pub enum AppCommand {
 pub trait AppMethods {
     fn new<'a>() -> Result<Self, &'a str> where Self: Sized;
     fn new_window<'a>(&self) -> Result<Box<WindowMethods>, &'a str>;
-    fn get_init_state() -> AppState;
     fn get_resources_path() -> Option<PathBuf>;
     fn render(&self, state: &AppState);
     fn get_events(&self) -> Vec<AppEvent>;
