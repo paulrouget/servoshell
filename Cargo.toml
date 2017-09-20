@@ -1,6 +1,6 @@
 [package]
 name = "servoshell"
-version = "0.0.3"
+version = "0.1.0"
 authors = ["Paul Rouget <me@paulrouget.com>"]
 description = "A basic servo-based browser"
 build = "build.rs"
