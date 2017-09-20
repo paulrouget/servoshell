@@ -304,7 +304,7 @@ class PackageCommands(CommandBase):
 
             # generate Servo.wxs
             import mako.template
-            template_path = path.join(dir_to_root, "support ", "windows", "ServoShell.wxs.mako")
+            template_path = path.join(dir_to_root, "support", "windows", "ServoShell.wxs.mako")
             template = mako.template.Template(open(template_path).read())
             wxs_path = path.join(dir_to_msi, "ServoShell.wxs")
             open(wxs_path, "w").write(template.render(
