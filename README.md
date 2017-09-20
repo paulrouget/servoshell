@@ -1,15 +1,26 @@
 # servoshell
 
 This is a sandbox project. Prototyping and experimenting with embedding Servo.
-The code compiles and run, but it's messy and memory management is non existent.
 
 ## Build
 
 There are 2 versions of the UI:
 1. Full UI: Tabs + urlbar interface. Cocoa based (only MacOS).
-2. Minimal UI: No controls. Driven by keybindings (Windows, Linux, Mac).
+2. Mini UI: No visual controls. Driven by keybindings (Windows, Linux, Mac).
 
 The minimal UI can be compiled on MacOS with `--features=force-glutin`.
+
+## Full UI
+
+A regular browser user interface.
+
+![Full UI](https://github.com/paulrouget/servoshell/blob/master/screenshots/tabs.png?raw=true "Full UI")
+
+## Mini UI
+
+Same features as a Full UI, just no widgets. Tabs are displayed in the titlebar as text.
+
+![Mini UI](https://github.com/paulrouget/servoshell/blob/master/screenshots/mini.png?raw=true "Mini UI")
 
 ### Linux and Mac
 
@@ -33,7 +44,6 @@ Make sure you installed all the [dependencies necessary to build Servo](https://
 
 ## Screenshots
 
-![tabs](https://github.com/paulrouget/servoshell/blob/master/screenshots/tabs.png?raw=true "regular")
 ![regular](https://github.com/paulrouget/servoshell/blob/master/screenshots/regular.png?raw=true "regular")
 ![dark theme](https://github.com/paulrouget/servoshell/blob/master/screenshots/dark-theme.png?raw=true "dark theme")
 ![options](https://github.com/paulrouget/servoshell/blob/master/screenshots/options.png?raw=true "options")
