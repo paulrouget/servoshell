@@ -425,8 +425,11 @@ fn main() {
             let app_has_changed = before_app_state == app_state;
             let win_has_changed = before_win_state == win_state;
             if app_has_changed || win_has_changed {
-                app.render(&app_state);
-                win.render(&win_state);
+                let app_diff = before_app_state.diff(&app_state);
+                // let win_diff = before_win_state.diff(&win_state);
+                // FIXME: remove reference to states.
+                // app.render(&app_state, app_diff);
+                // win.render(&win_state, win_diff);
             }
 
             servo.sync(force_sync);

@@ -20,13 +20,13 @@ use state::BrowserState;
 use std::path::PathBuf;
 
 pub use self::servo::BrowserId;
-pub use self::servo::gl;
 pub use self::servo::compositing::compositor_thread::EventLoopWaker;
-pub use self::servo::style_traits::cursor::Cursor as ServoCursor;
-pub use self::servo::servo_url::ServoUrl;
 pub use self::servo::compositing::windowing::WebRenderDebugOption;
+pub use self::servo::gl;
 pub use self::servo::msg::constellation_msg::{Key, KeyModifiers, KeyState};
 pub use self::servo::msg::constellation_msg::{SHIFT, CONTROL, ALT, SUPER};
+pub use self::servo::servo_url::ServoUrl;
+pub use self::servo::style_traits::cursor::Cursor as ServoCursor;
 
 use traits::view::{self, DrawableGeometry};
 
