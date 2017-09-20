@@ -1,4 +1,4 @@
-# servoshell
+# ServoShell
 
 This is a sandbox project. Prototyping and experimenting with embedding Servo.
 
