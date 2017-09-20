@@ -53,8 +53,8 @@ PACKAGES = {
         'target/release/brew/servoshell.tar.gz',
     ],
     'windows-msvc': [
-        r'target\release\msi\Servo.msi',
-        r'target\release\msi\Servo.zip',
+        r'target\release\msi\ServoShell.msi',
+        r'target\release\msi\ServoShell.zip',
     ],
 }
 
@@ -294,7 +294,7 @@ class PackageCommands(CommandBase):
 
             print("Copying files")
             dir_to_temp = path.join(dir_to_msi, 'temp')
-            dir_to_temp_servo = path.join(dir_to_temp, 'servo')
+            dir_to_temp_servo = path.join(dir_to_temp, 'servoshell')
             dir_to_resources = path.join(dir_to_temp_servo, 'resources')
             shutil.copytree(path.join(dir_to_root, 'shell_resources'), path.join(dir_to_resources, 'shell_resources'))
             shutil.copytree(path.join(dir_to_root, 'servo_resources'), path.join(dir_to_resources, 'servo_resources'))
