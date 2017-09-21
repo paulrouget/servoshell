@@ -2,6 +2,8 @@
 
 This is a sandbox project. Prototyping and experimenting with embedding Servo.
 
+[Download](https://github.com/paulrouget/servoshell/releases/).
+
 ## Full UI
 
 A regular browser user interface (only available for MacOS for now).
