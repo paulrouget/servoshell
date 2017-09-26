@@ -8,7 +8,7 @@ use cocoa::foundation::*;
 use objc::declare::ClassDecl;
 use objc::runtime::{Class, Object, Sel};
 use servo::ServoCursor;
-use state::AppState;
+use state::{AppState, ChangeType, DiffKey, WindowState};
 use std::env;
 use std::os::raw::c_void;
 use std::path::PathBuf;
@@ -125,7 +125,8 @@ impl App {
     }
 
     // From winit
-    fn update_cursor(&self, cursor: ServoCursor) {
+    fn render_cursor(&self, cursor: ServoCursor) {
+        // FIXME: pointingHandCursor only stays a pointingHandCursor if constantly set
 
         let cursor_name = match cursor {
             ServoCursor::Default => "arrowCursor",
@@ -164,6 +165,7 @@ impl App {
             ServoCursor::Progress |
             ServoCursor::Help => "arrowServoCursor"
         };
+
         let sel = Sel::register(cursor_name);
         let cls = Class::get("NSCursor").unwrap();
         unsafe {
@@ -209,7 +211,7 @@ impl App {
 
 impl AppMethods for App {
 
-    fn new<'a>() -> Result<App, &'a str> {
+    fn new<'a>(state: &AppState) -> Result<App, &'a str> {
 
         register();
         view::register();
@@ -249,6 +251,9 @@ impl AppMethods for App {
 
         let app = App {nsapp: nsapp};
 
+        app.copy_state(state);
+        app.render_cursor(state.cursor);
+
         Ok(app)
     }
 
@@ -256,9 +261,20 @@ impl AppMethods for App {
         Self::get_res_parent().map(|p| p.join("servo_resources"))
     }
 
-    fn render(&self, state: &AppState) {
+    fn render(&self, diff: Vec<ChangeType>, state: &AppState) {
         self.copy_state(state);
-        self.update_cursor(state.cursor);
+        for change in diff {
+            use self::DiffKey as K;
+            match change {
+                ChangeType::Modified(keys) => {
+                    match keys.as_slice() {
+                        &[K::cursor] => self.render_cursor(state.cursor),
+                        _ => println!("App::render: unexpected keys: {:?}", keys)
+                    }
+                },
+                _ => println!("App::render: unexpected change type: {:?}", change)
+            }
+        }
     }
 
     fn get_events(&self) -> Vec<AppEvent> {
@@ -305,20 +321,19 @@ impl AppMethods for App {
                     }
                 }
 
-                msg_send![self.nsapp, updateWindows];
-                msg_send![pool, release];
+                let _: () = msg_send![pool, release];
             }
             callback();
         }
     }
 
-    fn new_window<'a>(&self) -> Result<Box<WindowMethods>, &'a str> {
+    fn new_window<'a>(&self, state: &WindowState) -> Result<Box<WindowMethods>, &'a str> {
         let (nswindow, nspopover) = match App::create_native_window() {
             Ok(w) => w,
             Err(msg) => return Err(&msg),
         };
 
-        Ok(Box::new(window::Window::new(nswindow, nspopover)))
+        Ok(Box::new(window::Window::new(state, nswindow, nspopover)))
     }
 
 }

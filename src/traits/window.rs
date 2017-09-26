@@ -4,7 +4,7 @@
 
 #![cfg_attr(any(feature = "force-glutin", not(target_os = "macos")), allow(dead_code))]
 
-use state::WindowState;
+use state::{ChangeType, WindowState};
 use traits::view::ViewMethods;
 use servo::EventLoopWaker;
 use std::rc::Rc;
@@ -53,7 +53,7 @@ pub enum WindowCommand {
 }
 
 pub trait WindowMethods {
-    fn render(&self, state: &WindowState);
+    fn render(&self, diff: Vec<ChangeType>, state: &WindowState);
     fn new_view(&self) -> Result<Rc<ViewMethods>, &'static str>;
     fn new_event_loop_waker(&self) -> Box<EventLoopWaker>;
     fn get_events(&self) -> Vec<WindowEvent>;

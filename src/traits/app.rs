@@ -4,7 +4,7 @@
 
 #![cfg_attr(any(feature = "force-glutin", not(target_os = "macos")), allow(dead_code))]
 
-use state::AppState;
+use state::{AppState, ChangeType, WindowState};
 use std::path::PathBuf;
 use traits::window::WindowMethods;
 
@@ -24,10 +24,10 @@ pub enum AppCommand {
 }
 
 pub trait AppMethods {
-    fn new<'a>() -> Result<Self, &'a str> where Self: Sized;
-    fn new_window<'a>(&self) -> Result<Box<WindowMethods>, &'a str>;
+    fn new<'a>(state: &AppState) -> Result<Self, &'a str> where Self: Sized;
+    fn new_window<'a>(&self, state: &WindowState) -> Result<Box<WindowMethods>, &'a str>;
     fn get_resources_path() -> Option<PathBuf>;
-    fn render(&self, state: &AppState);
+    fn render(&self, diff: Vec<ChangeType>, state: &AppState);
     fn get_events(&self) -> Vec<AppEvent>;
     fn run<T>(&self, callback: T) where T: FnMut();
 }

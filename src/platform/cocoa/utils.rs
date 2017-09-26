@@ -78,16 +78,45 @@ pub fn get_classname(id: id) -> String {
 }
 
 pub fn get_view_by_id(id: id, name: &'static str) -> Option<id> {
+    // FIXME: cache
+    let mut toolbar: Option<id> = None;
     let nsview: id = if id_is_instance_of(id, "NSWindow") {
-        unsafe { msg_send![id, contentView] }
+        unsafe {
+            toolbar = Some(msg_send![id, toolbar]);
+            msg_send![id, contentView]
+        }
     } else {
         id
     };
-    get_view(nsview, &|view| {
+    let view = get_view(nsview, &|view| {
         unsafe {
             let identifier: id = msg_send![view, identifier];
             NSString::isEqualToString(identifier, name)
         }
+    });
+    // If we can't find a view in the window, let's look in the toolbar
+    view.or_else(|| {
+        unsafe {
+            if let Some(toolbar) = toolbar {
+                let items: id = msg_send![toolbar, items];
+                let count: NSInteger = msg_send![items, count];
+                for i in 0..count {
+                    let item: id = msg_send![items, objectAtIndex:i];
+                    let item_identifier: id = msg_send![item, itemIdentifier];
+                    let view = msg_send![item, view];
+                    if NSString::isEqualToString(item_identifier, name) {
+                        return Some(view);
+                    }
+                    if let Some(view) = get_view(view, &|view| {
+                        let identifier: id = msg_send![view, identifier];
+                        NSString::isEqualToString(identifier, name)
+                    }) {
+                        return Some(view);
+                    }
+                }
+            }
+        }
+        None
     })
 }
 

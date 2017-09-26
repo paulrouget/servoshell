@@ -11,7 +11,7 @@ use objc::declare::ClassDecl;
 use objc::runtime::{Class, Object, Sel};
 use platform::View;
 use servo::EventLoopWaker;
-use state::WindowState;
+use state::{BrowserState, ChangeType, DiffKey, WindowState};
 use std::f64;
 use std::ffi::CStr;
 use std::os::raw::c_void;
@@ -117,11 +117,17 @@ pub fn register() {
                     WindowCommand::ZoomIn
                 }
             } else if action == sel!(shellReloadStop:) {
-                let idx = get_win_state().current_browser_index.unwrap();
-                if get_win_state().browsers[idx].is_loading {
-                    WindowCommand::Stop
-                } else {
-                    WindowCommand::Reload
+                match get_win_state().current_browser_index {
+                    Some(idx) => {
+                        if get_win_state().browsers[idx].is_loading {
+                            WindowCommand::Stop
+                        } else {
+                            WindowCommand::Reload
+                        }
+                    },
+                    None => {
+                        WindowCommand::Stop
+                    }
                 }
             } else if action == sel!(shellStop:) { WindowCommand::Stop }
             else if action == sel!(shellReload:) { WindowCommand::Reload }
@@ -161,7 +167,7 @@ pub fn register() {
         }
 
         extern fn validate_action(_this: &Object, _sel: Sel, action: Sel) -> BOOL {
-            let idx = get_win_state().current_browser_index.unwrap();
+            let idx = if let Some(idx) = get_win_state().current_browser_index { idx } else { return NO };
             let ref state = get_win_state().browsers[idx];
             let enabled = if action == sel!(shellStop:) {
                 state.is_loading
@@ -311,7 +317,7 @@ pub struct Window {
 }
 
 impl Window {
-    pub fn new(nswindow: id, nspopover: id) -> Window {
+    pub fn new(state: &WindowState, nswindow: id, nspopover: id) -> Window {
 
         let win = Window {
             nswindow: nswindow,
@@ -332,9 +338,7 @@ impl Window {
 
             {
                 // Add delegate to urlbar textfield
-                let item = win.get_toolbar_item("urlbar").unwrap();
-                let view = msg_send![item, view];
-                let field = utils::get_view_by_id(view, "shellToolbarViewUrlbarTextfield").unwrap();
+                let field = utils::get_view_by_id(nswindow, "shellToolbarViewUrlbarTextfield").unwrap();
                 msg_send![field, setDelegate:delegate];
             }
 
@@ -366,6 +370,10 @@ impl Window {
             msg_send![text_container, setWidthTracksTextView:NO];
             msg_send![text_container, setContainerSize:NSSize::new(f64::MAX, f64::MAX)];
 
+            win.copy_state(state);
+            win.render_popover(state);
+            win.render_logs(state);
+
             (*delegate).set_ivar("rendering", false);
         }
 
@@ -378,22 +386,6 @@ impl Window {
         unsafe {
             let delegate: id = msg_send![NSApp(), delegate];
             (*delegate).set_ivar("win_state", state_ptr as *mut c_void);
-        }
-    }
-
-    fn get_toolbar_item(&self, identifier: &str) -> Option<id> {
-        unsafe {
-            let toolbar: id = msg_send![self.nswindow, toolbar];
-            let items: id = msg_send![toolbar, items];
-            let count: NSInteger = msg_send![items, count];
-            for i in 0..count {
-                let item: id = msg_send![items, objectAtIndex:i];
-                let item_identifier: id = msg_send![item, itemIdentifier];
-                if NSString::isEqualToString(item_identifier, identifier) {
-                    return Some(item);
-                }
-            }
-            None
         }
     }
 
@@ -420,7 +412,7 @@ impl Window {
             (NSAppearanceNameVibrantLight, YES, 0)
         }};
 
-        let item = self.get_toolbar_item("options").unwrap();
+        let item = utils::get_view_by_id(self.nswindow, "options").expect("Can't find options view");
         let topview = unsafe {
             let view: id = msg_send![item, view];
             let view: id = msg_send![view, superview];
@@ -450,83 +442,84 @@ impl Window {
             msg_send![self.nswindow, setAppearance:appearance];
         }
     }
-}
 
-impl WindowMethods for Window {
+    fn render_history_buttons(&self, state: &BrowserState) {
+        if let Some(view) = utils::get_view_by_id(self.nswindow, "shellToolbarViewNavigation") {
+            let can_go_back = if state.can_go_back { YES } else { NO };
+            let can_go_forward = if state.can_go_forward { YES } else { NO };
+            unsafe {
+                msg_send![view, setEnabled:can_go_back forSegment:0];
+                msg_send![view, setEnabled:can_go_forward forSegment:1];
+            }
+        }
+    }
 
-    fn render(&self, state: &WindowState) {
+    fn render_throbber(&self, state: &BrowserState) {
+        if let Some(indicator) = utils::get_view_by_id(self.nswindow, "shellToolbarViewUrlbarThrobber") {
+            if state.is_loading {
+                unsafe { msg_send![indicator, startAnimation:nil] }
+            } else {
+                unsafe { msg_send![indicator, stopAnimation:nil] }
+            }
+        }
+    }
 
-        self.copy_state(state);
-
-        // FIXME: long function is long
-
-        let idx = state.current_browser_index.unwrap();
-
-        self.update_theme();
-
-        let delegate = unsafe {
-            let delegate: id = msg_send![self.nswindow, delegate];
-            (*delegate).set_ivar("rendering", true);
-            delegate
-        };
-
-        // First, update the avaibility of the buttons
-        unsafe {
-            let toolbar: id = msg_send![self.nswindow, toolbar];
-            let items: id = msg_send![toolbar, items];
-            let count: NSInteger = msg_send![items, count];
-            for i in 0..count {
-                let item: id = msg_send![items, objectAtIndex:i];
-                let view: id = msg_send![item, view];
-                if view == nil {
-                    continue;
-                }
-                let action: Sel = msg_send![item, action];
-                let identifier: id = msg_send![view, identifier];
-                if NSString::isEqualToString(identifier, "shellToolbarViewUrlbar") {
-                    let stopped: BOOL = msg_send![delegate, validateAction:sel!(shellStop:)];
-                    let indicator = utils::get_view_by_id(view, "shellToolbarViewUrlbarThrobber").unwrap();
-                    if stopped == YES {
-                        msg_send![indicator, startAnimation:nil];
-                    } else {
-                        msg_send![indicator, stopAnimation:nil];
-                    }
-                } else if action == sel!(shellNavigate:) {
-                    let enabled0: BOOL = msg_send![delegate, validateAction:sel!(shellNavigateBack:)];
-                    let enabled1: BOOL = msg_send![delegate, validateAction:sel!(shellNavigateForward:)];
-                    msg_send![view, setEnabled:enabled0 forSegment:0];
-                    msg_send![view, setEnabled:enabled1 forSegment:1];
-                } else if action == sel!(shellZoom:) {
-                    let enabled0: BOOL = msg_send![delegate, validateAction:sel!(shellZoomOut:)];
-                    let enabled1: BOOL = msg_send![delegate, validateAction:sel!(shellZoomToActualSize:)];
-                    let enabled2: BOOL = msg_send![delegate, validateAction:sel!(shellZoomIn:)];
-                    msg_send![view, setEnabled:enabled0 forSegment:0];
-                    msg_send![view, setEnabled:enabled1 forSegment:1];
-                    msg_send![view, setEnabled:enabled2 forSegment:2];
-                } else if action == sel!(shellReloadStop:) {
-                    let can_reload: BOOL = msg_send![delegate, validateAction:sel!(shellReload:)];
-                    let subviews: id = msg_send![view, subviews];
-                    let button_reload: id = msg_send![subviews, objectAtIndex:0];
-                    let button_stop: id = msg_send![subviews, objectAtIndex:1];
-                    if can_reload == YES {
-                        msg_send![button_reload, setEnabled:YES];
-                        msg_send![button_reload, setHidden:NO];
-                        msg_send![button_stop, setEnabled:NO];
-                        msg_send![button_stop, setHidden:YES];
-                    } else {
-                        msg_send![button_reload, setEnabled:NO];
-                        msg_send![button_reload, setHidden:YES];
-                        msg_send![button_stop, setEnabled:YES];
-                        msg_send![button_stop, setHidden:NO];
-                    }
+    fn render_stop_reload_button(&self, state: &BrowserState) {
+        if let Some(indicator) = utils::get_view_by_id(self.nswindow, "shellToolbarViewReloadStop") {
+            unsafe {
+                let subviews: id = msg_send![indicator, subviews];
+                let button_reload: id = msg_send![subviews, objectAtIndex:0];
+                let button_stop: id = msg_send![subviews, objectAtIndex:1];
+                if state.is_loading {
+                    msg_send![button_reload, setEnabled:NO];
+                    msg_send![button_reload, setHidden:YES];
+                    msg_send![button_stop, setEnabled:YES];
+                    msg_send![button_stop, setHidden:NO];
                 } else {
-                    let enabled: BOOL = msg_send![delegate, validateAction:action];
-                    msg_send![view, setEnabled:enabled];
+                    msg_send![button_reload, setEnabled:YES];
+                    msg_send![button_reload, setHidden:NO];
+                    msg_send![button_stop, setEnabled:NO];
+                    msg_send![button_stop, setHidden:YES];
                 }
             }
         }
+    }
 
-        // Then, update the state of the popover
+    fn render_zoom_buttons(&self, state: &BrowserState) {
+        if let Some(view) = utils::get_view_by_id(self.nswindow, "shellToolbarViewZoom") {
+            let enabled0 = YES;
+            let enabled1 = if state.zoom != 1.0 { YES } else { NO };
+            let enabled2 = YES;
+            unsafe {
+                msg_send![view, setEnabled:enabled0 forSegment:0];
+                msg_send![view, setEnabled:enabled1 forSegment:1];
+                msg_send![view, setEnabled:enabled2 forSegment:2];
+            }
+        }
+    }
+
+    fn render_urlbar_text(&self, state: &BrowserState) {
+        let field = utils::get_view_by_id(self.nswindow, "shellToolbarViewUrlbarTextfield").expect("Can't find urlbar field");
+        unsafe {
+            match state.url {
+                Some(ref url) if url != "about:blank" => msg_send![field, setStringValue:NSString::alloc(nil).init_str(url)],
+                _ => msg_send![field, setStringValue:NSString::alloc(nil).init_str("")],
+            };
+        }
+    }
+
+    fn render_focus(&self, state: &BrowserState) {
+        if state.urlbar_focused {
+            let field = utils::get_view_by_id(self.nswindow, "shellToolbarViewUrlbarTextfield").expect("Can't find urlbar field");
+            unsafe {
+                msg_send![field, becomeFirstResponder];
+            }
+        } else {
+            // FIXME: unfocus urlbar and focus browser
+        }
+    }
+
+    fn render_popover(&self, state: &WindowState) {
         unsafe {
             let controller: id = msg_send![self.nspopover, contentViewController];
             let topview: id = msg_send![controller, view];
@@ -539,104 +532,28 @@ impl WindowMethods for Window {
                 // FIXME
                 if utils::id_is_instance_of(view, "NSButton") {
                     let action: Sel = msg_send![view, action];
+                    let delegate: id = msg_send![self.nswindow, delegate];
                     let state: NSInteger = msg_send![delegate, getStateForAction:action];
                     msg_send![view, setState:state];
                 }
             }
-        }
 
-        // Show logs if necessary
-        let logs = utils::get_view_by_id(self.nswindow, "shellViewLogs").unwrap();
-        let visible = state.logs_visible;
-        let hidden = if visible {NO} else {YES};
+            if state.options_open {
+                let button = utils::get_view_by_id(self.nswindow, "options").unwrap();
+                let bounds = NSView::bounds(button);
+                msg_send![self.nspopover, showRelativeToRect:bounds ofView:button preferredEdge:3];
+            }
+        }
+    }
+
+    fn render_logs(&self, state: &WindowState) {
+        let logs = utils::get_view_by_id(self.nswindow, "shellViewLogs").expect("Can't find shellViewLogs view");
+        let hidden = if state.logs_visible {NO} else {YES};
         unsafe {msg_send![logs, setHidden:hidden]};
+    }
 
-        // Update urlbar
-        let item = self.get_toolbar_item("urlbar").unwrap();
-        // FIXME: alloc everytime is bad. Use diff
-        unsafe {
-            let view = msg_send![item, view];
-            let field = utils::get_view_by_id(view, "shellToolbarViewUrlbarTextfield").unwrap();
-            match state.browsers[idx].url {
-                Some(ref url) if url != "about:blank" => msg_send![field, setStringValue:NSString::alloc(nil).init_str(url)],
-                _ => msg_send![field, setStringValue:NSString::alloc(nil).init_str("")],
-            };
-
-            if state.urlbar_focused {
-                msg_send![field, becomeFirstResponder];
-            }
-        }
-
-        // FIXME: focus browser
-
-        // FIXME, very ugly
-        // Update tabbar
-        // Sorry for the basic stupid diff
-        let tabview = utils::get_view_by_id(self.nswindow, "tabview").unwrap();
-
-        let visual_count: usize = unsafe { msg_send![tabview, numberOfTabViewItems] };
-
-        unsafe {
-            for i in (0..visual_count).rev() {
-                let item: id = msg_send![tabview, tabViewItemAtIndex:i];
-                let view_id: id = msg_send![item, identifier];
-                if !state.browsers.iter().any(|b| {
-                    // FIXME: store String
-                    NSString::isEqualToString(view_id, &format!("{}", b.id))
-                }) {
-                    msg_send![tabview, removeTabViewItem:item];
-                }
-            }
-        }
-
-        let visual_count: usize = unsafe { msg_send![tabview, numberOfTabViewItems] };
-
-        let state_count = state.browsers.len();
-
-        if state_count == visual_count + 1 {
-            // Need to add a tab
-            // Always assume extra tab has been added at the end
-            let id = state.browsers[state_count - 1].id;
-            unsafe {
-                let item: id = msg_send![class("NSTabViewItem"), alloc];
-                let identifier = NSString::alloc(nil).init_str(format!("{}", id).as_str());
-                let item: id = msg_send![item, initWithIdentifier:identifier];
-                msg_send![tabview, addTabViewItem:item];
-            }
-
-        } else if state_count != visual_count {
-            // That should never happen
-            println!("Inconsistent tabs");
-        }
-
-        unsafe {
-            msg_send![tabview, selectTabViewItemAtIndex:idx];
-        }
-
-        unsafe {
-            for i in 0..state_count {
-                // FIXME: alloc…
-                let item: id = msg_send![tabview, tabViewItemAtIndex:i];
-                let nsstring = match state.browsers[i].title {
-                    Some(ref title) => NSString::alloc(nil).init_str(title),
-                    None => NSString::alloc(nil).init_str("No Title"),
-                };
-                msg_send![item, setLabel:nsstring];
-            }
-        }
-
-        // FIXME: This is too basic. If we want animations and proper sidebar support,
-        // we need to have access to "animator()" which, afaiu, comes only
-        // from a NSSplitViewController. We want to be able to use this:
-        // https://developer.apple.com/reference/appkit/nssplitviewcontroller/1388905-togglesidebar
-        let sidebar = utils::get_view_by_id(self.nswindow, "shellViewSidebar").unwrap();
-        unsafe {
-            let hidden = if state.sidebar_is_open {NO} else {YES};
-            msg_send![sidebar, setHidden:hidden];
-        }
-
-        // FIXME: diff
-        let textfield = utils::get_view_by_id(self.nswindow, "shellStatusLabel").unwrap();
+    fn render_status(&self, state: &WindowState) {
+        let textfield = utils::get_view_by_id(self.nswindow, "shellStatusLabel").expect("Can't find status view");
         match state.status {
             Some(ref status) => {
                 unsafe {
@@ -650,14 +567,162 @@ impl WindowMethods for Window {
             }
         }
 
+    }
+
+    fn render_tab_title(&self, state: &WindowState, index: usize) {
+        let title = &state.browsers[index].title;
+        let tabview = utils::get_view_by_id(self.nswindow, "tabview").expect("Can't find tabview");
         unsafe {
-            if state.options_open {
-                let item = self.get_toolbar_item("options").unwrap();
-                let button: id = msg_send![item, view];
-                let bounds = NSView::bounds(button);
-                msg_send![self.nspopover, showRelativeToRect:bounds ofView:button preferredEdge:3];
+            let item: id = msg_send![tabview, tabViewItemAtIndex:index];
+            let nsstring = match *title {
+                Some(ref title) => NSString::alloc(nil).init_str(title),
+                None => NSString::alloc(nil).init_str("No Title"),
+            };
+            msg_send![item, setLabel:nsstring];
+        }
+    }
+
+    fn render_sidebar(&self, state: &WindowState) {
+        // FIXME: This is too basic. If we want animations and proper sidebar support,
+        // we need to have access to "animator()" which, afaiu, comes only
+        // from a NSSplitViewController. We want to be able to use this:
+        // https://developer.apple.com/reference/appkit/nssplitviewcontroller/1388905-togglesidebar
+        let sidebar = utils::get_view_by_id(self.nswindow, "shellViewSidebar").expect("Can't find sidebar view");
+        unsafe {
+            let hidden = if state.sidebar_is_open {NO} else {YES};
+            msg_send![sidebar, setHidden:hidden];
+        }
+    }
+
+    fn render_selected_tab(&self, index: usize) {
+        unsafe {
+            let tabview = utils::get_view_by_id(self.nswindow, "tabview").expect("Can't find tabview");
+            msg_send![tabview, selectTabViewItemAtIndex:index];
+        }
+    }
+
+    fn render_add_tab(&self, index: usize, state: &BrowserState) {
+        unsafe {
+            let tabview = utils::get_view_by_id(self.nswindow, "tabview").expect("Can't find tabview");
+            let item: id = msg_send![class("NSTabViewItem"), alloc];
+            let identifier = NSString::alloc(nil).init_str(format!("{}", state.id).as_str());
+            let item: id = msg_send![item, initWithIdentifier:identifier];
+            msg_send![tabview, insertTabViewItem:item atIndex:index];
+        }
+    }
+
+    fn render_remove_tab(&self, index: usize) {
+        unsafe {
+            let tabview = utils::get_view_by_id(self.nswindow, "tabview").expect("Can't find tabview");
+            let item: id = msg_send![tabview, tabViewItemAtIndex:index];
+            msg_send![tabview, removeTabViewItem:item];
+        }
+    }
+}
+
+impl WindowMethods for Window {
+
+    fn render(&self, diff: Vec<ChangeType>, state: &WindowState) {
+
+        println!("DIFF: {:?}", diff);
+
+        self.copy_state(state);
+
+        let delegate = unsafe {
+            let delegate: id = msg_send![self.nswindow, delegate];
+            (*delegate).set_ivar("rendering", true);
+            delegate
+        };
+
+        let idx = if let Some(idx) = state.current_browser_index { idx } else { return };
+        let current_browser_state = &state.browsers[idx];
+
+        // FIXME: Most of these render functions have overlap logic with the validate_action
+
+        for change in diff {
+            use self::DiffKey as K;
+            match change {
+                ChangeType::Modified(keys) => {
+                    match keys.as_slice() {
+                        &[K::current_browser_index] => {
+                            self.render_throbber(current_browser_state);
+                            self.render_stop_reload_button(current_browser_state);
+                            self.render_history_buttons(current_browser_state);
+                            self.render_zoom_buttons(current_browser_state);
+                            self.render_urlbar_text(current_browser_state);
+                            self.render_focus(current_browser_state);
+                            self.render_selected_tab(idx);
+                        }
+                        &[K::browsers, K::Index(i), K::title] => {
+                            self.render_tab_title(state, i);
+                        },
+                        &[K::browsers, K::Index(i), K::is_loading] if idx == i => {
+                            self.render_throbber(current_browser_state);
+                            self.render_stop_reload_button(current_browser_state);
+                        },
+                        &[K::browsers, K::Index(i), K::can_go_back] if idx == i => {
+                            self.render_history_buttons(current_browser_state);
+                        },
+                        &[K::browsers, K::Index(i), K::can_go_forward] if idx == i => {
+                            self.render_history_buttons(current_browser_state);
+                        },
+                        &[K::browsers, K::Index(i), K::zoom] if idx == i => {
+                            self.render_zoom_buttons(current_browser_state);
+                        },
+                        &[K::browsers, K::Index(i), K::url] if idx == i => {
+                            self.render_urlbar_text(current_browser_state);
+                        },
+                        &[K::browsers, K::Index(i), K::urlbar_focused] if idx == i => {
+                            self.render_focus(current_browser_state);
+                        }
+                        &[K::debug_options, ..] => {
+                            self.render_popover(state);
+                        },
+                        &[K::logs_visible] => {
+                            self.render_logs(state);
+                        },
+                        &[K::options_open] => {
+                            self.render_popover(state);
+                        },
+                        &[K::status] => {
+                            self.render_status(state);
+                        },
+                        &[K::sidebar_is_open] => {
+                            self.render_sidebar(state);
+                        },
+                        &[K::browsers, K::Index(_), K::user_input] => {
+                            // Nothing to do
+                        },
+                        &[K::browsers, K::Index(i), K::can_go_forward] |
+                        &[K::browsers, K::Index(i), K::can_go_back] |
+                        &[K::browsers, K::Index(i), K::url] |
+                        &[K::browsers, K::Index(i), K::is_loading] if i != idx => {
+                            // Nothing to do
+                        },
+                        _ => println!("App::render: unexpected Modified keys: {:?}", keys)
+                    }
+                },
+                ChangeType::Added(keys) => {
+                    match keys.as_slice() {
+                        &[K::browsers, K::Index(i)] => {
+                            self.render_add_tab(i, &state.browsers[i]);
+                        },
+                        _ => println!("App::render: unexpected Added keys: {:?}", keys)
+                    }
+                }
+                ChangeType::Removed(keys) => {
+                    match keys.as_slice() {
+                        &[K::browsers, K::Index(i)] => {
+                            self.render_remove_tab(i);
+                        },
+                        _ => println!("App::render: unexpected Removed keys: {:?}", keys)
+                    }
+                }
             }
         }
+
+        // FIXME
+        self.update_theme();
 
         unsafe {
             (*delegate).set_ivar("rendering", false);
@@ -668,14 +733,13 @@ impl WindowMethods for Window {
     fn new_view(&self) -> Result<Rc<ViewMethods>, &'static str> {
         // FIXME: We should dynamically create a NSServoView,
         // and adds the constraints, instead on relying on IB's instance.
-        utils::get_view_by_id(self.nswindow, "shellViewServo")
-            .map(|nsview| Rc::new(View::new(nsview)) as Rc<ViewMethods>)
-        .ok_or("Can't find NSServoView")
+        let nsview = utils::get_view_by_id(self.nswindow, "shellViewServo").expect("Can't find shellViewServo");
+        Ok(Rc::new(View::new(nsview)) as Rc<ViewMethods>)
     }
 
     fn append_logs(&self, logs: &Vec<ShellLog>) {
         unsafe {
-            let textview = utils::get_view_by_id(self.nswindow, "shellViewLogsTextView").unwrap();
+            let textview = utils::get_view_by_id(self.nswindow, "shellViewLogsTextView").expect("Can't find shellViewLogsTextView");
             let textstorage: id = msg_send![textview, textStorage];
             // FIXME: figure out how to add colors
             for l in logs {

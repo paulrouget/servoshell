@@ -4,10 +4,12 @@
 
 #![feature(box_syntax)]
 #![feature(link_args)]
+#![feature(slice_patterns)]
 
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
+extern crate serde;
 extern crate treediff;
 
 #[macro_use]
@@ -45,7 +47,7 @@ mod logs;
 use platform::App;
 use servo::{Servo, ServoEvent, ServoUrl, WebRenderDebugOption};
 use std::env::args;
-use state::{AppState, WindowState};
+use state::{AppState, State, WindowState};
 use traits::app::{AppEvent, AppCommand, AppMethods};
 use traits::view::*;
 use traits::window::{WindowEvent, WindowCommand};
@@ -66,8 +68,15 @@ fn main() {
 
     let resources_path = App::get_resources_path().expect("Can't find resources path");
 
-    let app = App::new().expect("Can't create application");
-    let win = app.new_window().expect("Can't create application");
+    let mut app_state = State::new(AppState::new());
+    app_state.get_mut().current_window_index = Some(0);
+
+    let mut win_state = State::new(WindowState::new());
+
+    let app = App::new(app_state.get()).expect("Can't create application");
+    let win = app.new_window(win_state.get()).expect("Can't create application");
+    app_state.snapshot();
+    win_state.snapshot();
 
     let view = win.new_view().unwrap();
 
@@ -91,15 +100,10 @@ fn main() {
     let browser = servo.new_browser(&url);
     servo.select_browser(browser.id);
 
-    let mut app_state = AppState::new();
-    app_state.current_window_index = Some(0);
-
-    let mut win_state = WindowState::new();
-    win_state.current_browser_index = Some(0);
-    win_state.browsers.push(browser);
-
-    app.render(&app_state);
-    win.render(&win_state);
+    win_state.get_mut().current_browser_index = Some(0);
+    win_state.get_mut().browsers.push(browser);
+    win.render(win_state.diff(), win_state.get());
+    win_state.snapshot();
 
     info!("Servo version: {}", servo.version());
 
@@ -107,9 +111,6 @@ fn main() {
 
         // Loop until no events are available anymore.
         loop {
-
-            let before_app_state = app_state.clone();
-            let before_win_state = win_state.clone();
 
             let app_events = app.get_events();
             let win_events = win.get_events();
@@ -145,7 +146,7 @@ fn main() {
                                 // FIXME
                             }
                             AppCommand::ToggleOptionDarkTheme => {
-                                app_state.dark_theme = !app_state.dark_theme;
+                                app_state.get_mut().dark_theme = !app_state.get().dark_theme;
                             }
                         }
                     }
@@ -171,14 +172,15 @@ fn main() {
                         // FIXME
                     }
                     WindowEvent::OptionsClosed => {
-                        win_state.options_open = false;
+                        win_state.get_mut().options_open = false;
                     }
                     WindowEvent::UrlbarFocusChanged(focused) => {
-                        win_state.urlbar_focused = focused;
+                        let idx = win_state.get().current_browser_index.unwrap();
+                        win_state.get_mut().browsers[idx].urlbar_focused = focused;
                     }
                     WindowEvent::DoCommand(cmd) => {
-                        let idx = win_state.current_browser_index.unwrap();
-                        let bid = win_state.browsers[idx].id;
+                        let idx = win_state.get().current_browser_index.unwrap();
+                        let bid = win_state.get().browsers[idx].id;
                         match cmd {
                             WindowCommand::Stop => {
                                 // FIXME
@@ -193,37 +195,37 @@ fn main() {
                                 servo.go_forward(bid);
                             }
                             WindowCommand::OpenLocation => {
-                                win_state.urlbar_focused = true;
+                                win_state.get_mut().browsers[idx].urlbar_focused = true;
                             }
                             WindowCommand::OpenInDefaultBrowser => {
-                                if let Some(ref url) = win_state.browsers[idx].url {
+                                if let Some(ref url) = win_state.get().browsers[idx].url {
                                     open::that(url.clone()).ok();
                                 }
                             }
                             WindowCommand::ZoomIn => {
-                                win_state.browsers[idx].zoom *= 1.1;
-                                servo.zoom(win_state.browsers[idx].zoom);
+                                win_state.get_mut().browsers[idx].zoom *= 1.1;
+                                servo.zoom(win_state.get().browsers[idx].zoom);
                             }
                             WindowCommand::ZoomOut => {
-                                win_state.browsers[idx].zoom /= 1.1;
-                                servo.zoom(win_state.browsers[idx].zoom);
+                                win_state.get_mut().browsers[idx].zoom /= 1.1;
+                                servo.zoom(win_state.get().browsers[idx].zoom);
                             }
                             WindowCommand::ZoomToActualSize => {
-                                win_state.browsers[idx].zoom = 1.0;
+                                win_state.get_mut().browsers[idx].zoom = 1.0;
                                 servo.reset_zoom();
                             }
 
                             WindowCommand::ToggleSidebar => {
-                                win_state.sidebar_is_open = !win_state.sidebar_is_open;
+                                win_state.get_mut().sidebar_is_open = !win_state.get().sidebar_is_open;
                             }
 
                             WindowCommand::ShowOptions => {
-                                win_state.options_open = !win_state.options_open;
+                                win_state.get_mut().options_open = !win_state.get().options_open;
                             }
 
                             WindowCommand::Load(request) => {
-                                win_state.browsers[idx].user_input = Some(request.clone());
-                                win_state.urlbar_focused = false;
+                                win_state.get_mut().browsers[idx].user_input = Some(request.clone());
+                                win_state.get_mut().browsers[idx].urlbar_focused = false;
                                 let url = ServoUrl::parse(&request).or_else(|error| {
                                     // FIXME: weak
                                     if request.ends_with(".com") || request.ends_with(".org") || request.ends_with(".net") {
@@ -242,57 +244,56 @@ fn main() {
                                 }
                             }
                             WindowCommand::ToggleOptionShowLogs => {
-                                win_state.logs_visible = !win_state.logs_visible;
+                                win_state.get_mut().logs_visible = !win_state.get().logs_visible;
                             },
                             WindowCommand::NewTab => {
-                                let browser = servo.new_browser("about:blank");
+                                let mut browser = servo.new_browser("about:blank");
+                                if cfg!(all(not(feature = "force-glutin"), target_os = "macos")) {
+                                    browser.urlbar_focused = true;
+                                }
                                 servo.select_browser(browser.id);
                                 servo.update_geometry(view.get_geometry());
-                                win_state.current_browser_index = Some(idx + 1);
-                                win_state.browsers.push(browser);
-                                if cfg!(all(not(feature = "force-glutin"), target_os = "macos")) {
-                                    // Focus urlbar, but only on cocoa
-                                    win_state.urlbar_focused = true;
-                                }
+                                win_state.get_mut().current_browser_index = Some(idx + 1);
+                                win_state.get_mut().browsers.push(browser);
                             },
                             WindowCommand::CloseTab => {
-                                if win_state.browsers.len() > 1 {
-                                    let id = win_state.browsers[idx].id;
-                                    let new_id = if idx == win_state.browsers.len() - 1 {
-                                        win_state.current_browser_index = Some(idx - 1);
-                                        win_state.browsers[idx - 1].id
+                                if win_state.get().browsers.len() > 1 {
+                                    let id = win_state.get().browsers[idx].id;
+                                    let new_id = if idx == win_state.get().browsers.len() - 1 {
+                                        win_state.get_mut().current_browser_index = Some(idx - 1);
+                                        win_state.get().browsers[idx - 1].id
                                     } else {
-                                        win_state.browsers[idx + 1].id
+                                        win_state.get().browsers[idx + 1].id
                                     };
                                     servo.select_browser(new_id);
                                     servo.close_browser(id);
-                                    win_state.browsers.remove(idx);
+                                    win_state.get_mut().browsers.remove(idx);
                                 }
                             },
                             WindowCommand::PrevTab => {
                                 let new_idx = if idx == 0 {
-                                    win_state.browsers.len() - 1
+                                    win_state.get().browsers.len() - 1
                                 } else {
                                     idx - 1
                                 };
-                                win_state.current_browser_index = Some(new_idx);
-                                let id = win_state.browsers[new_idx].id;
+                                win_state.get_mut().current_browser_index = Some(new_idx);
+                                let id = win_state.get().browsers[new_idx].id;
                                 servo.select_browser(id);
                             },
                             WindowCommand::NextTab => {
-                                let new_idx = if idx == win_state.browsers.len() - 1 {
+                                let new_idx = if idx == win_state.get().browsers.len() - 1 {
                                     0
                                 } else {
                                     idx + 1
                                 };
-                                win_state.current_browser_index = Some(new_idx);
-                                let id = win_state.browsers[new_idx].id;
+                                win_state.get_mut().current_browser_index = Some(new_idx);
+                                let id = win_state.get().browsers[new_idx].id;
                                 servo.select_browser(id);
                             },
                             WindowCommand::SelectTab(idx) => {
-                                if win_state.current_browser_index != Some(idx) {
-                                    win_state.current_browser_index = Some(idx);
-                                    let id = win_state.browsers[idx].id;
+                                if win_state.get().current_browser_index != Some(idx) {
+                                    win_state.get_mut().current_browser_index = Some(idx);
+                                    let id = win_state.get().browsers[idx].id;
                                     servo.select_browser(id);
                                 }
                             },
@@ -303,17 +304,17 @@ fn main() {
                             WindowCommand::ToggleOptionTileBorders => { },
 
                             WindowCommand::ToggleOptionWRProfiler => {
-                                win_state.debug_options.wr_profiler = !win_state.debug_options.wr_profiler;
+                                win_state.get_mut().debug_options.wr_profiler = !win_state.get().debug_options.wr_profiler;
                                 servo.toggle_webrender_debug_option(WebRenderDebugOption::Profiler);
                             },
 
                             WindowCommand::ToggleOptionWRTextureCacheDebug => {
-                                win_state.debug_options.wr_texture_cache_debug = !win_state.debug_options.wr_texture_cache_debug;
+                                win_state.get_mut().debug_options.wr_texture_cache_debug = !win_state.get().debug_options.wr_texture_cache_debug;
                                 servo.toggle_webrender_debug_option(WebRenderDebugOption::TextureCacheDebug);
                             },
 
                             WindowCommand::ToggleOptionWRTargetDebug => {
-                                win_state.debug_options.wr_render_target_debug = !win_state.debug_options.wr_render_target_debug;
+                                win_state.get_mut().debug_options.wr_render_target_debug = !win_state.get().debug_options.wr_render_target_debug;
                                 servo.toggle_webrender_debug_option(WebRenderDebugOption::RenderTargetDebug);
                             },
                         }
@@ -322,8 +323,6 @@ fn main() {
             }
 
             for event in view_events {
-                let idx = win_state.current_browser_index.unwrap();
-                let state = &mut win_state.browsers[idx];
                 match event {
                     ViewEvent::GeometryDidChange => {
                         servo.update_geometry(view.get_geometry());
@@ -346,7 +345,9 @@ fn main() {
                         servo.perform_click(x, y, element_state, button);
                     }
                     ViewEvent::KeyEvent(c, key, keystate, modifiers) => {
-                        servo.send_key(state.id, c, key, keystate, modifiers);
+                        let idx = win_state.get().current_browser_index.unwrap();
+                        let id = win_state.get().browsers[idx].id;
+                        servo.send_key(id, c, key, keystate, modifiers);
                     }
                 }
             }
@@ -367,7 +368,7 @@ fn main() {
                         }
                     }
                     ServoEvent::TitleChanged(id, title) => {
-                        match win_state.browsers.iter_mut().find(|b| b.id == id) {
+                        match win_state.get_mut().browsers.iter_mut().find(|b| b.id == id) {
                             Some(browser) => {
                                 browser.title = title;
                             }
@@ -375,10 +376,10 @@ fn main() {
                         }
                     }
                     ServoEvent::StatusChanged(status) => {
-                        win_state.status = status;
+                        win_state.get_mut().status = status;
                     }
                     ServoEvent::LoadStart(id) => {
-                        match win_state.browsers.iter_mut().find(|b| b.id == id) {
+                        match win_state.get_mut().browsers.iter_mut().find(|b| b.id == id) {
                             Some(browser) => {
                                 browser.is_loading = true;
                             }
@@ -386,7 +387,7 @@ fn main() {
                         }
                     }
                     ServoEvent::LoadEnd(id) => {
-                        match win_state.browsers.iter_mut().find(|b| b.id == id) {
+                        match win_state.get_mut().browsers.iter_mut().find(|b| b.id == id) {
                             Some(browser) => {
                                 browser.is_loading = false;
                             }
@@ -397,7 +398,7 @@ fn main() {
                         // FIXME
                     }
                     ServoEvent::HistoryChanged(id, entries, current) => {
-                        match win_state.browsers.iter_mut().find(|b| b.id == id) {
+                        match win_state.get_mut().browsers.iter_mut().find(|b| b.id == id) {
                             Some(browser) => {
                                 let url = entries[current].url.to_string();
                                 browser.url = Some(url);
@@ -408,7 +409,10 @@ fn main() {
                         }
                     }
                     ServoEvent::CursorChanged(cursor) => {
-                        app_state.cursor = cursor;
+                        // FIXME: Work-around https://github.com/servo/servo/issues/18599
+                        if cursor != app_state.get().cursor {
+                            app_state.get_mut().cursor = cursor;
+                        }
                     }
                     ServoEvent::FaviconChanged(..) => {
                         // FIXME
@@ -422,15 +426,13 @@ fn main() {
                 }
             }
 
-            let app_has_changed = before_app_state == app_state;
-            let win_has_changed = before_win_state == win_state;
-            if app_has_changed || win_has_changed {
-                let app_diff = before_app_state.diff(&app_state);
-                // let win_diff = before_win_state.diff(&win_state);
-                // FIXME: remove reference to states.
-                // app.render(&app_state, app_diff);
-                // win.render(&win_state, win_diff);
+            if app_state.has_changed() || win_state.has_changed() {
+                app.render(app_state.diff(), app_state.get());
+                win.render(win_state.diff(), win_state.get());
+                app_state.snapshot();
+                win_state.snapshot();
             }
+
 
             servo.sync(force_sync);
         }
@@ -439,7 +441,7 @@ fn main() {
         // new events
 
         // FIXME: logs will grow until pulled
-        if win_state.logs_visible {
+        if win_state.get().logs_visible {
             win.append_logs(&logs.get_logs());
         }
     };

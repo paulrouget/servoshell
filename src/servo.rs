@@ -38,6 +38,7 @@ const SERVO_ISSUE_ALIAS: &'static str = "servoshell://issue/servo";
 const SHELL_ISSUE_URL: &'static str = "http://github.com/paulrouget/servoshell/issues/new";
 const SERVO_ISSUE_URL: &'static str  = "http://github.com/servo/servo/issues/new";
 
+#[derive(Debug)]
 pub enum ServoEvent {
     SetWindowInnerSize(u32, u32),
     SetWindowPosition(i32, i32),
@@ -119,6 +120,7 @@ impl Servo {
             can_go_back: false,
             can_go_forward: false,
             is_loading: false,
+            urlbar_focused: false,
         }
     }
 
