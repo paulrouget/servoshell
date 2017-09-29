@@ -67,7 +67,6 @@ impl ViewMethods for View {
 
     // FIXME: should be controlled by state
     fn exit_fullscreen(&self) {
-        self.windows.borrow().get(&self.id).unwrap().glutin_window.swap_buffers().unwrap();
     }
 
     fn set_live_resize_callback(&self, _callback: &FnMut()) {
