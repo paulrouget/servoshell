@@ -625,47 +625,44 @@ impl WindowMethods for Window {
             delegate
         };
 
-        let idx = state.tabs.get_visible_fg_index().expect("no current browser");;
+        let idx = state.tabs.fg_browser_index().expect("no current browser");;
         let current_browser_state = state.tabs.ref_fg_browser().expect("no current browser");
 
         // FIXME: Most of these render functions have overlap logic with the validate_action
 
         for change in diff {
+            break;
             use self::DiffKey as K;
             match change {
                 ChangeType::Modified(keys) => {
                     match keys.as_slice() {
-                        &[K::current_browser_index] => {
-                            self.render_throbber(current_browser_state);
-                            self.render_stop_reload_button(current_browser_state);
-                            self.render_history_buttons(current_browser_state);
-                            self.render_zoom_buttons(current_browser_state);
-                            self.render_urlbar_text(current_browser_state);
-                            self.render_focus(current_browser_state);
-                            self.render_selected_tab(idx);
-                        }
-                        &[K::browsers, K::Index(i), K::title] => {
+                        &[K::tabs, K::Index(i), K::Alive, ref attr] if idx == i => {
+                            match *attr {
+                                K::background => {
+                                    self.render_throbber(current_browser_state);
+                                    self.render_stop_reload_button(current_browser_state);
+                                    self.render_history_buttons(current_browser_state);
+                                    self.render_zoom_buttons(current_browser_state);
+                                    self.render_urlbar_text(current_browser_state);
+                                    self.render_focus(current_browser_state);
+                                    self.render_selected_tab(idx);
+                                },
+                                K::is_loading => {
+                                    self.render_throbber(current_browser_state);
+                                    self.render_stop_reload_button(current_browser_state);
+                                },
+                                K::title => self.render_tab_title(state, i),
+                                K::can_go_back => self.render_history_buttons(current_browser_state),
+                                K::can_go_forward => self.render_history_buttons(current_browser_state),
+                                K::zoom => self.render_zoom_buttons(current_browser_state),
+                                K::url => self.render_urlbar_text(current_browser_state),
+                                K::urlbar_focused => self.render_focus(current_browser_state),
+                                _ => println!("App::render: unexpected Modified keys: {:?}", keys)
+                            }
+                        },
+                        &[K::tabs, K::Index(i), K::Alive, K::title] => {
                             self.render_tab_title(state, i);
                         },
-                        &[K::browsers, K::Index(i), K::is_loading] if idx == i => {
-                            self.render_throbber(current_browser_state);
-                            self.render_stop_reload_button(current_browser_state);
-                        },
-                        &[K::browsers, K::Index(i), K::can_go_back] if idx == i => {
-                            self.render_history_buttons(current_browser_state);
-                        },
-                        &[K::browsers, K::Index(i), K::can_go_forward] if idx == i => {
-                            self.render_history_buttons(current_browser_state);
-                        },
-                        &[K::browsers, K::Index(i), K::zoom] if idx == i => {
-                            self.render_zoom_buttons(current_browser_state);
-                        },
-                        &[K::browsers, K::Index(i), K::url] if idx == i => {
-                            self.render_urlbar_text(current_browser_state);
-                        },
-                        &[K::browsers, K::Index(i), K::urlbar_focused] if idx == i => {
-                            self.render_focus(current_browser_state);
-                        }
                         &[K::debug_options, ..] => {
                             self.render_popover(state);
                         },
@@ -681,13 +678,13 @@ impl WindowMethods for Window {
                         &[K::sidebar_is_open] => {
                             self.render_sidebar(state);
                         },
-                        &[K::browsers, K::Index(_), K::user_input] => {
+                        &[K::tabs, K::Index(_), K::user_input] => {
                             // Nothing to do
                         },
-                        &[K::browsers, K::Index(i), K::can_go_forward] |
-                        &[K::browsers, K::Index(i), K::can_go_back] |
-                        &[K::browsers, K::Index(i), K::url] |
-                        &[K::browsers, K::Index(i), K::is_loading] if i != idx => {
+                        &[K::tabs, K::Index(i), K::can_go_forward] |
+                        &[K::tabs, K::Index(i), K::can_go_back] |
+                        &[K::tabs, K::Index(i), K::url] |
+                        &[K::tabs, K::Index(i), K::is_loading] if i != idx => {
                             // Nothing to do
                         },
                         _ => println!("App::render: unexpected Modified keys: {:?}", keys)
@@ -695,17 +692,18 @@ impl WindowMethods for Window {
                 },
                 ChangeType::Added(keys) => {
                     match keys.as_slice() {
-                        &[K::browsers, K::Index(i)] => {
+                        &[K::tabs, K::Index(i)] => {
                             // FIXME
-                            // self.render_add_tab(i, &state.tabs
+                            // self.render_add_tab(i, &state.tabs…
                         },
                         _ => println!("App::render: unexpected Added keys: {:?}", keys)
                     }
                 }
                 ChangeType::Removed(keys) => {
                     match keys.as_slice() {
-                        &[K::browsers, K::Index(i)] => {
-                            self.render_remove_tab(i);
+                        &[K::tabs, K::Index(i), Alive] => {
+                            // FIXME
+                            // self.render_remove_tab(i);
                         },
                         _ => println!("App::render: unexpected Removed keys: {:?}", keys)
                     }

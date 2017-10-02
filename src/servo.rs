@@ -113,6 +113,7 @@ impl Servo {
 
         BrowserState {
             id: id,
+            background: true,
             zoom: 1.0,
             url: None,
             title: None,

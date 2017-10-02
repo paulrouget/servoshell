@@ -5,77 +5,95 @@
 use servo::BrowserId;
 use super::{BrowserState, DeadBrowserState};
 
-// FIXME: don't use an option. We want DeadBrowserState instead of None.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct TabState(Option<BrowserState>);
+pub enum TabState {
+    Alive(BrowserState),
+    Dead(DeadBrowserState),
+}
 
 impl TabState {
     fn is_alive(&self) -> bool {
-        !self.0.is_none()
-    }
-    fn is_fg(&self) -> bool {
-        self.0.map(|b| !b.background).unwrap_or(false)
-    }
-    fn is_bg(&self) -> bool {
-        self.0.map(|b| !b.background).unwrap_or(false)
-    }
-    fn ref_browser(&self) -> Result<&BrowserState, &'static str> {
-        self.0.as_ref().ok_or("Dead browser")
-    }
-    fn mut_browser(&mut self) -> Result<&mut BrowserState, &'static str> {
-        self.0.as_mut().ok_or("Dead browser")
-    }
-    fn kill(&mut self) -> Result<(), &'static str> {
-        match self.0 {
-            None => Err("Already dead"),
-            Some(_) => {
-                self.0 = None;
-                Ok(())
-            }
+        match *self {
+            TabState::Alive(_) => true,
+            TabState::Dead(_) => false,
         }
     }
+    fn is_fg(&self) -> bool {
+        self.ref_browser().map(|b| !b.background).unwrap_or(false)
+    }
+    fn is_bg(&self) -> bool {
+        self.ref_browser().map(|b| b.background).unwrap_or(false)
+    }
+    fn ref_browser(&self) -> Result<&BrowserState, &'static str> {
+        match *self {
+            TabState::Alive(ref x) => Ok(x),
+            TabState::Dead(_) => Err("Dead browser"),
+        }
+    }
+    fn mut_browser(&mut self) -> Result<&mut BrowserState, &'static str> {
+        match *self {
+            TabState::Alive(ref mut x) => Ok(x),
+            TabState::Dead(_) => Err("Dead browser"),
+        }
+    }
+    fn kill(&mut self) -> Result<(), &'static str> {
+        if !self.is_alive() {
+            return Err("Already dead");
+        }
+        let id = self.ref_browser().unwrap().id;
+        let tab = TabState::Dead(DeadBrowserState { id });
+        *self = tab;
+        Ok(())
+    }
     fn foreground(&mut self) -> Result<(), &'static str> {
-        match self.0 {
-            None => Err("Dead tab"),
-            Some(browser) if browser.background => {
-                    browser.background = false;
-                    Ok(())
-            },
-            Some(_) => {
+        match *self {
+            TabState::Alive(ref mut browser) if browser.background => {
+                browser.background = false;
+                Ok(())
+            }
+            TabState::Alive(_) => {
                 Err("Already foreground")
+            },
+            TabState::Dead(_) => {
+                Err("Dead browser")
             }
         }
     }
     fn background(&mut self) -> Result<(), &'static str> {
-        match self.0 {
-            None => Err("Dead tab"),
-            Some(browser) if !browser.background => {
-                    browser.background = true;
-                    Ok(())
-            },
-            Some(_) => {
+        match *self {
+            TabState::Alive(ref mut browser) if !browser.background => {
+                browser.background = true;
+                Ok(())
+            }
+            TabState::Alive(_) => {
                 Err("Already background")
+            },
+            TabState::Dead(_) => {
+                Err("Dead browser")
             }
         }
     }
 }
 
-#[derive(Clone, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct TabsState(Vec<TabState>);
 
 impl TabsState {
+
     pub fn new() -> TabsState {
         TabsState(Vec::new())
     }
-    pub fn has_more_than_one_tab(&self) -> bool {
+
+    pub fn has_more_than_one(&self) -> bool {
         self.0.iter().filter(|tab| tab.is_alive()).count() > 1
     }
-    pub fn kill_fg_tab(&mut self) -> Result<BrowserId, &'static str> {
+
+    pub fn kill_fg(&mut self) -> Result<BrowserId, &'static str> {
         let fg_idx = self.0.iter().position(TabState::is_fg).ok_or("No foreground tab")?;
-        if self.can_select_next_tab()? {
-            self.select_next_tab()?;
-        } else if self.can_select_prev_tab()? {
-            self.select_prev_tab()?;
+        if self.can_select_next()? {
+            self.select_next()?;
+        } else if self.can_select_prev()? {
+            self.select_prev()?;
         } else {
             return Err("No background tab to select");
         }
@@ -83,39 +101,48 @@ impl TabsState {
         self.0[fg_idx].kill()?;
         Ok(id)
     }
-    pub fn can_select_next_tab(&self) -> Result<bool,&'static str> {
+
+    pub fn can_select_next(&self) -> Result<bool,&'static str> {
         let fg_idx = self.0.iter().position(TabState::is_fg).ok_or("No foreground tab")?;
         Ok(self.0.iter().skip(fg_idx + 1).any(TabState::is_bg))
     }
-    pub fn select_next_tab(&mut self) -> Result<(), &'static str> {
+
+    pub fn select_next(&mut self) -> Result<(), &'static str> {
         let fg_idx = self.0.iter()
-            .position(TabState::is_fg)
+            .position(|tab| tab.is_fg())
             .ok_or("No foreground tab")?;
         let next_idx = self.0.iter()
+            .enumerate()
             .skip(fg_idx + 1)
-            .position(TabState::is_bg)
+            .find(|&(_, tab)| tab.is_bg())
+            .map(|(idx, _)| idx)
             .ok_or("No tab to select")?;
         self.0[fg_idx].background()?;
         self.0[next_idx].foreground()?;
         Ok(())
     }
-    pub fn can_select_prev_tab(&self) -> Result<bool, &'static str> {
+
+    pub fn can_select_prev(&self) -> Result<bool, &'static str> {
         let fg_idx = self.0.iter().position(TabState::is_fg).ok_or("No foreground tab")?;
         Ok(self.0.iter().rev().skip(self.0.len() - fg_idx).any(TabState::is_bg))
     }
-    pub fn select_prev_tab(&mut self) -> Result<(), &'static str> {
+
+    pub fn select_prev(&mut self) -> Result<(), &'static str> {
         let fg_idx = self.0.iter()
             .position(TabState::is_fg)
             .ok_or("No foreground tab")?;
         let prev_idx = self.0.iter()
+            .enumerate()
             .rev().skip(self.0.len() - fg_idx)
-            .position(TabState::is_bg)
+            .find(|&(_, tab)| tab.is_bg())
+            .map(|(idx, _)| idx)
             .ok_or("No tab to select")?;
         self.0[fg_idx].background()?;
         self.0[prev_idx].foreground()?;
         Ok(())
     }
-    pub fn select_first_tab(&mut self) -> Result<(), &'static str> {
+
+    pub fn select_first(&mut self) -> Result<(), &'static str> {
         let fg_idx = self.0.iter()
             .position(TabState::is_fg)
             .ok_or("No foreground tab")?;
@@ -126,22 +153,28 @@ impl TabsState {
         self.0[first_idx].foreground()?;
         Ok(())
     }
-    pub fn select_last_tab(&mut self) -> Result<(), &'static str> {
+
+    pub fn select_last(&mut self) -> Result<(), &'static str> {
         let fg_idx = self.0.iter()
             .position(TabState::is_fg)
             .ok_or("No foreground tab")?;
-        let last_idx = self.0.iter().rev()
-            .position(TabState::is_bg)
+        let last_idx = self.0.iter().enumerate().rev()
+            .find(|&(_, tab)| tab.is_bg())
+            .map(&|(idx, _)| idx)
             .ok_or("No tab to select")?;
         self.0[fg_idx].background()?;
         self.0[last_idx].foreground()?;
         Ok(())
     }
 
-    pub fn can_select_nth_tab(&self, index: usize) -> bool {
-        self.0.iter().filter(|tab| tab.is_alive()).nth(index).is_some()
+    pub fn can_select_nth(&self, index: usize) -> bool {
+        self.0.iter()
+            .filter(|tab| tab.is_alive())
+            .nth(index)
+            .is_some()
     }
-    pub fn select_nth_tab(&mut self, index: usize) -> Result<(), &'static str> {
+
+    pub fn select_nth(&mut self, index: usize) -> Result<(), &'static str> {
         let fg_idx = self.0.iter()
             .position(TabState::is_fg)
             .ok_or("No foreground tab")?;
@@ -156,21 +189,44 @@ impl TabsState {
         Ok(())
     }
 
-    pub fn add_new_foreground_tab_at_the_end(&mut self, mut browser: BrowserState) -> Result<(), &'static str> {
-        browser.background = false;
-        self.0.push(TabState(Some(browser)));
-        self.select_last_tab()
+    pub fn append_new(&mut self, mut browser: BrowserState) -> Result<(), &'static str> {
+        if self.0.len() == 0 {
+            browser.background = false;
+            self.0.push(TabState::Alive(browser));
+            Ok(())
+        } else if !browser.background {
+            browser.background = true;
+            self.0.push(TabState::Alive(browser));
+            self.select_last()
+        } else {
+            self.0.push(TabState::Alive(browser));
+            Ok(())
+        }
     }
 
     pub fn find_browser(&mut self, id: &BrowserId) -> Option<&mut BrowserState> {
-        self.0.iter_mut().filter_map(|tab| tab.mut_browser().ok()).find(|b| b.id == *id)
+        self.0.iter_mut()
+            .filter_map(|tab| tab.mut_browser().ok())
+            .find(|b| b.id == *id)
     }
 
-    // pub fn get_fg_index(&self) -> Result<usize, &'static str> {
-    //     self.0.iter().filter_map
-    // }
+    pub fn ref_fg_browser(&self) -> Result<&BrowserState, &'static str> {
+        self.0.iter()
+            .find(|tab| tab.is_fg())
+            .ok_or("No foreground tab")
+            .and_then(|tab| tab.ref_browser())
+    }
 
-    // pub fn alive_index(&self, usize) -> Result<usize, &'static str> {
-    //     self.0.iter().filter(TabState::is_alive).position(|tab| tab.is_fg()).ok_or("no current browser")
-    // }
+    pub fn mut_fg_browser(&mut self) -> Result<&mut BrowserState, &'static str> {
+        self.0.iter_mut()
+            .find(|tab| tab.is_fg())
+            .ok_or("No foreground tab")
+            .and_then(|tab| tab.mut_browser())
+    }
+
+    pub fn fg_browser_index(&self) -> Result<usize, &'static str> {
+        self.0.iter()
+            .position(|tab| tab.is_fg())
+            .ok_or("No foreground tab")
+    }
 }

@@ -53,17 +53,20 @@ impl<'t, T> State<T> where T: Clone + Deserialize<'t> + Serialize {
 }
 
 // FIXME: can we generate all of these with macros?
+// FIXME: I'm not even sure everything bound to a string
 
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug, PartialEq)]
 pub enum DiffKey {
-    Unknown,
+    // Don't keep the string
+    Unknown(String),
     Index(usize),
-    current_window_index,
+    Alive,
+    Dead,
+    background,
     dark_theme,
     cursor,
-    current_browser_index,
-    browsers,
+    tabs,
     sidebar_is_open,
     logs_visible,
     debug_options,
@@ -95,11 +98,12 @@ impl DiffKey {
             Index(idx) => DiffKey::Index(idx),
             String(ref name) => {
                 match name.as_ref() {
-                    "current_window_index" => DiffKey::current_window_index,
+                    "Dead" => DiffKey::Dead,
+                    "Alive" => DiffKey::Alive,
+                    "background" => DiffKey::background,
                     "dark_theme" => DiffKey::dark_theme,
                     "cursor" => DiffKey::cursor,
-                    "current_browser_index" => DiffKey::current_browser_index,
-                    "browsers" => DiffKey::browsers,
+                    "tabs" => DiffKey::tabs,
                     "sidebar_is_open" => DiffKey::sidebar_is_open,
                     "logs_visible" => DiffKey::logs_visible,
                     "debug_options" => DiffKey::debug_options,
@@ -122,7 +126,7 @@ impl DiffKey {
                     "wr_profiler" => DiffKey::wr_profiler,
                     "wr_texture_cache_debug" => DiffKey::wr_texture_cache_debug,
                     "wr_render_target_debug" => DiffKey::wr_render_target_debug,
-                    _ => DiffKey::Unknown,
+                    s => DiffKey::Unknown(s.to_owned()),
                 }
             }
         }
