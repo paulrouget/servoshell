@@ -117,17 +117,9 @@ pub fn register() {
                     WindowCommand::ZoomIn
                 }
             } else if action == sel!(shellReloadStop:) {
-                match get_win_state().current_browser_index {
-                    Some(idx) => {
-                        if get_win_state().browsers[idx].is_loading {
-                            WindowCommand::Stop
-                        } else {
-                            WindowCommand::Reload
-                        }
-                    },
-                    None => {
-                        WindowCommand::Stop
-                    }
+                match get_win_state().tabs.ref_fg_browser() {
+                    Ok(&BrowserState {is_loading: false, ..}) => WindowCommand::Reload,
+                    _ => WindowCommand::Stop,
                 }
             } else if action == sel!(shellStop:) { WindowCommand::Stop }
             else if action == sel!(shellReload:) { WindowCommand::Reload }
@@ -167,8 +159,7 @@ pub fn register() {
         }
 
         extern fn validate_action(_this: &Object, _sel: Sel, action: Sel) -> BOOL {
-            let idx = if let Some(idx) = get_win_state().current_browser_index { idx } else { return NO };
-            let ref state = get_win_state().browsers[idx];
+            let ref state = get_win_state().tabs.ref_fg_browser().expect("no current browser");
             let enabled = if action == sel!(shellStop:) {
                 state.is_loading
             } else if action == sel!(shellReload:) {
@@ -570,7 +561,7 @@ impl Window {
     }
 
     fn render_tab_title(&self, state: &WindowState, index: usize) {
-        let title = &state.browsers[index].title;
+        let title = &state.tabs.ref_fg_browser().expect("not current browser").title;
         let tabview = utils::get_view_by_id(self.nswindow, "tabview").expect("Can't find tabview");
         unsafe {
             let item: id = msg_send![tabview, tabViewItemAtIndex:index];
@@ -634,8 +625,8 @@ impl WindowMethods for Window {
             delegate
         };
 
-        let idx = if let Some(idx) = state.current_browser_index { idx } else { return };
-        let current_browser_state = &state.browsers[idx];
+        let idx = state.tabs.get_visible_fg_index().expect("no current browser");;
+        let current_browser_state = state.tabs.ref_fg_browser().expect("no current browser");
 
         // FIXME: Most of these render functions have overlap logic with the validate_action
 
@@ -705,7 +696,8 @@ impl WindowMethods for Window {
                 ChangeType::Added(keys) => {
                     match keys.as_slice() {
                         &[K::browsers, K::Index(i)] => {
-                            self.render_add_tab(i, &state.browsers[i]);
+                            // FIXME
+                            // self.render_add_tab(i, &state.tabs
                         },
                         _ => println!("App::render: unexpected Added keys: {:?}", keys)
                     }

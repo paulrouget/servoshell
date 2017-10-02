@@ -3,7 +3,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use treediff::{self, Delegate};
-use servo::{BrowserId, ServoCursor};
 use serde::{Deserialize, Serialize};
 use serde_json;
 
@@ -51,53 +50,6 @@ impl<'t, T> State<T> where T: Clone + Deserialize<'t> + Serialize {
     pub fn has_changed(&self) -> bool {
         self.has_changed
     }
-}
-
-#[derive(Clone, PartialEq, Deserialize, Serialize)]
-pub struct AppState {
-    pub current_window_index: Option<usize>,
-    pub dark_theme: bool,
-    pub cursor: ServoCursor,
-}
-
-#[derive(Clone, PartialEq, Deserialize, Serialize)]
-pub struct WindowState {
-    pub current_browser_index: Option<usize>,
-    pub browsers: Vec<BrowserState>,
-    pub sidebar_is_open: bool,
-    pub logs_visible: bool,
-    pub debug_options: DebugOptions,
-    pub status: Option<String>,
-    pub options_open: bool,
-    pub title: String,
-}
-
-#[derive(Clone, PartialEq, Deserialize, Serialize)]
-pub struct BrowserState {
-    pub id: BrowserId,
-    pub zoom: f32,
-    pub url: Option<String>,
-    pub title: Option<String>,
-    // FIXME: pub favicon: Option<>,
-    pub user_input: Option<String>,
-    pub can_go_back: bool,
-    pub can_go_forward: bool,
-    pub is_loading: bool,
-    pub urlbar_focused: bool,
-}
-
-#[derive(Clone, PartialEq, Deserialize, Serialize)]
-pub struct DebugOptions {
-    pub show_fragment_borders: bool,
-    pub parallel_display_list_building: bool,
-    pub show_parallel_layout: bool,
-    pub convert_mouse_to_touch: bool,
-    pub show_tiles_borders: bool,
-
-    // webrender:
-    pub wr_profiler: bool,
-    pub wr_texture_cache_debug: bool,
-    pub wr_render_target_debug: bool,
 }
 
 // FIXME: can we generate all of these with macros?
@@ -176,42 +128,6 @@ impl DiffKey {
         }
     }
 }
-
-impl AppState {
-    pub fn new() -> AppState {
-        AppState {
-            current_window_index: None,
-            dark_theme: false,
-            cursor: ServoCursor::Default,
-        }
-    }
-}
-
-impl WindowState {
-    pub fn new() -> WindowState {
-        WindowState {
-            current_browser_index: None,
-            browsers: Vec::new(),
-            sidebar_is_open: false,
-            logs_visible: false,
-            status: None,
-            options_open: false,
-            title: "ServoShell".to_owned(),
-            debug_options: DebugOptions {
-                show_fragment_borders: false,
-                parallel_display_list_building: false,
-                show_parallel_layout: false,
-                convert_mouse_to_touch: false,
-                show_tiles_borders: false,
-                wr_profiler: false,
-                wr_texture_cache_debug: false,
-                wr_render_target_debug: false,
-            },
-        }
-    }
-}
-
-/* --------------------------------------------- */
 
 #[derive(Debug, PartialEq)]
 pub enum ChangeType {

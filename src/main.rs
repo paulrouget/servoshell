@@ -100,12 +100,13 @@ fn main() {
     let browser = servo.new_browser(&url);
     servo.select_browser(browser.id);
 
-    win_state.get_mut().current_browser_index = Some(0);
-    win_state.get_mut().browsers.push(browser);
+    win_state.get_mut().tabs.add_new_foreground_tab_at_the_end(browser).expect("");
     win.render(win_state.diff(), win_state.get());
     win_state.snapshot();
 
     info!("Servo version: {}", servo.version());
+
+    return;
 
     let handle_events = || {
 
@@ -175,12 +176,11 @@ fn main() {
                         win_state.get_mut().options_open = false;
                     }
                     WindowEvent::UrlbarFocusChanged(focused) => {
-                        let idx = win_state.get().current_browser_index.unwrap();
-                        win_state.get_mut().browsers[idx].urlbar_focused = focused;
+                        win_state.get_mut().tabs.mut_fg_browser().expect("no current browser")
+                            .urlbar_focused = focused;
                     }
                     WindowEvent::DoCommand(cmd) => {
-                        let idx = win_state.get().current_browser_index.unwrap();
-                        let bid = win_state.get().browsers[idx].id;
+                        let bid = win_state.get().tabs.ref_fg_browser().expect("no current browser").id;
                         match cmd {
                             WindowCommand::Stop => {
                                 // FIXME
@@ -195,23 +195,24 @@ fn main() {
                                 servo.go_forward(bid);
                             }
                             WindowCommand::OpenLocation => {
-                                win_state.get_mut().browsers[idx].urlbar_focused = true;
+                                win_state.get_mut().tabs.mut_fg_browser().expect("no current browser")
+                                    .urlbar_focused = true;
                             }
                             WindowCommand::OpenInDefaultBrowser => {
-                                if let Some(ref url) = win_state.get().browsers[idx].url {
+                                if let Some(ref url) = win_state.get().tabs.ref_fg_browser().expect("no current browser").url {
                                     open::that(url.clone()).ok();
                                 }
                             }
                             WindowCommand::ZoomIn => {
-                                win_state.get_mut().browsers[idx].zoom *= 1.1;
-                                servo.zoom(win_state.get().browsers[idx].zoom);
+                                win_state.get_mut().tabs.mut_fg_browser().expect("no current browser").zoom *= 1.1;
+                                servo.zoom(win_state.get().tabs.ref_fg_browser().expect("no current browser").zoom);
                             }
                             WindowCommand::ZoomOut => {
-                                win_state.get_mut().browsers[idx].zoom /= 1.1;
-                                servo.zoom(win_state.get().browsers[idx].zoom);
+                                win_state.get_mut().tabs.mut_fg_browser().expect("no current browser").zoom /= 1.1;
+                                servo.zoom(win_state.get().tabs.ref_fg_browser().expect("no current browser").zoom);
                             }
                             WindowCommand::ZoomToActualSize => {
-                                win_state.get_mut().browsers[idx].zoom = 1.0;
+                                win_state.get_mut().tabs.mut_fg_browser().expect("no current browser").zoom = 1.0;
                                 servo.reset_zoom();
                             }
 
@@ -224,10 +225,10 @@ fn main() {
                             }
 
                             WindowCommand::Load(request) => {
-                                win_state.get_mut().browsers[idx].user_input = Some(request.clone());
-                                win_state.get_mut().browsers[idx].urlbar_focused = false;
+                                win_state.get_mut().tabs.mut_fg_browser().expect("no current browser").user_input = Some(request.clone());
+                                win_state.get_mut().tabs.mut_fg_browser().expect("no current browser").urlbar_focused = false;
                                 let url = ServoUrl::parse(&request).or_else(|error| {
-                                    // FIXME: weak
+                                    // See: https://github.com/paulrouget/servoshell/issues/59
                                     if request.ends_with(".com") || request.ends_with(".org") || request.ends_with(".net") {
                                         ServoUrl::parse(&format!("http://{}", request))
                                     } else {
@@ -248,53 +249,50 @@ fn main() {
                             },
                             WindowCommand::NewTab => {
                                 let mut browser = servo.new_browser("about:blank");
+                                servo.select_browser(browser.id);
                                 if cfg!(all(not(feature = "force-glutin"), target_os = "macos")) {
                                     browser.urlbar_focused = true;
                                 }
-                                servo.select_browser(browser.id);
+                                // FIXME: remove all the expect & co
+                                win_state.get_mut().tabs.add_new_foreground_tab_at_the_end(browser).expect("");
                                 servo.update_geometry(view.get_geometry());
-                                win_state.get_mut().current_browser_index = Some(idx + 1);
-                                win_state.get_mut().browsers.push(browser);
                             },
                             WindowCommand::CloseTab => {
-                                if win_state.get().browsers.len() > 1 {
-                                    let id = win_state.get().browsers[idx].id;
-                                    let new_id = if idx == win_state.get().browsers.len() - 1 {
-                                        win_state.get_mut().current_browser_index = Some(idx - 1);
-                                        win_state.get().browsers[idx - 1].id
-                                    } else {
-                                        win_state.get().browsers[idx + 1].id
-                                    };
-                                    servo.select_browser(new_id);
-                                    servo.close_browser(id);
-                                    win_state.get_mut().browsers.remove(idx);
+                                if win_state.get().tabs.has_more_than_one_tab() {
+                                    let old = win_state.get_mut().tabs.kill_fg_tab().expect("can't close tab");
+                                    servo.close_browser(old);
+                                    let new = win_state.get().tabs.ref_fg_browser().expect("no current browser").id;
+                                    servo.select_browser(new);
                                 }
                             },
                             WindowCommand::PrevTab => {
-                                let new_idx = if idx == 0 {
-                                    win_state.get().browsers.len() - 1
-                                } else {
-                                    idx - 1
-                                };
-                                win_state.get_mut().current_browser_index = Some(new_idx);
-                                let id = win_state.get().browsers[new_idx].id;
-                                servo.select_browser(id);
+                                if win_state.get().tabs.has_more_than_one_tab() {
+                                    if win_state.get().tabs.can_select_prev_tab().unwrap() {
+                                        win_state.get_mut().tabs.select_prev_tab().expect("can't select prev tab");
+                                    } else {
+                                        win_state.get_mut().tabs.select_last_tab().expect("can't select last tab");
+                                    }
+                                    let new = win_state.get().tabs.ref_fg_browser().expect("no current browser").id;
+                                    servo.select_browser(new);
+                                }
                             },
                             WindowCommand::NextTab => {
-                                let new_idx = if idx == win_state.get().browsers.len() - 1 {
-                                    0
-                                } else {
-                                    idx + 1
-                                };
-                                win_state.get_mut().current_browser_index = Some(new_idx);
-                                let id = win_state.get().browsers[new_idx].id;
-                                servo.select_browser(id);
+                                if win_state.get().tabs.has_more_than_one_tab() {
+                                    if win_state.get().tabs.can_select_next_tab().unwrap() {
+                                        win_state.get_mut().tabs.select_next_tab().expect("can't select next tab");
+                                    } else {
+                                        win_state.get_mut().tabs.select_first_tab().expect("can't select first tab");
+                                    }
+                                    let new = win_state.get().tabs.ref_fg_browser().expect("no current browser").id;
+                                    servo.select_browser(new);
+                                }
+                                // FIXME: select first tab
                             },
                             WindowCommand::SelectTab(idx) => {
-                                if win_state.get().current_browser_index != Some(idx) {
-                                    win_state.get_mut().current_browser_index = Some(idx);
-                                    let id = win_state.get().browsers[idx].id;
-                                    servo.select_browser(id);
+                                if win_state.get().tabs.can_select_nth_tab(idx) {
+                                    win_state.get_mut().tabs.select_nth_tab(idx).expect("can't select tab at index");
+                                    let new = win_state.get().tabs.ref_fg_browser().expect("no current browser").id;
+                                    servo.select_browser(new);
                                 }
                             },
                             WindowCommand::ToggleOptionFragmentBorders => { },
@@ -345,8 +343,7 @@ fn main() {
                         servo.perform_click(x, y, element_state, button);
                     }
                     ViewEvent::KeyEvent(c, key, keystate, modifiers) => {
-                        let idx = win_state.get().current_browser_index.unwrap();
-                        let id = win_state.get().browsers[idx].id;
+                        let id = win_state.get().tabs.ref_fg_browser().expect("no current browser").id;
                         servo.send_key(id, c, key, keystate, modifiers);
                     }
                 }
@@ -368,7 +365,7 @@ fn main() {
                         }
                     }
                     ServoEvent::TitleChanged(id, title) => {
-                        match win_state.get_mut().browsers.iter_mut().find(|b| b.id == id) {
+                        match win_state.get_mut().tabs.find_browser(&id) {
                             Some(browser) => {
                                 browser.title = title;
                             }
@@ -379,7 +376,7 @@ fn main() {
                         win_state.get_mut().status = status;
                     }
                     ServoEvent::LoadStart(id) => {
-                        match win_state.get_mut().browsers.iter_mut().find(|b| b.id == id) {
+                        match win_state.get_mut().tabs.find_browser(&id) {
                             Some(browser) => {
                                 browser.is_loading = true;
                             }
@@ -387,7 +384,7 @@ fn main() {
                         }
                     }
                     ServoEvent::LoadEnd(id) => {
-                        match win_state.get_mut().browsers.iter_mut().find(|b| b.id == id) {
+                        match win_state.get_mut().tabs.find_browser(&id) {
                             Some(browser) => {
                                 browser.is_loading = false;
                             }
@@ -398,7 +395,7 @@ fn main() {
                         // FIXME
                     }
                     ServoEvent::HistoryChanged(id, entries, current) => {
-                        match win_state.get_mut().browsers.iter_mut().find(|b| b.id == id) {
+                        match win_state.get_mut().tabs.find_browser(&id) {
                             Some(browser) => {
                                 let url = entries[current].url.to_string();
                                 browser.url = Some(url);
