@@ -4,6 +4,13 @@
 
 #![feature(box_syntax)]
 #![feature(link_args)]
+#![feature(slice_patterns)]
+
+#[macro_use]
+extern crate serde_derive;
+extern crate serde_json;
+extern crate serde;
+extern crate treediff;
 
 #[macro_use]
 extern crate log;
@@ -39,8 +46,9 @@ mod logs;
 
 use platform::App;
 use servo::{Servo, ServoEvent, ServoUrl, WebRenderDebugOption};
+use state::{AppState, State, WindowState};
 use std::env::args;
-use state::{AppState, WindowState};
+use std::rc::Rc;
 use traits::app::{AppEvent, AppCommand, AppMethods};
 use traits::view::*;
 use traits::window::{WindowEvent, WindowCommand};
@@ -61,8 +69,15 @@ fn main() {
 
     let resources_path = App::get_resources_path().expect("Can't find resources path");
 
-    let app = App::new().expect("Can't create application");
-    let win = app.new_window().expect("Can't create application");
+    let mut app_state = State::new(AppState::new());
+    app_state.get_mut().current_window_index = Some(0);
+
+    let mut win_state = State::new(WindowState::new());
+
+    let app = App::new(app_state.get()).expect("Can't create application");
+    let win = app.new_window(win_state.get()).expect("Can't create application");
+    app_state.snapshot();
+    win_state.snapshot();
 
     let view = win.new_view().unwrap();
 
@@ -86,15 +101,9 @@ fn main() {
     let browser = servo.new_browser(&url);
     servo.select_browser(browser.id);
 
-    let mut app_state = AppState::new();
-    app_state.current_window_index = Some(0);
-
-    let mut win_state = WindowState::new();
-    win_state.current_browser_index = Some(0);
-    win_state.browsers.push(browser);
-
-    app.render(&app_state);
-    win.render(&win_state);
+    win_state.get_mut().tabs.append_new(browser).expect("Can't append browser");
+    win.render(win_state.diff(), win_state.get());
+    win_state.snapshot();
 
     info!("Servo version: {}", servo.version());
 
@@ -102,9 +111,6 @@ fn main() {
 
         // Loop until no events are available anymore.
         loop {
-
-            let before_app_state = app_state.clone();
-            let before_win_state = win_state.clone();
 
             let app_events = app.get_events();
             let win_events = win.get_events();
@@ -121,307 +127,29 @@ fn main() {
             // FIXME: it's really annoying we need this
             let mut force_sync = false;
 
-            for event in app_events {
-                match event {
-                    AppEvent::DidFinishLaunching => {
-                        // FIXME: does this work?
-                    }
-                    AppEvent::WillTerminate => {
-                        // FIXME: does this work?
-                    }
-                    AppEvent::DidChangeScreenParameters => {
-                        // FIXME: does this work?
-                        servo.update_geometry(view.get_geometry());
-                        view.update_drawable();
-                    }
-                    AppEvent::DoCommand(cmd) => {
-                        match cmd {
-                            AppCommand::ClearHistory => {
-                                // FIXME
-                            }
-                            AppCommand::ToggleOptionDarkTheme => {
-                                app_state.dark_theme = !app_state.dark_theme;
-                            }
-                        }
-                    }
+            for event in win_events {
+                if handle_win_event(&servo, &view, &mut win_state, &mut app_state, event).expect("handle_win_event exception") {
+                    force_sync = true;
                 }
             }
 
-            for event in win_events {
-                match event {
-                    WindowEvent::EventLoopAwaken => {
-                        force_sync = true;
-                    }
-                    WindowEvent::GeometryDidChange => {
-                        servo.update_geometry(view.get_geometry());
-                        view.update_drawable();
-                    }
-                    WindowEvent::DidEnterFullScreen => {
-                        // FIXME
-                    }
-                    WindowEvent::DidExitFullScreen => {
-                        // FIXME
-                    }
-                    WindowEvent::WillClose => {
-                        // FIXME
-                    }
-                    WindowEvent::OptionsClosed => {
-                        win_state.options_open = false;
-                    }
-                    WindowEvent::UrlbarFocusChanged(focused) => {
-                        win_state.urlbar_focused = focused;
-                    }
-                    WindowEvent::DoCommand(cmd) => {
-                        let idx = win_state.current_browser_index.unwrap();
-                        let bid = win_state.browsers[idx].id;
-                        match cmd {
-                            WindowCommand::Stop => {
-                                // FIXME
-                            }
-                            WindowCommand::Reload => {
-                                servo.reload(bid);
-                            }
-                            WindowCommand::NavigateBack => {
-                                servo.go_back(bid);
-                            }
-                            WindowCommand::NavigateForward => {
-                                servo.go_forward(bid);
-                            }
-                            WindowCommand::OpenLocation => {
-                                win_state.urlbar_focused = true;
-                            }
-                            WindowCommand::OpenInDefaultBrowser => {
-                                if let Some(ref url) = win_state.browsers[idx].url {
-                                    open::that(url.clone()).ok();
-                                }
-                            }
-                            WindowCommand::ZoomIn => {
-                                win_state.browsers[idx].zoom *= 1.1;
-                                servo.zoom(win_state.browsers[idx].zoom);
-                            }
-                            WindowCommand::ZoomOut => {
-                                win_state.browsers[idx].zoom /= 1.1;
-                                servo.zoom(win_state.browsers[idx].zoom);
-                            }
-                            WindowCommand::ZoomToActualSize => {
-                                win_state.browsers[idx].zoom = 1.0;
-                                servo.reset_zoom();
-                            }
-
-                            WindowCommand::ToggleSidebar => {
-                                win_state.sidebar_is_open = !win_state.sidebar_is_open;
-                            }
-
-                            WindowCommand::ShowOptions => {
-                                win_state.options_open = !win_state.options_open;
-                            }
-
-                            WindowCommand::Load(request) => {
-                                win_state.browsers[idx].user_input = Some(request.clone());
-                                win_state.urlbar_focused = false;
-                                let url = ServoUrl::parse(&request).or_else(|error| {
-                                    // FIXME: weak
-                                    if request.ends_with(".com") || request.ends_with(".org") || request.ends_with(".net") {
-                                        ServoUrl::parse(&format!("http://{}", request))
-                                    } else {
-                                        Err(error)
-                                    }
-                                }).or_else(|_| {
-                                    ServoUrl::parse(&format!("https://duckduckgo.com/html/?q={}", request))
-                                });
-                                match url {
-                                    Ok(url) => {
-                                        servo.load_url(bid, url)
-                                    },
-                                    Err(err) => warn!("Can't parse url: {}", err),
-                                }
-                            }
-                            WindowCommand::ToggleOptionShowLogs => {
-                                win_state.logs_visible = !win_state.logs_visible;
-                            },
-                            WindowCommand::NewTab => {
-                                let browser = servo.new_browser("about:blank");
-                                servo.select_browser(browser.id);
-                                servo.update_geometry(view.get_geometry());
-                                win_state.current_browser_index = Some(idx + 1);
-                                win_state.browsers.push(browser);
-                                if cfg!(all(not(feature = "force-glutin"), target_os = "macos")) {
-                                    // Focus urlbar, but only on cocoa
-                                    win_state.urlbar_focused = true;
-                                }
-                            },
-                            WindowCommand::CloseTab => {
-                                if win_state.browsers.len() > 1 {
-                                    let id = win_state.browsers[idx].id;
-                                    let new_id = if idx == win_state.browsers.len() - 1 {
-                                        win_state.current_browser_index = Some(idx - 1);
-                                        win_state.browsers[idx - 1].id
-                                    } else {
-                                        win_state.browsers[idx + 1].id
-                                    };
-                                    servo.select_browser(new_id);
-                                    servo.close_browser(id);
-                                    win_state.browsers.remove(idx);
-                                }
-                            },
-                            WindowCommand::PrevTab => {
-                                let new_idx = if idx == 0 {
-                                    win_state.browsers.len() - 1
-                                } else {
-                                    idx - 1
-                                };
-                                win_state.current_browser_index = Some(new_idx);
-                                let id = win_state.browsers[new_idx].id;
-                                servo.select_browser(id);
-                            },
-                            WindowCommand::NextTab => {
-                                let new_idx = if idx == win_state.browsers.len() - 1 {
-                                    0
-                                } else {
-                                    idx + 1
-                                };
-                                win_state.current_browser_index = Some(new_idx);
-                                let id = win_state.browsers[new_idx].id;
-                                servo.select_browser(id);
-                            },
-                            WindowCommand::SelectTab(idx) => {
-                                if win_state.current_browser_index != Some(idx) {
-                                    win_state.current_browser_index = Some(idx);
-                                    let id = win_state.browsers[idx].id;
-                                    servo.select_browser(id);
-                                }
-                            },
-                            WindowCommand::ToggleOptionFragmentBorders => { },
-                            WindowCommand::ToggleOptionParallelDisplayListBuidling => { },
-                            WindowCommand::ToggleOptionShowParallelLayout => { },
-                            WindowCommand::ToggleOptionConvertMouseToTouch => { },
-                            WindowCommand::ToggleOptionTileBorders => { },
-
-                            WindowCommand::ToggleOptionWRProfiler => {
-                                win_state.debug_options.wr_profiler = !win_state.debug_options.wr_profiler;
-                                servo.toggle_webrender_debug_option(WebRenderDebugOption::Profiler);
-                            },
-
-                            WindowCommand::ToggleOptionWRTextureCacheDebug => {
-                                win_state.debug_options.wr_texture_cache_debug = !win_state.debug_options.wr_texture_cache_debug;
-                                servo.toggle_webrender_debug_option(WebRenderDebugOption::TextureCacheDebug);
-                            },
-
-                            WindowCommand::ToggleOptionWRTargetDebug => {
-                                win_state.debug_options.wr_render_target_debug = !win_state.debug_options.wr_render_target_debug;
-                                servo.toggle_webrender_debug_option(WebRenderDebugOption::RenderTargetDebug);
-                            },
-                        }
-                    }
-                }
+            for event in app_events {
+                handle_app_event(&servo, &view, &mut win_state, &mut app_state, event).expect("handle_app_event exception");
             }
 
             for event in view_events {
-                let idx = win_state.current_browser_index.unwrap();
-                let state = &mut win_state.browsers[idx];
-                match event {
-                    ViewEvent::GeometryDidChange => {
-                        servo.update_geometry(view.get_geometry());
-                        view.update_drawable();
-                    }
-                    ViewEvent::MouseWheel(delta, phase) => {
-                        // FIXME: magic value
-                        static LINE_HEIGHT: f32 = 38.0;
-                        let (mut x, mut y) = match delta {
-                            MouseScrollDelta::PixelDelta(x, y) => (x, y),
-                            MouseScrollDelta::LineDelta(x, y) => (x, y * LINE_HEIGHT),
-                        };
-                        if y.abs() >= x.abs() { x = 0.0; } else { y = 0.0; }
-                        servo.perform_scroll(0, 0, x, y, phase);
-                    }
-                    ViewEvent::MouseMoved(x, y) => {
-                        servo.perform_mouse_move(x, y);
-                    }
-                    ViewEvent::MouseInput(element_state, button, x, y) => {
-                        servo.perform_click(x, y, element_state, button);
-                    }
-                    ViewEvent::KeyEvent(c, key, keystate, modifiers) => {
-                        servo.send_key(state.id, c, key, keystate, modifiers);
-                    }
-                }
+                handle_view_event(&servo, &view, &mut win_state, &mut app_state, event).expect("handle_view_event exception");
             }
 
             for event in servo_events {
-                match event {
-                    ServoEvent::SetWindowInnerSize(..) => {
-                        // ignore
-                    }
-                    ServoEvent::SetWindowPosition(..) => {
-                        // ignore
-                    }
-                    ServoEvent::SetFullScreenState(fullscreen) => {
-                        if fullscreen {
-                            view.enter_fullscreen();
-                        } else {
-                            view.exit_fullscreen();
-                        }
-                    }
-                    ServoEvent::TitleChanged(id, title) => {
-                        match win_state.browsers.iter_mut().find(|b| b.id == id) {
-                            Some(browser) => {
-                                browser.title = title;
-                            }
-                            None => warn!("Got message for unkown browser:  {:?}", id)
-                        }
-                    }
-                    ServoEvent::StatusChanged(status) => {
-                        win_state.status = status;
-                    }
-                    ServoEvent::LoadStart(id) => {
-                        match win_state.browsers.iter_mut().find(|b| b.id == id) {
-                            Some(browser) => {
-                                browser.is_loading = true;
-                            }
-                            None => warn!("Got message for unkown browser:  {:?}", id)
-                        }
-                    }
-                    ServoEvent::LoadEnd(id) => {
-                        match win_state.browsers.iter_mut().find(|b| b.id == id) {
-                            Some(browser) => {
-                                browser.is_loading = false;
-                            }
-                            None => warn!("Got message for unkown browser:  {:?}", id)
-                        }
-                    }
-                    ServoEvent::HeadParsed(..) => {
-                        // FIXME
-                    }
-                    ServoEvent::HistoryChanged(id, entries, current) => {
-                        match win_state.browsers.iter_mut().find(|b| b.id == id) {
-                            Some(browser) => {
-                                let url = entries[current].url.to_string();
-                                browser.url = Some(url);
-                                browser.can_go_back = current > 0;
-                                browser.can_go_forward = current < entries.len() - 1;
-                            }
-                            None => warn!("Got message for unkown browser:  {:?}", id)
-                        }
-                    }
-                    ServoEvent::CursorChanged(cursor) => {
-                        app_state.cursor = cursor;
-                    }
-                    ServoEvent::FaviconChanged(..) => {
-                        // FIXME
-                    }
-                    ServoEvent::Key(..) => {
-                        // FIXME
-                    }
-                    ServoEvent::OpenInDefaultBrowser(url) => {
-                        open::that(url).ok();
-                    }
-                }
+                handle_servo_event(&servo, &view, &mut win_state, &mut app_state, event).expect("handle_servo_event exception");
             }
 
-            let app_has_changed = before_app_state == app_state;
-            let win_has_changed = before_win_state == win_state;
-            if app_has_changed || win_has_changed {
-                app.render(&app_state);
-                win.render(&win_state);
+            if app_state.has_changed() || win_state.has_changed() {
+                app.render(app_state.diff(), app_state.get());
+                win.render(win_state.diff(), win_state.get());
+                app_state.snapshot();
+                win_state.snapshot();
             }
 
             servo.sync(force_sync);
@@ -431,7 +159,7 @@ fn main() {
         // new events
 
         // FIXME: logs will grow until pulled
-        if win_state.logs_visible {
+        if win_state.get().logs_visible {
             win.append_logs(&logs.get_logs());
         }
     };
@@ -440,4 +168,331 @@ fn main() {
 
     app.run(handle_events);
 
+}
+
+fn handle_win_event(
+    servo: &Servo,
+    view: &Rc<ViewMethods>,
+    win_state: &mut State<WindowState>,
+    _app_state: &mut State<AppState>,
+    event: WindowEvent) -> Result<bool, &'static str> {
+
+    match event {
+        WindowEvent::EventLoopAwaken => {
+            return Ok(true);
+        }
+        WindowEvent::GeometryDidChange => {
+            servo.update_geometry(view.get_geometry());
+            view.update_drawable();
+        }
+        WindowEvent::DidEnterFullScreen => {
+            // FIXME
+        }
+        WindowEvent::DidExitFullScreen => {
+            // FIXME
+        }
+        WindowEvent::WillClose => {
+            // FIXME
+        }
+        WindowEvent::OptionsClosed => {
+            win_state.get_mut().options_open = false;
+        }
+        WindowEvent::UrlbarFocusChanged(focused) => {
+            win_state.get_mut().tabs.mut_fg_browser()?.urlbar_focused = focused;
+        }
+        WindowEvent::DoCommand(cmd) => {
+            let bid = win_state.get().tabs.ref_fg_browser()?.id;
+            match cmd {
+                WindowCommand::Stop => {
+                    // FIXME
+                }
+                WindowCommand::Reload => {
+                    servo.reload(bid);
+                }
+                WindowCommand::NavigateBack => {
+                    servo.go_back(bid);
+                }
+                WindowCommand::NavigateForward => {
+                    servo.go_forward(bid);
+                }
+                WindowCommand::OpenLocation => {
+                    win_state.get_mut().tabs.mut_fg_browser()?.urlbar_focused = true;
+                }
+                WindowCommand::OpenInDefaultBrowser => {
+                    if let Some(ref url) = win_state.get().tabs.ref_fg_browser()?.url {
+                        open::that(url.clone()).ok();
+                    }
+                }
+                WindowCommand::ZoomIn => {
+                    win_state.get_mut().tabs.mut_fg_browser()?.zoom *= 1.1;
+                    servo.zoom(win_state.get().tabs.ref_fg_browser()?.zoom);
+                }
+                WindowCommand::ZoomOut => {
+                    win_state.get_mut().tabs.mut_fg_browser()?.zoom /= 1.1;
+                    servo.zoom(win_state.get().tabs.ref_fg_browser()?.zoom);
+                }
+                WindowCommand::ZoomToActualSize => {
+                    win_state.get_mut().tabs.mut_fg_browser()?.zoom = 1.0;
+                    servo.reset_zoom();
+                }
+
+                WindowCommand::ToggleSidebar => {
+                    win_state.get_mut().sidebar_is_open = !win_state.get().sidebar_is_open;
+                }
+
+                WindowCommand::ShowOptions => {
+                    win_state.get_mut().options_open = !win_state.get().options_open;
+                }
+
+                WindowCommand::Load(request) => {
+                    win_state.get_mut().tabs.mut_fg_browser()?.user_input = Some(request.clone());
+                    win_state.get_mut().tabs.mut_fg_browser()?.urlbar_focused = false;
+                    let url = ServoUrl::parse(&request).or_else(|error| {
+                        // See: https://github.com/paulrouget/servoshell/issues/59
+                        if request.ends_with(".com") || request.ends_with(".org") || request.ends_with(".net") {
+                            ServoUrl::parse(&format!("http://{}", request))
+                        } else {
+                            Err(error)
+                        }
+                    }).or_else(|_| {
+                        ServoUrl::parse(&format!("https://duckduckgo.com/html/?q={}", request))
+                    });
+                    match url {
+                        Ok(url) => {
+                            servo.load_url(bid, url)
+                        },
+                        Err(err) => warn!("Can't parse url: {}", err),
+                    }
+                }
+                WindowCommand::ToggleOptionShowLogs => {
+                    win_state.get_mut().logs_visible = !win_state.get().logs_visible;
+                },
+                WindowCommand::NewTab => {
+                    let mut browser = servo.new_browser("about:blank");
+                    browser.background = false;
+                    if cfg!(all(not(feature = "force-glutin"), target_os = "macos")) {
+                        browser.urlbar_focused = true;
+                    }
+                    win_state.get_mut().tabs.append_new(browser)?;
+                    let new = win_state.get().tabs.ref_fg_browser()?.id;
+                    servo.select_browser(new);
+                    servo.update_geometry(view.get_geometry());
+                },
+                WindowCommand::CloseTab => {
+                    if win_state.get().tabs.has_more_than_one() {
+                        let old = win_state.get_mut().tabs.kill_fg()?;
+                        servo.close_browser(old);
+                        let new = win_state.get().tabs.ref_fg_browser()?.id;
+                        servo.select_browser(new);
+                    }
+                },
+                WindowCommand::PrevTab => {
+                    if win_state.get().tabs.has_more_than_one() {
+                        if win_state.get().tabs.can_select_prev().unwrap() {
+                            win_state.get_mut().tabs.select_prev()?;
+                        } else {
+                            win_state.get_mut().tabs.select_last()?;
+                        }
+                        let new = win_state.get().tabs.ref_fg_browser()?.id;
+                        servo.select_browser(new);
+                    }
+                },
+                WindowCommand::NextTab => {
+                    if win_state.get().tabs.has_more_than_one() {
+                        if win_state.get().tabs.can_select_next().unwrap() {
+                            win_state.get_mut().tabs.select_next()?;
+                        } else {
+                            win_state.get_mut().tabs.select_first()?;
+                        }
+                        let new = win_state.get().tabs.ref_fg_browser()?.id;
+                        servo.select_browser(new);
+                    }
+                },
+                WindowCommand::SelectTab(idx) => {
+                    if win_state.get().tabs.can_select_nth(idx) {
+                        win_state.get_mut().tabs.select_nth(idx)?;
+                        let new = win_state.get().tabs.ref_fg_browser()?.id;
+                        servo.select_browser(new);
+                    }
+                },
+                WindowCommand::ToggleOptionFragmentBorders => { },
+                WindowCommand::ToggleOptionParallelDisplayListBuidling => { },
+                WindowCommand::ToggleOptionShowParallelLayout => { },
+                WindowCommand::ToggleOptionConvertMouseToTouch => { },
+                WindowCommand::ToggleOptionTileBorders => { },
+
+                WindowCommand::ToggleOptionWRProfiler => {
+                    win_state.get_mut().debug_options.wr_profiler = !win_state.get().debug_options.wr_profiler;
+                    servo.toggle_webrender_debug_option(WebRenderDebugOption::Profiler);
+                },
+
+                WindowCommand::ToggleOptionWRTextureCacheDebug => {
+                    win_state.get_mut().debug_options.wr_texture_cache_debug = !win_state.get().debug_options.wr_texture_cache_debug;
+                    servo.toggle_webrender_debug_option(WebRenderDebugOption::TextureCacheDebug);
+                },
+
+                WindowCommand::ToggleOptionWRTargetDebug => {
+                    win_state.get_mut().debug_options.wr_render_target_debug = !win_state.get().debug_options.wr_render_target_debug;
+                    servo.toggle_webrender_debug_option(WebRenderDebugOption::RenderTargetDebug);
+                },
+            }
+        }
+    }
+    Ok(false)
+}
+
+
+fn handle_app_event(
+    servo: &Servo,
+    view: &Rc<ViewMethods>,
+    _win_state: &mut State<WindowState>,
+    app_state: &mut State<AppState>,
+    event: AppEvent) -> Result<(), &'static str> {
+
+    match event {
+        AppEvent::DidFinishLaunching => {
+            // FIXME: does this work?
+        }
+        AppEvent::WillTerminate => {
+            // FIXME: does this work?
+        }
+        AppEvent::DidChangeScreenParameters => {
+            // FIXME: does this work?
+            servo.update_geometry(view.get_geometry());
+            view.update_drawable();
+        }
+        AppEvent::DoCommand(cmd) => {
+            match cmd {
+                AppCommand::ClearHistory => {
+                    // FIXME
+                }
+                AppCommand::ToggleOptionDarkTheme => {
+                    app_state.get_mut().dark_theme = !app_state.get().dark_theme;
+                }
+            }
+        }
+    };
+    Ok(())
+}
+
+
+
+fn handle_view_event(
+    servo: &Servo,
+    view: &Rc<ViewMethods>,
+    win_state: &mut State<WindowState>,
+    _app_state: &mut State<AppState>,
+    event: ViewEvent) -> Result<(), &'static str> {
+
+    match event {
+        ViewEvent::GeometryDidChange => {
+            servo.update_geometry(view.get_geometry());
+            view.update_drawable();
+        }
+        ViewEvent::MouseWheel(delta, phase) => {
+            // FIXME: magic value
+            static LINE_HEIGHT: f32 = 38.0;
+            let (mut x, mut y) = match delta {
+                MouseScrollDelta::PixelDelta(x, y) => (x, y),
+                MouseScrollDelta::LineDelta(x, y) => (x, y * LINE_HEIGHT),
+            };
+            if y.abs() >= x.abs() { x = 0.0; } else { y = 0.0; }
+            servo.perform_scroll(0, 0, x, y, phase);
+        }
+        ViewEvent::MouseMoved(x, y) => {
+            servo.perform_mouse_move(x, y);
+        }
+        ViewEvent::MouseInput(element_state, button, x, y) => {
+            servo.perform_click(x, y, element_state, button);
+        }
+        ViewEvent::KeyEvent(c, key, keystate, modifiers) => {
+            let id = win_state.get().tabs.ref_fg_browser().expect("no current browser").id;
+            servo.send_key(id, c, key, keystate, modifiers);
+        }
+    };
+    Ok(())
+}
+
+
+
+fn handle_servo_event(
+    _servo: &Servo,
+    view: &Rc<ViewMethods>,
+    win_state: &mut State<WindowState>,
+    app_state: &mut State<AppState>,
+    event: ServoEvent) -> Result<(), &'static str> {
+
+    match event {
+        ServoEvent::SetWindowInnerSize(..) => {
+            // ignore
+        }
+        ServoEvent::SetWindowPosition(..) => {
+            // ignore
+        }
+        ServoEvent::SetFullScreenState(fullscreen) => {
+            if fullscreen {
+                view.enter_fullscreen();
+            } else {
+                view.exit_fullscreen();
+            }
+        }
+        ServoEvent::TitleChanged(id, title) => {
+            match win_state.get_mut().tabs.find_browser(&id) {
+                Some(browser) => {
+                    browser.title = title;
+                }
+                None => warn!("Got message for unkown browser:  {:?}", id)
+            }
+        }
+        ServoEvent::StatusChanged(status) => {
+            win_state.get_mut().status = status;
+        }
+        ServoEvent::LoadStart(id) => {
+            match win_state.get_mut().tabs.find_browser(&id) {
+                Some(browser) => {
+                    browser.is_loading = true;
+                }
+                None => warn!("Got message for unkown browser:  {:?}", id)
+            }
+        }
+        ServoEvent::LoadEnd(id) => {
+            match win_state.get_mut().tabs.find_browser(&id) {
+                Some(browser) => {
+                    browser.is_loading = false;
+                }
+                None => warn!("Got message for unkown browser:  {:?}", id)
+            }
+        }
+        ServoEvent::HeadParsed(..) => {
+            // FIXME
+        }
+        ServoEvent::HistoryChanged(id, entries, current) => {
+            match win_state.get_mut().tabs.find_browser(&id) {
+                Some(browser) => {
+                    let url = entries[current].url.to_string();
+                    browser.url = Some(url);
+                    browser.can_go_back = current > 0;
+                    browser.can_go_forward = current < entries.len() - 1;
+                }
+                None => warn!("Got message for unkown browser:  {:?}", id)
+            }
+        }
+        ServoEvent::CursorChanged(cursor) => {
+            // FIXME: Work-around https://github.com/servo/servo/issues/18599
+            // FIXME: also, see https://github.com/paulrouget/servoshell/issues/67
+            if cursor != app_state.get().cursor {
+                app_state.get_mut().cursor = cursor;
+            }
+        }
+        ServoEvent::FaviconChanged(..) => {
+            // FIXME
+        }
+        ServoEvent::Key(..) => {
+            // FIXME
+        }
+        ServoEvent::OpenInDefaultBrowser(url) => {
+            open::that(url).ok();
+        }
+    };
+    Ok(())
 }

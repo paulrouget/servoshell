@@ -20,13 +20,13 @@ use state::BrowserState;
 use std::path::PathBuf;
 
 pub use self::servo::BrowserId;
-pub use self::servo::gl;
 pub use self::servo::compositing::compositor_thread::EventLoopWaker;
-pub use self::servo::style_traits::cursor::Cursor as ServoCursor;
-pub use self::servo::servo_url::ServoUrl;
 pub use self::servo::compositing::windowing::WebRenderDebugOption;
+pub use self::servo::gl;
 pub use self::servo::msg::constellation_msg::{Key, KeyModifiers, KeyState};
 pub use self::servo::msg::constellation_msg::{SHIFT, CONTROL, ALT, SUPER};
+pub use self::servo::servo_url::ServoUrl;
+pub use self::servo::style_traits::cursor::Cursor as ServoCursor;
 
 use traits::view::{self, DrawableGeometry};
 
@@ -38,6 +38,7 @@ const SERVO_ISSUE_ALIAS: &'static str = "servoshell://issue/servo";
 const SHELL_ISSUE_URL: &'static str = "http://github.com/paulrouget/servoshell/issues/new";
 const SERVO_ISSUE_URL: &'static str  = "http://github.com/servo/servo/issues/new";
 
+#[derive(Debug)]
 pub enum ServoEvent {
     SetWindowInnerSize(u32, u32),
     SetWindowPosition(i32, i32),
@@ -112,6 +113,7 @@ impl Servo {
 
         BrowserState {
             id: id,
+            background: true,
             zoom: 1.0,
             url: None,
             title: None,
@@ -119,6 +121,7 @@ impl Servo {
             can_go_back: false,
             can_go_forward: false,
             is_loading: false,
+            urlbar_focused: false,
         }
     }
 
@@ -254,8 +257,7 @@ impl Servo {
     }
 
     pub fn sync(&self, force: bool) {
-        // FIXME: ports/glutin/window.rs uses mem::replace. Should we too?
-        // See: https://doc.rust-lang.org/core/mem/fn.replace.html
+        // FIXME: should we use mem::replace?
         if !self.events_for_servo.borrow().is_empty() || force {
             let mut events = self.events_for_servo.borrow_mut();
             let clone = events.drain(..).collect();
@@ -273,8 +275,7 @@ struct ServoCallbacks {
 
 impl ServoCallbacks {
     fn get_events(&self) -> Vec<ServoEvent> {
-        // FIXME: ports/glutin/window.rs uses mem::replace. Should we too?
-        // See: https://doc.rust-lang.org/core/mem/fn.replace.html
+        // FIXME: should we use mem::replace?
         let mut events = self.event_queue.borrow_mut();
         let copy = events.drain(..).collect();
         copy

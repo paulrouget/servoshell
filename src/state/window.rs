@@ -2,34 +2,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use servo::{ServoCursor, BrowserId};
+use super::tabs::TabsState;
 
-#[derive(Clone, PartialEq)]
-pub struct AppState {
-    pub current_window_index: Option<usize>,
-    pub dark_theme: bool,
-    pub cursor: ServoCursor,
-}
-
-impl AppState {
-    pub fn new() -> AppState {
-        AppState {
-            current_window_index: None,
-            dark_theme: false,
-            cursor: ServoCursor::Default,
-        }
-    }
-}
-
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Deserialize, Serialize)]
 pub struct WindowState {
-    pub current_browser_index: Option<usize>,
-    pub browsers: Vec<BrowserState>,
+    pub tabs: TabsState,
     pub sidebar_is_open: bool,
     pub logs_visible: bool,
     pub debug_options: DebugOptions,
     pub status: Option<String>,
-    pub urlbar_focused: bool,
     pub options_open: bool,
     pub title: String,
 }
@@ -37,12 +18,10 @@ pub struct WindowState {
 impl WindowState {
     pub fn new() -> WindowState {
         WindowState {
-            current_browser_index: None,
-            browsers: Vec::new(),
+            tabs: TabsState::new(),
             sidebar_is_open: false,
             logs_visible: false,
             status: None,
-            urlbar_focused: false,
             options_open: false,
             title: "ServoShell".to_owned(),
             debug_options: DebugOptions {
@@ -59,20 +38,7 @@ impl WindowState {
     }
 }
 
-#[derive(Clone, PartialEq)]
-pub struct BrowserState {
-    pub id: BrowserId,
-    pub zoom: f32,
-    pub url: Option<String>,
-    pub title: Option<String>,
-    // FIXME: pub favicon: Option<>,
-    pub user_input: Option<String>,
-    pub can_go_back: bool,
-    pub can_go_forward: bool,
-    pub is_loading: bool,
-}
-
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Deserialize, Serialize)]
 pub struct DebugOptions {
     pub show_fragment_borders: bool,
     pub parallel_display_list_building: bool,

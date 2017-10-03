@@ -112,7 +112,6 @@ pub fn register() {
     }
 
     extern fn awake_from_nib(this: &mut Object, _sel: Sel) {
-        // FIXME: is that the best way to create a raw pointer?
         let event_queue: Vec<ViewEvent> = Vec::new();
         let event_queue_ptr = Box::into_raw(Box::new(event_queue));
         unsafe {
@@ -257,7 +256,7 @@ impl ViewMethods for View {
             let content_frame: NSRect = msg_send![content_view, frame];
             let visible_rect: NSRect = msg_send![nswindow, contentLayoutRect];
 
-            let tabview = utils::get_view_by_id(nswindow, "tabview").unwrap();
+            let tabview = utils::get_view_by_id(nswindow, "tabview").expect("Can't find tabview");
             let count: usize = msg_send![tabview, numberOfTabViewItems];
             let tabheight = if count > 1 {
                 // FIXME

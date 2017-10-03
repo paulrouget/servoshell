@@ -4,8 +4,8 @@
 
 use glutin::{self, GlContext};
 use platform::Window;
-use servo:: EventLoopWaker;
-use state::AppState;
+use servo::{ServoCursor, EventLoopWaker};
+use state::{AppState, ChangeType, DiffKey, WindowState};
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use std::env;
@@ -66,10 +66,19 @@ impl App {
         false
     }
 
+    fn render_cursor(&self, cursor: ServoCursor) {
+        let cursor = utils::servo_cursor_to_glutin_cursor(cursor);
+        let windows = self.windows.borrow();
+        for (_, window) in windows.iter() {
+            window.glutin_window.set_cursor(cursor);
+        };
+    }
 }
 
 impl AppMethods for App {
-    fn new<'a>() -> Result<App, &'a str> {
+
+    fn new<'a>(_state: &AppState) -> Result<App, &'a str> {
+
         let event_loop = glutin::EventsLoop::new();
         let event_loop_waker = box WinitEventLoopWaker {
             proxy: Arc::new(event_loop.create_proxy())
@@ -107,19 +116,26 @@ impl AppMethods for App {
         None
     }
 
-    fn render(&self, state: &AppState) {
-        let cursor = utils::servo_cursor_to_glutin_cursor(state.cursor);
-        let windows = self.windows.borrow();
-        for (_, window) in windows.iter() {
-            window.glutin_window.set_cursor(cursor);
-        };
+    fn render(&self, diff: Vec<ChangeType>, state: &AppState) {
+        for change in diff {
+            use self::DiffKey as K;
+            match change {
+                ChangeType::Modified(keys) => {
+                    match keys.as_slice() {
+                        &[K::cursor] => self.render_cursor(state.cursor),
+                        _ => println!("App::render: unexpected keys: {:?}", keys)
+                    }
+                },
+                _ => println!("App::render: unexpected change type: {:?}", change)
+            }
+        }
     }
 
     fn get_events(&self) -> Vec<AppEvent> {
         vec![]
     }
 
-    fn new_window<'a>(&self) -> Result<Box<WindowMethods>, &'a str> {
+    fn new_window<'a>(&self, state: &WindowState) -> Result<Box<WindowMethods>, &'a str> {
 
         #[cfg(target_os = "windows")]
         let factor = utils::windows_hidpi_factor();
@@ -158,7 +174,7 @@ impl AppMethods for App {
             mouse_coordinate: (0, 0),
         });
 
-        Ok(Box::new(Window::new(id, self.windows.clone())))
+        Ok(Box::new(Window::new(id, state, self.windows.clone())))
     }
 
     fn run<T>(&self, mut callback: T) where T: FnMut() {
