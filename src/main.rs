@@ -62,10 +62,12 @@ fn main() {
 
     info!("starting");
 
-    args().find(|arg| arg == "--version").map(|_| {
-        println!("{} {}", PKG_NAME, PKG_VERSION);
-        std::process::exit(0);
-    });
+    args()
+        .find(|arg| arg == "--version")
+        .map(|_| {
+                 println!("{} {}", PKG_NAME, PKG_VERSION);
+                 std::process::exit(0);
+             });
 
     let resources_path = App::get_resources_path().expect("Can't find resources path");
 
@@ -75,7 +77,8 @@ fn main() {
     let mut win_state = State::new(WindowState::new());
 
     let app = App::new(app_state.get()).expect("Can't create application");
-    let win = app.new_window(win_state.get()).expect("Can't create application");
+    let win = app.new_window(win_state.get())
+        .expect("Can't create application");
     app_state.snapshot();
     win_state.snapshot();
 
@@ -89,19 +92,30 @@ fn main() {
         Servo::new(geometry, view.clone(), waker)
     };
 
-    let home_url = resources_path.parent().unwrap().join("shell_resources").join("home.html");
-    let home_url = ServoUrl::from_file_path(&home_url).unwrap().into_string();
+    let home_url = resources_path
+        .parent()
+        .unwrap()
+        .join("shell_resources")
+        .join("home.html");
+    let home_url = ServoUrl::from_file_path(&home_url)
+        .unwrap()
+        .into_string();
 
     // Skip first argument (executable), and find the first
     // argument that doesn't start with `-`
-    let url = args().skip(1).find(|arg| {
-        !arg.starts_with("-")
-    }).unwrap_or(home_url);
+    let url = args()
+        .skip(1)
+        .find(|arg| !arg.starts_with("-"))
+        .unwrap_or(home_url);
 
     let browser = servo.new_browser(&url);
     servo.select_browser(browser.id);
 
-    win_state.get_mut().tabs.append_new(browser).expect("Can't append browser");
+    win_state
+        .get_mut()
+        .tabs
+        .append_new(browser)
+        .expect("Can't append browser");
     win.render(win_state.diff(), win_state.get());
     win_state.snapshot();
 
@@ -117,32 +131,37 @@ fn main() {
             let view_events = view.get_events();
             let servo_events = servo.get_events();
 
-            if app_events.is_empty() &&
-               win_events.is_empty() &&
-               view_events.is_empty() &&
+            if app_events.is_empty() && win_events.is_empty() && view_events.is_empty() &&
                servo_events.is_empty() {
-                   break
+                break;
             }
 
             // FIXME: it's really annoying we need this
             let mut force_sync = false;
 
             for event in win_events {
-                if handle_win_event(&servo, &view, &mut win_state, &mut app_state, event).expect("handle_win_event exception") {
-                    force_sync = true;
-                }
+                if handle_win_event(&servo, &view, &mut win_state, &mut app_state, event)
+                           .expect("handle_win_event exception") {
+                        force_sync = true;
+                    }
             }
 
             for event in app_events {
-                handle_app_event(&servo, &view, &mut win_state, &mut app_state, event).expect("handle_app_event exception");
+                handle_app_event(&servo,
+                                 &view,
+                                 &mut win_state,
+                                 &mut app_state,
+                                 event).expect("handle_app_event exception");
             }
 
             for event in view_events {
-                handle_view_event(&servo, &view, &mut win_state, &mut app_state, event).expect("handle_view_event exception");
+                handle_view_event(&servo, &view, &mut win_state, &mut app_state, event)
+                        .expect("handle_view_event exception");
             }
 
             for event in servo_events {
-                handle_servo_event(&servo, &view, &mut win_state, &mut app_state, event).expect("handle_servo_event exception");
+                handle_servo_event(&servo, &view, &mut win_state, &mut app_state, event)
+                        .expect("handle_servo_event exception");
             }
 
             if app_state.has_changed() || win_state.has_changed() {
@@ -170,12 +189,12 @@ fn main() {
 
 }
 
-fn handle_win_event(
-    servo: &Servo,
-    view: &Rc<ViewMethods>,
-    win_state: &mut State<WindowState>,
-    _app_state: &mut State<AppState>,
-    event: WindowEvent) -> Result<bool, &'static str> {
+fn handle_win_event(servo: &Servo,
+                    view: &Rc<ViewMethods>,
+                    win_state: &mut State<WindowState>,
+                    _app_state: &mut State<AppState>,
+                    event: WindowEvent)
+                    -> Result<bool, &'static str> {
 
     match event {
         WindowEvent::EventLoopAwaken => {
@@ -198,7 +217,11 @@ fn handle_win_event(
             win_state.get_mut().options_open = false;
         }
         WindowEvent::UrlbarFocusChanged(focused) => {
-            win_state.get_mut().tabs.mut_fg_browser()?.urlbar_focused = focused;
+            win_state
+                .get_mut()
+                .tabs
+                .mut_fg_browser()?
+                .urlbar_focused = focused;
         }
         WindowEvent::DoCommand(cmd) => {
             let bid = win_state.get().tabs.ref_fg_browser()?.id;
@@ -216,7 +239,11 @@ fn handle_win_event(
                     servo.go_forward(bid);
                 }
                 WindowCommand::OpenLocation => {
-                    win_state.get_mut().tabs.mut_fg_browser()?.urlbar_focused = true;
+                    win_state
+                        .get_mut()
+                        .tabs
+                        .mut_fg_browser()?
+                        .urlbar_focused = true;
                 }
                 WindowCommand::OpenInDefaultBrowser => {
                     if let Some(ref url) = win_state.get().tabs.ref_fg_browser()?.url {
@@ -246,27 +273,33 @@ fn handle_win_event(
 
                 WindowCommand::Load(request) => {
                     win_state.get_mut().tabs.mut_fg_browser()?.user_input = Some(request.clone());
-                    win_state.get_mut().tabs.mut_fg_browser()?.urlbar_focused = false;
-                    let url = ServoUrl::parse(&request).or_else(|error| {
-                        // See: https://github.com/paulrouget/servoshell/issues/59
-                        if request.ends_with(".com") || request.ends_with(".org") || request.ends_with(".net") {
-                            ServoUrl::parse(&format!("http://{}", request))
-                        } else {
-                            Err(error)
-                        }
-                    }).or_else(|_| {
-                        ServoUrl::parse(&format!("https://duckduckgo.com/html/?q={}", request))
-                    });
+                    win_state
+                        .get_mut()
+                        .tabs
+                        .mut_fg_browser()?
+                        .urlbar_focused = false;
+                    let url = ServoUrl::parse(&request)
+                        .or_else(|error| {
+                            // See: https://github.com/paulrouget/servoshell/issues/59
+                            if request.ends_with(".com") || request.ends_with(".org") ||
+                               request.ends_with(".net") {
+                                ServoUrl::parse(&format!("http://{}", request))
+                            } else {
+                                Err(error)
+                            }
+                        })
+                        .or_else(|_| {
+                                     ServoUrl::parse(&format!("https://duckduckgo.com/html/?q={}",
+                                                              request))
+                                 });
                     match url {
-                        Ok(url) => {
-                            servo.load_url(bid, url)
-                        },
+                        Ok(url) => servo.load_url(bid, url),
                         Err(err) => warn!("Can't parse url: {}", err),
                     }
                 }
                 WindowCommand::ToggleOptionShowLogs => {
                     win_state.get_mut().logs_visible = !win_state.get().logs_visible;
-                },
+                }
                 WindowCommand::NewTab => {
                     let mut browser = servo.new_browser("about:blank");
                     browser.background = false;
@@ -277,7 +310,7 @@ fn handle_win_event(
                     let new = win_state.get().tabs.ref_fg_browser()?.id;
                     servo.select_browser(new);
                     servo.update_geometry(view.get_geometry());
-                },
+                }
                 WindowCommand::CloseTab => {
                     if win_state.get().tabs.has_more_than_one() {
                         let old = win_state.get_mut().tabs.kill_fg()?;
@@ -285,7 +318,7 @@ fn handle_win_event(
                         let new = win_state.get().tabs.ref_fg_browser()?.id;
                         servo.select_browser(new);
                     }
-                },
+                }
                 WindowCommand::PrevTab => {
                     if win_state.get().tabs.has_more_than_one() {
                         if win_state.get().tabs.can_select_prev().unwrap() {
@@ -296,7 +329,7 @@ fn handle_win_event(
                         let new = win_state.get().tabs.ref_fg_browser()?.id;
                         servo.select_browser(new);
                     }
-                },
+                }
                 WindowCommand::NextTab => {
                     if win_state.get().tabs.has_more_than_one() {
                         if win_state.get().tabs.can_select_next().unwrap() {
@@ -307,34 +340,37 @@ fn handle_win_event(
                         let new = win_state.get().tabs.ref_fg_browser()?.id;
                         servo.select_browser(new);
                     }
-                },
+                }
                 WindowCommand::SelectTab(idx) => {
                     if win_state.get().tabs.can_select_nth(idx) {
                         win_state.get_mut().tabs.select_nth(idx)?;
                         let new = win_state.get().tabs.ref_fg_browser()?.id;
                         servo.select_browser(new);
                     }
-                },
-                WindowCommand::ToggleOptionFragmentBorders => { },
-                WindowCommand::ToggleOptionParallelDisplayListBuidling => { },
-                WindowCommand::ToggleOptionShowParallelLayout => { },
-                WindowCommand::ToggleOptionConvertMouseToTouch => { },
-                WindowCommand::ToggleOptionTileBorders => { },
+                }
+                WindowCommand::ToggleOptionFragmentBorders => {}
+                WindowCommand::ToggleOptionParallelDisplayListBuidling => {}
+                WindowCommand::ToggleOptionShowParallelLayout => {}
+                WindowCommand::ToggleOptionConvertMouseToTouch => {}
+                WindowCommand::ToggleOptionTileBorders => {}
 
                 WindowCommand::ToggleOptionWRProfiler => {
-                    win_state.get_mut().debug_options.wr_profiler = !win_state.get().debug_options.wr_profiler;
+                    win_state.get_mut().debug_options.wr_profiler =
+                        !win_state.get().debug_options.wr_profiler;
                     servo.toggle_webrender_debug_option(WebRenderDebugOption::Profiler);
-                },
+                }
 
                 WindowCommand::ToggleOptionWRTextureCacheDebug => {
-                    win_state.get_mut().debug_options.wr_texture_cache_debug = !win_state.get().debug_options.wr_texture_cache_debug;
+                    win_state.get_mut().debug_options.wr_texture_cache_debug =
+                        !win_state.get().debug_options.wr_texture_cache_debug;
                     servo.toggle_webrender_debug_option(WebRenderDebugOption::TextureCacheDebug);
-                },
+                }
 
                 WindowCommand::ToggleOptionWRTargetDebug => {
-                    win_state.get_mut().debug_options.wr_render_target_debug = !win_state.get().debug_options.wr_render_target_debug;
+                    win_state.get_mut().debug_options.wr_render_target_debug =
+                        !win_state.get().debug_options.wr_render_target_debug;
                     servo.toggle_webrender_debug_option(WebRenderDebugOption::RenderTargetDebug);
-                },
+                }
             }
         }
     }
@@ -342,12 +378,12 @@ fn handle_win_event(
 }
 
 
-fn handle_app_event(
-    servo: &Servo,
-    view: &Rc<ViewMethods>,
-    _win_state: &mut State<WindowState>,
-    app_state: &mut State<AppState>,
-    event: AppEvent) -> Result<(), &'static str> {
+fn handle_app_event(servo: &Servo,
+                    view: &Rc<ViewMethods>,
+                    _win_state: &mut State<WindowState>,
+                    app_state: &mut State<AppState>,
+                    event: AppEvent)
+                    -> Result<(), &'static str> {
 
     match event {
         AppEvent::DidFinishLaunching => {
@@ -377,12 +413,12 @@ fn handle_app_event(
 
 
 
-fn handle_view_event(
-    servo: &Servo,
-    view: &Rc<ViewMethods>,
-    win_state: &mut State<WindowState>,
-    _app_state: &mut State<AppState>,
-    event: ViewEvent) -> Result<(), &'static str> {
+fn handle_view_event(servo: &Servo,
+                     view: &Rc<ViewMethods>,
+                     win_state: &mut State<WindowState>,
+                     _app_state: &mut State<AppState>,
+                     event: ViewEvent)
+                     -> Result<(), &'static str> {
 
     match event {
         ViewEvent::GeometryDidChange => {
@@ -396,7 +432,11 @@ fn handle_view_event(
                 MouseScrollDelta::PixelDelta(x, y) => (x, y),
                 MouseScrollDelta::LineDelta(x, y) => (x, y * LINE_HEIGHT),
             };
-            if y.abs() >= x.abs() { x = 0.0; } else { y = 0.0; }
+            if y.abs() >= x.abs() {
+                x = 0.0;
+            } else {
+                y = 0.0;
+            }
             servo.perform_scroll(0, 0, x, y, phase);
         }
         ViewEvent::MouseMoved(x, y) => {
@@ -406,7 +446,12 @@ fn handle_view_event(
             servo.perform_click(x, y, element_state, button);
         }
         ViewEvent::KeyEvent(c, key, keystate, modifiers) => {
-            let id = win_state.get().tabs.ref_fg_browser().expect("no current browser").id;
+            let id = win_state
+                .get()
+                .tabs
+                .ref_fg_browser()
+                .expect("no current browser")
+                .id;
             servo.send_key(id, c, key, keystate, modifiers);
         }
     };
@@ -415,12 +460,12 @@ fn handle_view_event(
 
 
 
-fn handle_servo_event(
-    _servo: &Servo,
-    view: &Rc<ViewMethods>,
-    win_state: &mut State<WindowState>,
-    app_state: &mut State<AppState>,
-    event: ServoEvent) -> Result<(), &'static str> {
+fn handle_servo_event(_servo: &Servo,
+                      view: &Rc<ViewMethods>,
+                      win_state: &mut State<WindowState>,
+                      app_state: &mut State<AppState>,
+                      event: ServoEvent)
+                      -> Result<(), &'static str> {
 
     match event {
         ServoEvent::SetWindowInnerSize(..) => {
@@ -441,7 +486,7 @@ fn handle_servo_event(
                 Some(browser) => {
                     browser.title = title;
                 }
-                None => warn!("Got message for unkown browser:  {:?}", id)
+                None => warn!("Got message for unkown browser:  {:?}", id),
             }
         }
         ServoEvent::StatusChanged(status) => {
@@ -452,7 +497,7 @@ fn handle_servo_event(
                 Some(browser) => {
                     browser.is_loading = true;
                 }
-                None => warn!("Got message for unkown browser:  {:?}", id)
+                None => warn!("Got message for unkown browser:  {:?}", id),
             }
         }
         ServoEvent::LoadEnd(id) => {
@@ -460,7 +505,7 @@ fn handle_servo_event(
                 Some(browser) => {
                     browser.is_loading = false;
                 }
-                None => warn!("Got message for unkown browser:  {:?}", id)
+                None => warn!("Got message for unkown browser:  {:?}", id),
             }
         }
         ServoEvent::HeadParsed(..) => {
@@ -474,7 +519,7 @@ fn handle_servo_event(
                     browser.can_go_back = current > 0;
                     browser.can_go_forward = current < entries.len() - 1;
                 }
-                None => warn!("Got message for unkown browser:  {:?}", id)
+                None => warn!("Got message for unkown browser:  {:?}", id),
             }
         }
         ServoEvent::CursorChanged(cursor) => {

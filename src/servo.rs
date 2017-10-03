@@ -10,7 +10,8 @@ use self::servo::servo_config::resource_files::set_resources_path;
 use self::servo::compositing::windowing::{MouseWindowEvent, WindowMethods, WindowEvent};
 use self::servo::msg::constellation_msg::TraversalDirection;
 use self::servo::servo_geometry::DeviceIndependentPixel;
-use self::servo::euclid::{Point2D, ScaleFactor, Size2D, TypedPoint2D, TypedRect, TypedSize2D, TypedVector2D};
+use self::servo::euclid::{Point2D, ScaleFactor, Size2D, TypedPoint2D, TypedRect, TypedSize2D,
+                          TypedVector2D};
 use self::servo::ipc_channel::ipc;
 use self::servo::script_traits::{LoadData, MouseButton, TouchEventType};
 use self::servo::style_traits::DevicePixel;
@@ -36,7 +37,7 @@ use std::cell::{Cell, RefCell};
 const SHELL_ISSUE_ALIAS: &'static str = "servoshell://issue/servoshell";
 const SERVO_ISSUE_ALIAS: &'static str = "servoshell://issue/servo";
 const SHELL_ISSUE_URL: &'static str = "http://github.com/paulrouget/servoshell/issues/new";
-const SERVO_ISSUE_URL: &'static str  = "http://github.com/servo/servo/issues/new";
+const SERVO_ISSUE_URL: &'static str = "http://github.com/servo/servo/issues/new";
 
 #[derive(Debug)]
 pub enum ServoEvent {
@@ -70,7 +71,6 @@ pub struct Servo {
 }
 
 impl Servo {
-
     pub fn configure(path: PathBuf) {
         let path = path.to_str().unwrap().to_string();
         set_resources_path(Some(path));
@@ -82,13 +82,16 @@ impl Servo {
         servo_version()
     }
 
-    pub fn new(geometry: DrawableGeometry, view: Rc<view::ViewMethods>, waker: Box<EventLoopWaker>) -> Servo {
+    pub fn new(geometry: DrawableGeometry,
+               view: Rc<view::ViewMethods>,
+               waker: Box<EventLoopWaker>)
+               -> Servo {
         let callbacks = Rc::new(ServoCallbacks {
-            event_queue: RefCell::new(Vec::new()),
-            geometry: Cell::new(geometry),
-            waker: waker,
-            view: view.clone(),
-        });
+                                    event_queue: RefCell::new(Vec::new()),
+                                    geometry: Cell::new(geometry),
+                                    waker: waker,
+                                    view: view.clone(),
+                                });
 
         let servo = servo::Servo::new(callbacks.clone());
 
@@ -106,7 +109,9 @@ impl Servo {
         let url = ServoUrl::parse(url).unwrap();
 
         let (sender, receiver) = ipc::channel().unwrap();
-        self.servo.borrow_mut().handle_events(vec![WindowEvent::NewBrowser(url, sender)]);
+        self.servo
+            .borrow_mut()
+            .handle_events(vec![WindowEvent::NewBrowser(url, sender)]);
         let id = receiver.recv().unwrap();
         self.select_browser(id);
         self.sync(false);
@@ -196,10 +201,10 @@ impl Servo {
     }
 
     pub fn perform_click(&self,
-                 x: i32,
-                 y: i32,
-                 element_state: view::ElementState,
-                 mouse_button: view::MouseButton) {
+                         x: i32,
+                         y: i32,
+                         element_state: view::ElementState,
+                         mouse_button: view::MouseButton) {
 
         let (x, y) = self.substract_margins(x, y);
         let max_pixel_dist = 10f64;
@@ -210,21 +215,32 @@ impl Servo {
         };
         let event = match element_state {
             view::ElementState::Pressed => {
-                *self.mouse_down.borrow_mut() = Some(LastMouseDown {x, y, button: mouse_button});
+                *self.mouse_down.borrow_mut() = Some(LastMouseDown {
+                                                         x,
+                                                         y,
+                                                         button: mouse_button,
+                                                     });
                 MouseWindowEvent::MouseDown(button, TypedPoint2D::new(x as f32, y as f32))
             }
             view::ElementState::Released => {
-                let mouse_up_event = MouseWindowEvent::MouseUp(button, TypedPoint2D::new(x as f32, y as f32));
+                let mouse_up_event =
+                    MouseWindowEvent::MouseUp(button, TypedPoint2D::new(x as f32, y as f32));
                 match *self.mouse_down.borrow() {
                     None => mouse_up_event,
-                    Some(LastMouseDown { button: org_button, x: org_x, y: org_y}) if org_button == mouse_button => {
+                    Some(LastMouseDown {
+                             button: org_button,
+                             x: org_x,
+                             y: org_y,
+                         }) if org_button == mouse_button => {
                         // Same button
                         let pixel_dist = Point2D::new(org_x, org_y) - Point2D::new(x, y);
                         let pixel_dist =
                             ((pixel_dist.x * pixel_dist.x + pixel_dist.y * pixel_dist.y) as f64)
                                 .sqrt();
                         if pixel_dist < max_pixel_dist {
-                            self.events_for_servo.borrow_mut().push(WindowEvent::MouseWindowEventClass(mouse_up_event));
+                            self.events_for_servo
+                                .borrow_mut()
+                                .push(WindowEvent::MouseWindowEventClass(mouse_up_event));
                             MouseWindowEvent::Click(button, TypedPoint2D::new(x as f32, y as f32))
                         } else {
                             mouse_up_event
@@ -234,26 +250,41 @@ impl Servo {
                 }
             }
         };
-        self.events_for_servo.borrow_mut().push(WindowEvent::MouseWindowEventClass(event));
+        self.events_for_servo
+            .borrow_mut()
+            .push(WindowEvent::MouseWindowEventClass(event));
     }
 
     pub fn zoom(&self, zoom: f32) {
-        self.events_for_servo.borrow_mut().push(WindowEvent::Zoom(zoom));
+        self.events_for_servo
+            .borrow_mut()
+            .push(WindowEvent::Zoom(zoom));
 
     }
 
     pub fn reset_zoom(&self) {
         // FIXME: Why is that useful? Compared to Zoom(1)
-        self.events_for_servo.borrow_mut().push(WindowEvent::ResetZoom);
+        self.events_for_servo
+            .borrow_mut()
+            .push(WindowEvent::ResetZoom);
     }
 
     pub fn toggle_webrender_debug_option(&self, option: WebRenderDebugOption) {
-        self.events_for_servo.borrow_mut().push(WindowEvent::ToggleWebRenderDebug(option));
+        self.events_for_servo
+            .borrow_mut()
+            .push(WindowEvent::ToggleWebRenderDebug(option));
     }
 
-    pub fn send_key(&self, _id: BrowserId, c: Option<char>, key: Key, state: KeyState, mods: KeyModifiers) {
+    pub fn send_key(&self,
+                    _id: BrowserId,
+                    c: Option<char>,
+                    key: Key,
+                    state: KeyState,
+                    mods: KeyModifiers) {
         // FIXME: we should pass the browser id
-        self.events_for_servo.borrow_mut().push(WindowEvent::KeyEvent(c, key, state, mods));
+        self.events_for_servo
+            .borrow_mut()
+            .push(WindowEvent::KeyEvent(c, key, state, mods));
     }
 
     pub fn sync(&self, force: bool) {
@@ -337,7 +368,7 @@ impl WindowMethods for ServoCallbacks {
 
         size.height = size.height - top - bottom;
         size.width = size.width - left - right;
-        
+
         TypedRect::new(TypedPoint2D::new(left, top), size)
     }
 
@@ -361,11 +392,15 @@ impl WindowMethods for ServoCallbacks {
     }
 
     fn set_position(&self, _id: BrowserId, point: Point2D<i32>) {
-        self.event_queue.borrow_mut().push(ServoEvent::SetWindowPosition(point.x, point.y));
+        self.event_queue
+            .borrow_mut()
+            .push(ServoEvent::SetWindowPosition(point.x, point.y));
     }
 
     fn set_fullscreen_state(&self, _id: BrowserId, state: bool) {
-        self.event_queue.borrow_mut().push(ServoEvent::SetFullScreenState(state))
+        self.event_queue
+            .borrow_mut()
+            .push(ServoEvent::SetFullScreenState(state))
     }
 
     fn present(&self) {
@@ -373,19 +408,27 @@ impl WindowMethods for ServoCallbacks {
     }
 
     fn set_page_title(&self, id: BrowserId, title: Option<String>) {
-        self.event_queue.borrow_mut().push(ServoEvent::TitleChanged(id, title));
+        self.event_queue
+            .borrow_mut()
+            .push(ServoEvent::TitleChanged(id, title));
     }
 
     fn status(&self, _id: BrowserId, status: Option<String>) {
-        self.event_queue.borrow_mut().push(ServoEvent::StatusChanged(status));
+        self.event_queue
+            .borrow_mut()
+            .push(ServoEvent::StatusChanged(status));
     }
 
     fn load_start(&self, id: BrowserId) {
-        self.event_queue.borrow_mut().push(ServoEvent::LoadStart(id));
+        self.event_queue
+            .borrow_mut()
+            .push(ServoEvent::LoadStart(id));
     }
 
     fn load_end(&self, id: BrowserId) {
-        self.event_queue.borrow_mut().push(ServoEvent::LoadEnd(id));
+        self.event_queue
+            .borrow_mut()
+            .push(ServoEvent::LoadEnd(id));
     }
 
     fn load_error(&self, _id: BrowserId, _: NetError, _url: String) {
@@ -393,22 +436,32 @@ impl WindowMethods for ServoCallbacks {
     }
 
     fn head_parsed(&self, id: BrowserId) {
-        self.event_queue.borrow_mut().push(ServoEvent::HeadParsed(id));
+        self.event_queue
+            .borrow_mut()
+            .push(ServoEvent::HeadParsed(id));
     }
 
     fn history_changed(&self, id: BrowserId, entries: Vec<LoadData>, current: usize) {
-        self.event_queue.borrow_mut().push(ServoEvent::HistoryChanged(id, entries, current));
+        self.event_queue
+            .borrow_mut()
+            .push(ServoEvent::HistoryChanged(id, entries, current));
     }
 
     fn set_cursor(&self, cursor: ServoCursor) {
-        self.event_queue.borrow_mut().push(ServoEvent::CursorChanged(cursor));
+        self.event_queue
+            .borrow_mut()
+            .push(ServoEvent::CursorChanged(cursor));
     }
 
     fn set_favicon(&self, id: BrowserId, url: ServoUrl) {
-        self.event_queue.borrow_mut().push(ServoEvent::FaviconChanged(id, url));
+        self.event_queue
+            .borrow_mut()
+            .push(ServoEvent::FaviconChanged(id, url));
     }
 
     fn handle_key(&self, _id: Option<BrowserId>, ch: Option<char>, key: Key, mods: KeyModifiers) {
-        self.event_queue.borrow_mut().push(ServoEvent::Key(ch, key, mods));
+        self.event_queue
+            .borrow_mut()
+            .push(ServoEvent::Key(ch, key, mods));
     }
 }

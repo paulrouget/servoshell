@@ -10,33 +10,37 @@ use super::utils::get_app_state;
 
 pub fn register() {
 
-    /* NSShellSegmentedCell */ {
+    /* NSShellSegmentedCell */
+    {
         let superclass = Class::get("NSSegmentedCell").unwrap();
         let mut class = ClassDecl::new("NSShellSegmentedCell", superclass).unwrap();
 
-        extern fn draw(this: &Object, _sel: Sel, rect: NSRect, view: id) {
+        extern "C" fn draw(this: &Object, _sel: Sel, rect: NSRect, view: id) {
             unsafe {
                 let dark = get_app_state().dark_theme;
                 if dark {
                     msg_send![this, drawInteriorWithFrame:rect inView:view];
                 } else {
-                    msg_send![super(this, Class::get("NSSegmentedCell").unwrap()), drawWithFrame:rect inView:view];
+                    let class = Class::get("NSSegmentedCell").unwrap();
+                    msg_send![super(this, class), drawWithFrame:rect inView:view];
                 }
             }
         }
 
         unsafe {
-            class.add_method(sel!(drawWithFrame:inView:), draw as extern fn(&Object, Sel, NSRect, id));
+            class.add_method(sel!(drawWithFrame:inView:),
+                             draw as extern "C" fn(&Object, Sel, NSRect, id));
         }
 
         class.register();
     }
 
-    /* NSShellTextFieldCell */ {
+    /* NSShellTextFieldCell */
+    {
         let superclass = Class::get("NSTextFieldCell").unwrap();
         let mut newclass = ClassDecl::new("NSShellTextFieldCell", superclass).unwrap();
 
-        extern fn draw(this: &Object, _sel: Sel, rect: NSRect, view: id) {
+        extern "C" fn draw(this: &Object, _sel: Sel, rect: NSRect, view: id) {
             unsafe {
                 let dark = get_app_state().dark_theme;
                 let superclass = Class::get("NSTextFieldCell").unwrap();
@@ -49,7 +53,8 @@ pub fn register() {
         }
 
         unsafe {
-            newclass.add_method(sel!(drawWithFrame:inView:), draw as extern fn(&Object, Sel, NSRect, id));
+            newclass.add_method(sel!(drawWithFrame:inView:),
+                                draw as extern "C" fn(&Object, Sel, NSRect, id));
         }
 
         newclass.register();

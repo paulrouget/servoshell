@@ -21,23 +21,35 @@ pub struct Window {
 }
 
 impl Window {
-    pub fn new(id: glutin::WindowId, state: &WindowState, windows: Rc<RefCell<HashMap<glutin::WindowId, GlutinWindow>>>) -> Window {
+    pub fn new(id: glutin::WindowId,
+               state: &WindowState,
+               windows: Rc<RefCell<HashMap<glutin::WindowId, GlutinWindow>>>)
+               -> Window {
         let window = Window { id, windows };
         window.render_title(state);
         window
     }
 
     fn render_title(&self, state: &WindowState) {
-        let text = state.tabs.alive_browsers().iter().fold("|".to_owned(), |f, b| {
-            let title = b.title.as_ref().and_then(|t| {
-                if t.is_empty() { None } else { Some(t) }
-            }).map_or("No Title", |t| t.as_str());
-            let selected = if !b.background { '>' } else { ' ' };
-            let loading = if b.is_loading { '*' } else { ' ' };
-            format!("{} {} {:15.15} {}|", f, selected, title, loading)
-        });
+        let text = state
+            .tabs
+            .alive_browsers()
+            .iter()
+            .fold("|".to_owned(), |f, b| {
+                let title = b.title
+                    .as_ref()
+                    .and_then(|t| if t.is_empty() { None } else { Some(t) })
+                    .map_or("No Title", |t| t.as_str());
+                let selected = if !b.background { '>' } else { ' ' };
+                let loading = if b.is_loading { '*' } else { ' ' };
+                format!("{} {} {:15.15} {}|", f, selected, title, loading)
+            });
         let mut windows = self.windows.borrow_mut();
-        windows.get_mut(&self.id).unwrap().glutin_window.set_title(&text);
+        windows
+            .get_mut(&self.id)
+            .unwrap()
+            .glutin_window
+            .set_title(&text);
     }
 
     fn render_urlbar(&self, state: &BrowserState) {
@@ -47,11 +59,16 @@ impl Window {
             match tinyfiledialogs::input_box("Search or type URL", "Search or type URL", &url) {
                 Some(input) => {
                     let win = windows.get_mut(&self.id).unwrap();
-                    win.window_events.push(WindowEvent::DoCommand(WindowCommand::Load(input)));
+                    win.window_events
+                        .push(WindowEvent::DoCommand(WindowCommand::Load(input)));
                 }
-                None => { },
+                None => {}
             }
-            windows.get_mut(&self.id).unwrap().window_events.push(WindowEvent::UrlbarFocusChanged(false));
+            windows
+                .get_mut(&self.id)
+                .unwrap()
+                .window_events
+                .push(WindowEvent::UrlbarFocusChanged(false));
         }
     }
 }
@@ -59,7 +76,10 @@ impl Window {
 impl WindowMethods for Window {
     fn render(&self, diff: Vec<ChangeType>, state: &WindowState) {
 
-        let idx = state.tabs.fg_browser_index().expect("no current browser");;
+        let idx = state
+            .tabs
+            .fg_browser_index()
+            .expect("no current browser");
         let current_browser_state = state.tabs.ref_fg_browser().expect("no current browser");
 
         for change in diff {
@@ -84,23 +104,23 @@ impl WindowMethods for Window {
                         &[K::tabs, K::Index(i), K::Alive, K::urlbar_focused] if i == idx => {
                             self.render_urlbar(current_browser_state);
                         }
-                        _ => println!("Window::render: unexpected Modified keys: {:?}", keys)
+                        _ => println!("Window::render: unexpected Modified keys: {:?}", keys),
                     }
-                },
+                }
                 ChangeType::Added(keys) => {
                     match keys.as_slice() {
                         &[K::tabs, K::Index(_)] => {
                             self.render_title(state);
-                        },
-                        _ => println!("Window::render: unexpected Added keys: {:?}", keys)
+                        }
+                        _ => println!("Window::render: unexpected Added keys: {:?}", keys),
                     }
                 }
                 ChangeType::Removed(keys) => {
                     match keys.as_slice() {
                         &[K::tabs, K::Index(_), K::Alive] => {
                             self.render_title(state);
-                        },
-                        _ => println!("Window::render: unexpected Removed keys: {:?}", keys)
+                        }
+                        _ => println!("Window::render: unexpected Removed keys: {:?}", keys),
                     }
                 }
             }
@@ -113,7 +133,11 @@ impl WindowMethods for Window {
 
     fn new_event_loop_waker(&self) -> Box<EventLoopWaker> {
         let mut windows = self.windows.borrow_mut();
-        windows.get_mut(&self.id).unwrap().event_loop_waker.clone()
+        windows
+            .get_mut(&self.id)
+            .unwrap()
+            .event_loop_waker
+            .clone()
     }
 
     fn get_events(&self) -> Vec<WindowEvent> {
@@ -123,8 +147,5 @@ impl WindowMethods for Window {
         events
     }
 
-    fn append_logs(&self, _logs: &Vec<ShellLog>) {
-    }
+    fn append_logs(&self, _logs: &Vec<ShellLog>) {}
 }
-
-

@@ -23,20 +23,20 @@ fn register() {
     class.add_ivar::<*mut c_void>("app_state");
     class.add_ivar::<*mut c_void>("win_state");
 
-    extern fn did_finish_launching(this: &Object, _sel: Sel, _notification: id) {
+    extern "C" fn did_finish_launching(this: &Object, _sel: Sel, _notification: id) {
         utils::get_event_queue(this).push(AppEvent::DidFinishLaunching)
     }
 
-    extern fn did_change_screen_parameter(this: &Object, _sel: Sel, _notification: id) {
+    extern "C" fn did_change_screen_parameter(this: &Object, _sel: Sel, _notification: id) {
         utils::get_event_queue(this).push(AppEvent::DidChangeScreenParameters)
     }
 
-    extern fn will_terminate(this: &Object, _sel: Sel, _notification: id) {
+    extern "C" fn will_terminate(this: &Object, _sel: Sel, _notification: id) {
         utils::get_event_queue(this).push(AppEvent::WillTerminate)
     }
 
-    extern fn validate_ui(_this: &Object, _sel: Sel, item: id) -> BOOL {
-        let action: Sel = unsafe {msg_send![item, action]};
+    extern "C" fn validate_ui(_this: &Object, _sel: Sel, item: id) -> BOOL {
+        let action: Sel = unsafe { msg_send![item, action] };
         if action == sel!(shellClearHistory:) {
             YES
         } else if action == sel!(shellToggleOptionDarkTheme:) {
@@ -46,8 +46,8 @@ fn register() {
         }
     }
 
-    extern fn record_command(this: &Object, _sel: Sel, item: id) {
-        let action: Sel = unsafe {msg_send![item, action]};
+    extern "C" fn record_command(this: &Object, _sel: Sel, item: id) {
+        let action: Sel = unsafe { msg_send![item, action] };
         let cmd = if action == sel!(shellClearHistory:) {
             AppCommand::ClearHistory
         } else if action == sel!(shellToggleOptionDarkTheme:) {
@@ -59,14 +59,20 @@ fn register() {
     }
 
     unsafe {
-        class.add_method(sel!(applicationDidFinishLaunching:), did_finish_launching as extern fn(&Object, Sel, id));
-        class.add_method(sel!(applicationDidChangeScreenParameter:), did_change_screen_parameter as extern fn(&Object, Sel, id));
-        class.add_method(sel!(applicationWillTerminate:), will_terminate as extern fn(&Object, Sel, id));
+        class.add_method(sel!(applicationDidFinishLaunching:),
+                         did_finish_launching as extern "C" fn(&Object, Sel, id));
+        class.add_method(sel!(applicationDidChangeScreenParameter:),
+                         did_change_screen_parameter as extern "C" fn(&Object, Sel, id));
+        class.add_method(sel!(applicationWillTerminate:),
+                         will_terminate as extern "C" fn(&Object, Sel, id));
 
-        class.add_method(sel!(validateUserInterfaceItem:), validate_ui as extern fn(&Object, Sel, id) -> BOOL);
+        class.add_method(sel!(validateUserInterfaceItem:),
+                         validate_ui as extern "C" fn(&Object, Sel, id) -> BOOL);
 
-        class.add_method(sel!(shellClearHistory:), record_command as extern fn(&Object, Sel, id));
-        class.add_method(sel!(shellToggleOptionDarkTheme:), record_command as extern fn(&Object, Sel, id));
+        class.add_method(sel!(shellClearHistory:),
+                         record_command as extern "C" fn(&Object, Sel, id));
+        class.add_method(sel!(shellToggleOptionDarkTheme:),
+                         record_command as extern "C" fn(&Object, Sel, id));
     }
 
     class.register();
@@ -74,7 +80,7 @@ fn register() {
 
 
 pub struct App {
-    nsapp: id
+    nsapp: id,
 }
 
 impl App {
@@ -84,7 +90,7 @@ impl App {
         let p = env::current_dir().unwrap();
 
         if p.join("servo_resources/").exists() {
-            return Some(p)
+            return Some(p);
         }
 
         // Maybe we run from an app bundle
@@ -93,7 +99,7 @@ impl App {
         let p = p.parent().unwrap().join("Resources");
 
         if p.join("servo_resources/").exists() {
-            return Some(p)
+            return Some(p);
         }
 
         None
@@ -103,7 +109,7 @@ impl App {
         Self::get_res_parent().and_then(|p| {
             // In app bundle
             if p.join("nibs").exists() {
-                return Some(p.join("nibs"))
+                return Some(p.join("nibs"));
             }
             // cargo run
             let p = p.join("target");
@@ -149,21 +155,11 @@ impl App {
             ServoCursor::NsResize => "resizeUpDownCursor",
             ServoCursor::ColResize => "resizeLeftRightCursor",
             ServoCursor::RowResize => "resizeUpDownCursor",
-            ServoCursor::None |
-            ServoCursor::Cell |
-            ServoCursor::Move |
-            ServoCursor::NeResize |
-            ServoCursor::NwResize |
-            ServoCursor::SeResize |
-            ServoCursor::SwResize |
-            ServoCursor::NeswResize |
-            ServoCursor::NwseResize |
-            ServoCursor::AllScroll |
-            ServoCursor::ZoomIn |
-            ServoCursor::ZoomOut |
-            ServoCursor::Wait |
-            ServoCursor::Progress |
-            ServoCursor::Help => "arrowServoCursor"
+            ServoCursor::None | ServoCursor::Cell | ServoCursor::Move | ServoCursor::NeResize |
+            ServoCursor::NwResize | ServoCursor::SeResize | ServoCursor::SwResize |
+            ServoCursor::NeswResize | ServoCursor::NwseResize | ServoCursor::AllScroll |
+            ServoCursor::ZoomIn | ServoCursor::ZoomOut | ServoCursor::Wait |
+            ServoCursor::Progress | ServoCursor::Help => "arrowServoCursor",
         };
 
         let sel = Sel::register(cursor_name);
@@ -210,7 +206,6 @@ impl App {
 
 
 impl AppMethods for App {
-
     fn new<'a>(state: &AppState) -> Result<App, &'a str> {
 
         register();
@@ -224,9 +219,9 @@ impl AppMethods for App {
             Err(msg) => return Err(msg),
         };
 
-        let nsapp = instances.into_iter().find(|i| {
-            utils::id_is_instance_of(*i, "NSApplication")
-        });
+        let nsapp = instances
+            .into_iter()
+            .find(|i| utils::id_is_instance_of(*i, "NSApplication"));
 
         let nsapp: id = match nsapp {
             None => return Err(&"Couldn't not find NSApplication instance in nib file"),
@@ -246,10 +241,10 @@ impl AppMethods for App {
         unsafe {
             let delegate: id = msg_send![class("NSShellApplicationDelegate"), alloc];
             (*delegate).set_ivar("event_queue", event_queue_ptr as *mut c_void);
-            msg_send![nsapp, setDelegate:delegate];
+            msg_send![nsapp, setDelegate: delegate];
         }
 
-        let app = App {nsapp: nsapp};
+        let app = App { nsapp: nsapp };
 
         app.copy_state(state);
 
@@ -268,10 +263,10 @@ impl AppMethods for App {
                 ChangeType::Modified(keys) => {
                     match keys.as_slice() {
                         &[K::cursor] => self.render_cursor(state.cursor),
-                        _ => println!("App::render: unexpected keys: {:?}", keys)
+                        _ => println!("App::render: unexpected keys: {:?}", keys),
                     }
-                },
-                _ => println!("App::render: unexpected change type: {:?}", change)
+                }
+                _ => println!("App::render: unexpected change type: {:?}", change),
             }
         }
     }
@@ -285,7 +280,9 @@ impl AppMethods for App {
     }
 
     // Equivalent of NSApp.run()
-    fn run<F>(&self, mut callback: F) where F: FnMut() {
+    fn run<F>(&self, mut callback: F)
+        where F: FnMut()
+    {
 
         unsafe { msg_send![self.nsapp, finishLaunching] };
 
@@ -294,9 +291,11 @@ impl AppMethods for App {
                 let pool = NSAutoreleasePool::new(nil);
 
                 // Blocks until event available
-                let nsevent = self.nsapp.nextEventMatchingMask_untilDate_inMode_dequeue_(
-                    NSAnyEventMask.bits(),
-                    NSDate::distantFuture(nil), NSDefaultRunLoopMode, YES);
+                let nsevent = self.nsapp
+                    .nextEventMatchingMask_untilDate_inMode_dequeue_(NSAnyEventMask.bits(),
+                                                                     NSDate::distantFuture(nil),
+                                                                     NSDefaultRunLoopMode,
+                                                                     YES);
 
                 let event_type = nsevent.eventType() as u64;
                 if event_type == NSApplicationDefined as u64 {
@@ -311,9 +310,11 @@ impl AppMethods for App {
 
                 // Get all pending events
                 loop {
-                    let nsevent = self.nsapp.nextEventMatchingMask_untilDate_inMode_dequeue_(
-                        NSAnyEventMask.bits(),
-                        NSDate::distantPast(nil), NSDefaultRunLoopMode, YES);
+                    let nsevent = self.nsapp
+                        .nextEventMatchingMask_untilDate_inMode_dequeue_(NSAnyEventMask.bits(),
+                                                                         NSDate::distantPast(nil),
+                                                                         NSDefaultRunLoopMode,
+                                                                         YES);
                     msg_send![self.nsapp, sendEvent: nsevent];
                     if nsevent == nil {
                         break;
@@ -334,5 +335,4 @@ impl AppMethods for App {
 
         Ok(Box::new(window::Window::new(state, nswindow, nspopover)))
     }
-
 }

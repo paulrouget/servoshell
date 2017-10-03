@@ -30,57 +30,98 @@ pub struct GlutinWindow {
 }
 
 impl GlutinWindow {
-
     pub fn glutin_event_to_command(&self, event: &glutin::WindowEvent) -> Option<WindowCommand> {
         match *event {
-            glutin::WindowEvent::KeyboardInput{ input: glutin::KeyboardInput {
-                state: glutin::ElementState::Pressed,
-                virtual_keycode,
-                modifiers,
+            glutin::WindowEvent::KeyboardInput {
+                input: glutin::KeyboardInput {
+                    state: glutin::ElementState::Pressed,
+                    virtual_keycode,
+                    modifiers,
+                    ..
+                },
                 ..
-            }, ..} => {
-                match (virtual_keycode, utils::cmd_or_ctrl(modifiers), modifiers.ctrl, modifiers.shift) {
+            } => {
+                match (virtual_keycode,
+                       utils::cmd_or_ctrl(modifiers),
+                       modifiers.ctrl,
+                       modifiers.shift) {
                     (Some(glutin::VirtualKeyCode::R), true, _, _) => Some(WindowCommand::Reload),
-                    (Some(glutin::VirtualKeyCode::Left), true, _, _) => Some(WindowCommand::NavigateBack),
-                    (Some(glutin::VirtualKeyCode::Right), true, _, _) => Some(WindowCommand::NavigateForward),
-                    (Some(glutin::VirtualKeyCode::L), true, _, _) => Some(WindowCommand::OpenLocation),
-                    (Some(glutin::VirtualKeyCode::Equals), true, _, _) => Some(WindowCommand::ZoomIn),
-                    (Some(glutin::VirtualKeyCode::Minus), true, _, _) => Some(WindowCommand::ZoomOut),
-                    (Some(glutin::VirtualKeyCode::Key0), true, _, _) => Some(WindowCommand::ZoomToActualSize),
+                    (Some(glutin::VirtualKeyCode::Left), true, _, _) => {
+                        Some(WindowCommand::NavigateBack)
+                    }
+                    (Some(glutin::VirtualKeyCode::Right), true, _, _) => {
+                        Some(WindowCommand::NavigateForward)
+                    }
+                    (Some(glutin::VirtualKeyCode::L), true, _, _) => {
+                        Some(WindowCommand::OpenLocation)
+                    }
+                    (Some(glutin::VirtualKeyCode::Equals), true, _, _) => {
+                        Some(WindowCommand::ZoomIn)
+                    }
+                    (Some(glutin::VirtualKeyCode::Minus), true, _, _) => {
+                        Some(WindowCommand::ZoomOut)
+                    }
+                    (Some(glutin::VirtualKeyCode::Key0), true, _, _) => {
+                        Some(WindowCommand::ZoomToActualSize)
+                    }
                     (Some(glutin::VirtualKeyCode::T), true, _, _) => Some(WindowCommand::NewTab),
                     (Some(glutin::VirtualKeyCode::W), true, _, _) => Some(WindowCommand::CloseTab),
-                    (Some(glutin::VirtualKeyCode::Tab), _, true, false) => Some(WindowCommand::NextTab),
-                    (Some(glutin::VirtualKeyCode::Tab), _, true, true) => Some(WindowCommand::PrevTab),
-                    (Some(glutin::VirtualKeyCode::Key1), true, _, _) => Some(WindowCommand::SelectTab(0)),
-                    (Some(glutin::VirtualKeyCode::Key2), true, _, _) => Some(WindowCommand::SelectTab(1)),
-                    (Some(glutin::VirtualKeyCode::Key3), true, _, _) => Some(WindowCommand::SelectTab(2)),
-                    (Some(glutin::VirtualKeyCode::Key4), true, _, _) => Some(WindowCommand::SelectTab(3)),
-                    (Some(glutin::VirtualKeyCode::Key5), true, _, _) => Some(WindowCommand::SelectTab(4)),
-                    (Some(glutin::VirtualKeyCode::Key6), true, _, _) => Some(WindowCommand::SelectTab(5)),
-                    (Some(glutin::VirtualKeyCode::Key7), true, _, _) => Some(WindowCommand::SelectTab(6)),
-                    (Some(glutin::VirtualKeyCode::Key8), true, _, _) => Some(WindowCommand::SelectTab(7)),
-                    (Some(glutin::VirtualKeyCode::Key9), true, _, _) => Some(WindowCommand::SelectTab(8)),
-                    _ => None
+                    (Some(glutin::VirtualKeyCode::Tab), _, true, false) => {
+                        Some(WindowCommand::NextTab)
+                    }
+                    (Some(glutin::VirtualKeyCode::Tab), _, true, true) => {
+                        Some(WindowCommand::PrevTab)
+                    }
+                    (Some(glutin::VirtualKeyCode::Key1), true, _, _) => {
+                        Some(WindowCommand::SelectTab(0))
+                    }
+                    (Some(glutin::VirtualKeyCode::Key2), true, _, _) => {
+                        Some(WindowCommand::SelectTab(1))
+                    }
+                    (Some(glutin::VirtualKeyCode::Key3), true, _, _) => {
+                        Some(WindowCommand::SelectTab(2))
+                    }
+                    (Some(glutin::VirtualKeyCode::Key4), true, _, _) => {
+                        Some(WindowCommand::SelectTab(3))
+                    }
+                    (Some(glutin::VirtualKeyCode::Key5), true, _, _) => {
+                        Some(WindowCommand::SelectTab(4))
+                    }
+                    (Some(glutin::VirtualKeyCode::Key6), true, _, _) => {
+                        Some(WindowCommand::SelectTab(5))
+                    }
+                    (Some(glutin::VirtualKeyCode::Key7), true, _, _) => {
+                        Some(WindowCommand::SelectTab(6))
+                    }
+                    (Some(glutin::VirtualKeyCode::Key8), true, _, _) => {
+                        Some(WindowCommand::SelectTab(7))
+                    }
+                    (Some(glutin::VirtualKeyCode::Key9), true, _, _) => {
+                        Some(WindowCommand::SelectTab(8))
+                    }
+                    _ => None,
                 }
             }
-            _ => None
+            _ => None,
         }
     }
 
     pub fn glutin_event_to_view_event(&mut self, event: &glutin::WindowEvent) -> Option<ViewEvent> {
         match *event {
-            glutin::WindowEvent::Resized(..) => {
-                Some(ViewEvent::GeometryDidChange)
-            }
-            glutin::WindowEvent::MouseMoved{position: (x, y), ..} => {
+            glutin::WindowEvent::Resized(..) => Some(ViewEvent::GeometryDidChange),
+            glutin::WindowEvent::MouseMoved { position: (x, y), .. } => {
                 self.mouse_coordinate = (x as i32, y as i32);
                 Some(ViewEvent::MouseMoved(x as i32, y as i32))
             }
-            glutin::WindowEvent::MouseWheel{delta, phase, ..} => {
+            glutin::WindowEvent::MouseWheel { delta, phase, .. } => {
                 let delta = match delta {
                     // FIXME: magic value
-                    glutin::MouseScrollDelta::LineDelta(dx, dy) => MouseScrollDelta::LineDelta(dx, dy),
-                    glutin::MouseScrollDelta::PixelDelta(dx, dy) => MouseScrollDelta::PixelDelta(dx, dy),
+                    glutin::MouseScrollDelta::LineDelta(dx, dy) => {
+                        MouseScrollDelta::LineDelta(dx, dy)
+                    }
+                    glutin::MouseScrollDelta::PixelDelta(dx, dy) => {
+                        MouseScrollDelta::PixelDelta(dx, dy)
+                    }
                 };
                 let phase = match phase {
                     glutin::TouchPhase::Started => TouchPhase::Started,
@@ -91,12 +132,19 @@ impl GlutinWindow {
                 };
                 Some(ViewEvent::MouseWheel(delta, phase))
             }
-            glutin::WindowEvent::MouseInput{state, button: glutin::MouseButton::Left, ..} => {
+            glutin::WindowEvent::MouseInput {
+                state,
+                button: glutin::MouseButton::Left,
+                ..
+            } => {
                 let state = match state {
                     glutin::ElementState::Released => ElementState::Released,
                     glutin::ElementState::Pressed => ElementState::Pressed,
                 };
-                Some(ViewEvent::MouseInput(state, MouseButton::Left, self.mouse_coordinate.0, self.mouse_coordinate.1))
+                Some(ViewEvent::MouseInput(state,
+                                           MouseButton::Left,
+                                           self.mouse_coordinate.0,
+                                           self.mouse_coordinate.1))
             }
             glutin::WindowEvent::ReceivedCharacter(ch) => {
 
@@ -109,12 +157,9 @@ impl GlutinWindow {
                     if !ch.is_control() {
                         match utils::char_to_script_key(ch) {
                             Some(key) => {
-                                Some(ViewEvent::KeyEvent(Some(ch),
-                                    key,
-                                    KeyState::Pressed,
-                                    mods))
+                                Some(ViewEvent::KeyEvent(Some(ch), key, KeyState::Pressed, mods))
                             }
-                            None => None
+                            None => None,
                         }
                     } else {
                         None
@@ -123,15 +168,29 @@ impl GlutinWindow {
                 self.last_pressed_key.set(None);
                 event
             }
-            glutin::WindowEvent::KeyboardInput{ input: glutin::KeyboardInput {
-                state, virtual_keycode: Some(virtual_keycode), modifiers, ..}, ..
+            glutin::WindowEvent::KeyboardInput {
+                input: glutin::KeyboardInput {
+                    state,
+                    virtual_keycode: Some(virtual_keycode),
+                    modifiers,
+                    ..
+                },
+                ..
             } => {
 
                 let mut servo_mods = KeyModifiers::empty();
-                if modifiers.shift { servo_mods.insert(SHIFT); }
-                if modifiers.ctrl { servo_mods.insert(CONTROL); }
-                if modifiers.alt { servo_mods.insert(ALT); }
-                if modifiers.logo { servo_mods.insert(SUPER); }
+                if modifiers.shift {
+                    servo_mods.insert(SHIFT);
+                }
+                if modifiers.ctrl {
+                    servo_mods.insert(CONTROL);
+                }
+                if modifiers.alt {
+                    servo_mods.insert(ALT);
+                }
+                if modifiers.logo {
+                    servo_mods.insert(SUPER);
+                }
 
                 self.key_modifiers.set(servo_mods);
 
@@ -157,4 +216,3 @@ impl GlutinWindow {
         }
     }
 }
-

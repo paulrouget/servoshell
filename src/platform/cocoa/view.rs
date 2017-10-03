@@ -13,7 +13,8 @@ use objc::declare::ClassDecl;
 use objc::runtime::{Class, Object, Sel};
 use self::cgl::{CGLEnable, kCGLCECrashOnRemovedFunctions};
 use self::core_foundation::base::TCFType;
-use self::core_foundation::bundle::{CFBundleGetBundleWithIdentifier, CFBundleGetFunctionPointerForName};
+use self::core_foundation::bundle::{CFBundleGetBundleWithIdentifier,
+                                    CFBundleGetFunctionPointerForName};
 use self::core_foundation::string::CFString;
 use std::os::raw::c_void;
 use std::rc::Rc;
@@ -28,7 +29,7 @@ pub fn register() {
     class.add_ivar::<*mut c_void>("event_queue");
     class.add_ivar::<*mut c_void>("live_resize_callback");
 
-    extern fn store_nsevent(this: &Object, _sel: Sel, nsevent: id) {
+    extern "C" fn store_nsevent(this: &Object, _sel: Sel, nsevent: id) {
         unsafe {
             let event_type = nsevent.eventType();
             match event_type {
@@ -42,8 +43,11 @@ pub fn register() {
                     let vkey = vkey.unwrap();
                     let received_c_str = NSString::UTF8String(nsevent.characters());
                     let received_str = ffi::CStr::from_ptr(received_c_str);
-                    let c = str::from_utf8(received_str.to_bytes()).unwrap().chars().last();
-                    let c = c.and_then(|c| if is_printable(vkey) {Some(c)} else {None});
+                    let c = str::from_utf8(received_str.to_bytes())
+                        .unwrap()
+                        .chars()
+                        .last();
+                    let c = c.and_then(|c| if is_printable(vkey) { Some(c) } else { None });
                     let state = match event_type {
                         NSKeyUp => KeyState::Released,
                         NSKeyDown => KeyState::Pressed,
@@ -52,7 +56,7 @@ pub fn register() {
                     let mods = to_mods(nsevent);
                     let event = ViewEvent::KeyEvent(c, vkey, state, mods);
                     utils::get_event_queue(this).push(event);
-                },
+                }
 
                 NSScrollWheel => {
                     // Stolen from winit
@@ -62,19 +66,20 @@ pub fn register() {
                     let hidpi_factor = hidpi_factor as f32;
                     let delta = if nsevent.hasPreciseScrollingDeltas() == YES {
                         PixelDelta(hidpi_factor * nsevent.scrollingDeltaX() as f32,
-                        hidpi_factor * nsevent.scrollingDeltaY() as f32)
+                                   hidpi_factor * nsevent.scrollingDeltaY() as f32)
                     } else {
                         LineDelta(hidpi_factor * nsevent.scrollingDeltaX() as f32,
-                        hidpi_factor * nsevent.scrollingDeltaY() as f32)
+                                  hidpi_factor * nsevent.scrollingDeltaY() as f32)
                     };
                     let phase = match nsevent.phase() {
-                        appkit::NSEventPhaseMayBegin | appkit::NSEventPhaseBegan => TouchPhase::Started,
+                        appkit::NSEventPhaseMayBegin |
+                        appkit::NSEventPhaseBegan => TouchPhase::Started,
                         appkit::NSEventPhaseEnded => TouchPhase::Ended,
                         _ => TouchPhase::Moved,
                     };
                     let event = ViewEvent::MouseWheel(delta, phase);
                     utils::get_event_queue(this).push(event);
-                },
+                }
                 NSMouseMoved => {
                     let (x, y) = cursor_coordinates_in_view(this, nsevent);
                     let event = ViewEvent::MouseMoved(x, y);
@@ -83,35 +88,53 @@ pub fn register() {
 
                 NSLeftMouseDown => {
                     let (x, y) = cursor_coordinates_in_view(this, nsevent);
-                    utils::get_event_queue(this).push(ViewEvent::MouseInput(ElementState::Pressed, MouseButton::Left, x, y))
-                },
+                    utils::get_event_queue(this).push(ViewEvent::MouseInput(ElementState::Pressed,
+                                                                            MouseButton::Left,
+                                                                            x,
+                                                                            y))
+                }
                 NSLeftMouseUp => {
                     let (x, y) = cursor_coordinates_in_view(this, nsevent);
-                    utils::get_event_queue(this).push(ViewEvent::MouseInput(ElementState::Released, MouseButton::Left, x, y))
-                },
+                    utils::get_event_queue(this).push(ViewEvent::MouseInput(ElementState::Released,
+                                                                            MouseButton::Left,
+                                                                            x,
+                                                                            y))
+                }
                 NSRightMouseDown => {
                     let (x, y) = cursor_coordinates_in_view(this, nsevent);
-                    utils::get_event_queue(this).push(ViewEvent::MouseInput(ElementState::Pressed, MouseButton::Right, x, y))
-                },
+                    utils::get_event_queue(this).push(ViewEvent::MouseInput(ElementState::Pressed,
+                                                                            MouseButton::Right,
+                                                                            x,
+                                                                            y))
+                }
                 NSRightMouseUp => {
                     let (x, y) = cursor_coordinates_in_view(this, nsevent);
-                    utils::get_event_queue(this).push(ViewEvent::MouseInput(ElementState::Released, MouseButton::Right, x, y))
-                },
+                    utils::get_event_queue(this).push(ViewEvent::MouseInput(ElementState::Released,
+                                                                            MouseButton::Right,
+                                                                            x,
+                                                                            y))
+                }
                 NSOtherMouseDown => {
                     let (x, y) = cursor_coordinates_in_view(this, nsevent);
-                    utils::get_event_queue(this).push(ViewEvent::MouseInput(ElementState::Pressed, MouseButton::Middle, x, y))
-                },
+                    utils::get_event_queue(this).push(ViewEvent::MouseInput(ElementState::Pressed,
+                                                                            MouseButton::Middle,
+                                                                            x,
+                                                                            y))
+                }
                 NSOtherMouseUp => {
                     let (x, y) = cursor_coordinates_in_view(this, nsevent);
-                    utils::get_event_queue(this).push(ViewEvent::MouseInput(ElementState::Released, MouseButton::Middle, x, y))
-                },
+                    utils::get_event_queue(this).push(ViewEvent::MouseInput(ElementState::Released,
+                                                                            MouseButton::Middle,
+                                                                            x,
+                                                                            y))
+                }
 
                 _ => {}
             }
         }
     }
 
-    extern fn awake_from_nib(this: &mut Object, _sel: Sel) {
+    extern "C" fn awake_from_nib(this: &mut Object, _sel: Sel) {
         let event_queue: Vec<ViewEvent> = Vec::new();
         let event_queue_ptr = Box::into_raw(Box::new(event_queue));
         unsafe {
@@ -119,13 +142,14 @@ pub fn register() {
         }
     }
 
-    extern fn accept_first_responder(_this: &Object, _sel: Sel) -> BOOL {
+    extern "C" fn accept_first_responder(_this: &Object, _sel: Sel) -> BOOL {
         YES
     }
 
-    extern fn set_frame_size(this: &Object, _sel: Sel, size: NSSize) {
+    extern "C" fn set_frame_size(this: &Object, _sel: Sel, size: NSSize) {
         unsafe {
-            msg_send![super(this, Class::get("NSView").unwrap()), setFrameSize:size];
+            msg_send![super(this, Class::get("NSView").unwrap()),
+                      setFrameSize: size];
             utils::get_event_queue(this).push(ViewEvent::GeometryDidChange);
             let live_resize: BOOL = msg_send![this, inLiveResize];
             if live_resize == YES {
@@ -137,18 +161,27 @@ pub fn register() {
     }
 
     unsafe {
-        class.add_method(sel!(scrollWheel:), store_nsevent as extern fn(&Object, Sel, id));
-        class.add_method(sel!(mouseDown:), store_nsevent as extern fn(&Object, Sel, id));
-        class.add_method(sel!(mouseUp:), store_nsevent as extern fn(&Object, Sel, id));
-        class.add_method(sel!(mouseMoved:), store_nsevent as extern fn(&Object, Sel, id));
-        class.add_method(sel!(keyDown:), store_nsevent as extern fn(&Object, Sel, id));
-        class.add_method(sel!(keyUp:), store_nsevent as extern fn(&Object, Sel, id));
+        class.add_method(sel!(scrollWheel:),
+                         store_nsevent as extern "C" fn(&Object, Sel, id));
+        class.add_method(sel!(mouseDown:),
+                         store_nsevent as extern "C" fn(&Object, Sel, id));
+        class.add_method(sel!(mouseUp:),
+                         store_nsevent as extern "C" fn(&Object, Sel, id));
+        class.add_method(sel!(mouseMoved:),
+                         store_nsevent as extern "C" fn(&Object, Sel, id));
+        class.add_method(sel!(keyDown:),
+                         store_nsevent as extern "C" fn(&Object, Sel, id));
+        class.add_method(sel!(keyUp:),
+                         store_nsevent as extern "C" fn(&Object, Sel, id));
 
-        class.add_method(sel!(acceptsFirstResponder), accept_first_responder as extern fn(&Object, Sel) -> BOOL);
+        class.add_method(sel!(acceptsFirstResponder),
+                         accept_first_responder as extern "C" fn(&Object, Sel) -> BOOL);
 
-        class.add_method(sel!(setFrameSize:), set_frame_size as extern fn(&Object, Sel, NSSize));
+        class.add_method(sel!(setFrameSize:),
+                         set_frame_size as extern "C" fn(&Object, Sel, NSSize));
 
-        class.add_method(sel!(awakeFromNib), awake_from_nib as extern fn(&mut Object, Sel));
+        class.add_method(sel!(awakeFromNib),
+                         awake_from_nib as extern "C" fn(&mut Object, Sel));
     }
 
     class.register();
@@ -174,21 +207,22 @@ impl View {
         let ctx = unsafe {
             nsview.setWantsBestResolutionOpenGLSurface_(YES);
             let attributes = vec![NSOpenGLPFADoubleBuffer as u32,
-                NSOpenGLPFAClosestPolicy as u32,
-                NSOpenGLPFAColorSize as u32,
-                32,
-                NSOpenGLPFAAlphaSize as u32,
-                8,
-                NSOpenGLPFADepthSize as u32,
-                24,
-                NSOpenGLPFAStencilSize as u32,
-                8,
-                NSOpenGLPFAOpenGLProfile as u32,
-                NSOpenGLProfileVersion3_2Core as u32,
-                0];
+                                  NSOpenGLPFAClosestPolicy as u32,
+                                  NSOpenGLPFAColorSize as u32,
+                                  32,
+                                  NSOpenGLPFAAlphaSize as u32,
+                                  8,
+                                  NSOpenGLPFADepthSize as u32,
+                                  24,
+                                  NSOpenGLPFAStencilSize as u32,
+                                  8,
+                                  NSOpenGLPFAOpenGLProfile as u32,
+                                  NSOpenGLProfileVersion3_2Core as u32,
+                                  0];
 
             let pixelformat = NSOpenGLPixelFormat::alloc(nil).initWithAttributes_(&attributes);
-            let ctx: id = NSOpenGLContext::alloc(nil).initWithFormat_shareContext_(pixelformat, nil);
+            let ctx: id =
+                NSOpenGLContext::alloc(nil).initWithFormat_shareContext_(pixelformat, nil);
             msg_send![ctx, setView: nsview];
             let value = 1;
             ctx.setValues_forParameter_(&value, NSOpenGLContextParameter::NSOpenGLCPSwapInterval);
@@ -205,8 +239,10 @@ impl View {
             gl::GlFns::load_with(|addr| {
                 let symbol_name: CFString = str::FromStr::from_str(addr).unwrap();
                 let framework_name: CFString = str::FromStr::from_str("com.apple.opengl").unwrap();
-                let framework = CFBundleGetBundleWithIdentifier(framework_name.as_concrete_TypeRef());
-                let symbol = CFBundleGetFunctionPointerForName(framework, symbol_name.as_concrete_TypeRef());
+                let framework = CFBundleGetBundleWithIdentifier(framework_name
+                                                                    .as_concrete_TypeRef());
+                let symbol = CFBundleGetFunctionPointerForName(framework,
+                                                               symbol_name.as_concrete_TypeRef());
                 symbol as *const c_void
             })
         };
@@ -220,7 +256,6 @@ impl View {
 }
 
 impl ViewMethods for View {
-
     fn gl(&self) -> Rc<gl::Gl> {
         self.gl.clone()
     }
@@ -281,7 +316,7 @@ impl ViewMethods for View {
 
     fn get_events(&self) -> Vec<ViewEvent> {
         // FIXME: we should allow only one GeometryDidChange
-        let nsobject = unsafe { &*self.nsview};
+        let nsobject = unsafe { &*self.nsview };
         utils::get_event_queue(nsobject).drain(..).collect()
     }
 
@@ -295,7 +330,7 @@ impl ViewMethods for View {
     // FIXME: should be controlled by state
     fn exit_fullscreen(&self) {
         unsafe {
-            msg_send![self.nsview, exitFullScreenModeWithOptions:nil];
+            msg_send![self.nsview, exitFullScreenModeWithOptions: nil];
         }
     }
 }
@@ -432,15 +467,12 @@ fn to_virtual_key_code(code: u16) -> Option<Key> {
         0x7d => Some(Key::Down),
         0x7e => Some(Key::Up),
         //0x7f =>  unkown,
-
         _ => None,
     }
 }
 
 fn to_mods(event: id) -> KeyModifiers {
-    let flags = unsafe {
-        NSEvent::modifierFlags(event)
-    };
+    let flags = unsafe { NSEvent::modifierFlags(event) };
     let mut result = KeyModifiers::empty();
     if flags.contains(appkit::NSShiftKeyMask) {
         result.insert(SHIFT);
@@ -460,13 +492,11 @@ fn to_mods(event: id) -> KeyModifiers {
 fn is_printable(key_code: Key) -> bool {
     use self::Key::*;
     match key_code {
-        Space | Apostrophe | Comma | Minus | Period | Slash |
-        Num0 | Num1 | Num2 | Num3 | Num4 | Num5 | Num6 | Num7 |
-        Num8 | Num9 | Semicolon | Equal | A | B | C | D | E |
-        F | G | H | I | J | K | L | M | N | O | P | Q | R | S |
-        T | U | V | W | X | Y | Z | LeftBracket | Backslash |
-        RightBracket | GraveAccent | Tab | KpDecimal |
-        KpDivide | KpMultiply | KpSubtract | KpAdd | KpEqual => true,
+        Space | Apostrophe | Comma | Minus | Period | Slash | Num0 | Num1 | Num2 | Num3 |
+        Num4 | Num5 | Num6 | Num7 | Num8 | Num9 | Semicolon | Equal | A | B | C | D | E | F |
+        G | H | I | J | K | L | M | N | O | P | Q | R | S | T | U | V | W | X | Y | Z |
+        LeftBracket | Backslash | RightBracket | GraveAccent | Tab | KpDecimal | KpDivide |
+        KpMultiply | KpSubtract | KpAdd | KpEqual => true,
         _ => false,
     }
 }

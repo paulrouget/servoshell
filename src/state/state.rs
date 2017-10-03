@@ -12,8 +12,10 @@ pub struct State<T> {
     has_changed: bool,
 }
 
-impl<'t, T> State<T> where T: Clone + Deserialize<'t> + Serialize {
-    pub fn new(state: T) -> State<T>  {
+impl<'t, T> State<T>
+    where T: Clone + Deserialize<'t> + Serialize
+{
+    pub fn new(state: T) -> State<T> {
         State {
             last_state: state.clone(),
             current_state: state,
@@ -174,14 +176,16 @@ impl<'a> Delegate<'a, treediff::value::Key, serde_json::Value> for DiffRecorder 
         self.cursor.pop();
     }
     fn removed<'b>(&mut self, k: &'b treediff::value::Key, _v: &'a serde_json::Value) {
-        self.changes.push(ChangeType::Removed(mk(&self.cursor, Some(k))));
+        self.changes
+            .push(ChangeType::Removed(mk(&self.cursor, Some(k))));
     }
     fn added<'b>(&mut self, k: &'b treediff::value::Key, _v: &'a serde_json::Value) {
-        self.changes.push(ChangeType::Added(mk(&self.cursor, Some(k))));
+        self.changes
+            .push(ChangeType::Added(mk(&self.cursor, Some(k))));
     }
     fn modified<'b>(&mut self, _v1: &'a serde_json::Value, _v2: &'a serde_json::Value) {
-        self.changes.push(ChangeType::Modified(mk(&self.cursor, None)));
+        self.changes
+            .push(ChangeType::Modified(mk(&self.cursor, None)));
     }
-    fn unchanged<'b>(&mut self, _v: &'a serde_json::Value) {
-    }
+    fn unchanged<'b>(&mut self, _v: &'a serde_json::Value) {}
 }

@@ -27,11 +27,12 @@ impl Logger {
     pub fn init() -> Arc<ShellLogs> {
         let mut rv = None;
         set_logger(|max_log_level| {
-            max_log_level.set(LogLevelFilter::Info);
-            let logs = Arc::new(ShellLogs(Mutex::new(Vec::new())));
-            rv = Some(logs.clone());
-            Box::new(Logger(logs))
-        }).unwrap();
+                       max_log_level.set(LogLevelFilter::Info);
+                       let logs = Arc::new(ShellLogs(Mutex::new(Vec::new())));
+                       rv = Some(logs.clone());
+                       Box::new(Logger(logs))
+                   })
+                .unwrap();
         rv.unwrap()
     }
 }

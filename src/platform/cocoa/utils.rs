@@ -16,7 +16,7 @@ pub fn load_nib<'a>(filename: &str) -> Result<Vec<id>, &'a str> {
 
     let path = match App::get_nibs_path() {
         Some(path) => path,
-        None => return Err(&"Can't find nib file")
+        None => return Err(&"Can't find nib file"),
     };
     let path = path.join(filename);
     let path = path.to_str().unwrap();
@@ -32,7 +32,7 @@ pub fn load_nib<'a>(filename: &str) -> Result<Vec<id>, &'a str> {
 
         let success: BOOL = msg_send![nsnib, instantiateWithOwner:nil topLevelObjects:&objects];
         if success == NO {
-            return Err(&"Can't load nib file")
+            return Err(&"Can't load nib file");
         }
 
         let count: NSInteger = msg_send![objects, count];
@@ -40,7 +40,7 @@ pub fn load_nib<'a>(filename: &str) -> Result<Vec<id>, &'a str> {
         let mut instances = Vec::new();
 
         for i in 0..count {
-            let instance: id = msg_send![objects, objectAtIndex:i];
+            let instance: id = msg_send![objects, objectAtIndex: i];
             instances.push(instance);
         }
 
@@ -51,7 +51,7 @@ pub fn load_nib<'a>(filename: &str) -> Result<Vec<id>, &'a str> {
 pub fn id_is_instance_of(id: id, classname: &'static str) -> bool {
     let is_instance: BOOL = unsafe {
         let classname = class(classname);
-        msg_send![id, isKindOfClass:classname]
+        msg_send![id, isKindOfClass: classname]
     };
     is_instance == YES
 }
@@ -88,12 +88,11 @@ pub fn get_view_by_id(id: id, name: &'static str) -> Option<id> {
     } else {
         id
     };
-    let view = get_view(nsview, &|view| {
-        unsafe {
-            let identifier: id = msg_send![view, identifier];
-            NSString::isEqualToString(identifier, name)
-        }
-    });
+    let view = get_view(nsview,
+                        &|view| unsafe {
+                             let identifier: id = msg_send![view, identifier];
+                             NSString::isEqualToString(identifier, name)
+                         });
     // If we can't find a view in the window, let's look in the toolbar
     view.or_else(|| {
         unsafe {
@@ -120,7 +119,9 @@ pub fn get_view_by_id(id: id, name: &'static str) -> Option<id> {
     })
 }
 
-pub fn get_view<F>(nsview: id, predicate: &F) -> Option<id> where F: Fn(id) -> bool {
+pub fn get_view<F>(nsview: id, predicate: &F) -> Option<id>
+    where F: Fn(id) -> bool
+{
     if predicate(nsview) {
         return Some(nsview);
     }
@@ -128,12 +129,12 @@ pub fn get_view<F>(nsview: id, predicate: &F) -> Option<id> where F: Fn(id) -> b
         let subviews: id = msg_send![nsview, subviews];
         let count: NSInteger = msg_send![subviews, count];
         for i in 0..count {
-            let view: id = msg_send![subviews, objectAtIndex:i];
+            let view: id = msg_send![subviews, objectAtIndex: i];
             if let Some(view) = get_view(view, predicate) {
-                return Some(view)
+                return Some(view);
             }
         }
-        return None
+        return None;
     }
 }
 

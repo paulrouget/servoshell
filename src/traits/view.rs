@@ -19,10 +19,7 @@ pub struct DrawableGeometry {
 }
 
 /// View events
-
 // FIXME: why not Servo events again?
-
-
 #[derive(Debug, Clone)]
 pub enum ViewEvent {
     GeometryDidChange,
@@ -54,8 +51,8 @@ pub enum MouseButton {
 
 #[derive(Debug, Clone)]
 pub enum MouseScrollDelta {
-	LineDelta(f32, f32),
-	PixelDelta(f32, f32)
+    LineDelta(f32, f32),
+    PixelDelta(f32, f32),
 }
 
 pub trait ViewMethods {

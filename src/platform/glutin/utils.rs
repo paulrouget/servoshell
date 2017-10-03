@@ -119,70 +119,13 @@ pub fn glutin_key_to_script_key(key: glutin::VirtualKeyCode) -> Result<Key, ()> 
 pub fn is_printable(key_code: glutin::VirtualKeyCode) -> bool {
     use glutin::VirtualKeyCode::*;
     match key_code {
-        Escape |
-            F1 |
-            F2 |
-            F3 |
-            F4 |
-            F5 |
-            F6 |
-            F7 |
-            F8 |
-            F9 |
-            F10 |
-            F11 |
-            F12 |
-            F13 |
-            F14 |
-            F15 |
-            Snapshot |
-            Scroll |
-            Pause |
-            Insert |
-            Home |
-            Delete |
-            End |
-            PageDown |
-            PageUp |
-            Left |
-            Up |
-            Right |
-            Down |
-            Back |
-            LAlt |
-            LControl |
-            LMenu |
-            LShift |
-            LWin |
-            Mail |
-            MediaSelect |
-            MediaStop |
-            Mute |
-            MyComputer |
-            NavigateForward |
-            NavigateBackward |
-            NextTrack |
-            NoConvert |
-            PlayPause |
-            Power |
-            PrevTrack |
-            RAlt |
-            RControl |
-            RMenu |
-            RShift |
-            RWin |
-            Sleep |
-            Stop |
-            VolumeDown |
-            VolumeUp |
-            Wake |
-            WebBack |
-            WebFavorites |
-            WebForward |
-            WebHome |
-            WebRefresh |
-            WebSearch |
-            WebStop => false,
+        Escape | F1 | F2 | F3 | F4 | F5 | F6 | F7 | F8 | F9 | F10 | F11 | F12 | F13 | F14 |
+        F15 | Snapshot | Scroll | Pause | Insert | Home | Delete | End | PageDown | PageUp |
+        Left | Up | Right | Down | Back | LAlt | LControl | LMenu | LShift | LWin | Mail |
+        MediaSelect | MediaStop | Mute | MyComputer | NavigateForward | NavigateBackward |
+        NextTrack | NoConvert | PlayPause | Power | PrevTrack | RAlt | RControl | RMenu |
+        RShift | RWin | Sleep | Stop | VolumeDown | VolumeUp | Wake | WebBack | WebFavorites |
+        WebForward | WebHome | WebRefresh | WebSearch | WebStop => false,
         _ => true,
     }
 }
@@ -334,7 +277,7 @@ pub fn char_to_script_key(c: char) -> Option<Key> {
         '\\' => Some(Key::Backslash),
         '}' => Some(Key::RightBracket),
         ']' => Some(Key::RightBracket),
-        _ => None
+        _ => None,
     }
 }
 

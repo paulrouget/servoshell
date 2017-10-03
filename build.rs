@@ -15,10 +15,13 @@ fn main() {
 
 fn build_mmtabbarview() {
     if !Path::new("./src/platform/cocoa/MMTabBarView/.git").exists() {
-        let _ = Command::new("git").args(&["submodule", "update", "--init"]).status();
+        let _ = Command::new("git")
+            .args(&["submodule", "update", "--init"])
+            .status();
     }
     let status = Command::new("xcodebuild")
-        .args(&["-project", "./src/platform/cocoa/MMTabBarView/MMTabBarView/MMTabBarView.xcodeproj"])
+        .args(&["-project",
+                "./src/platform/cocoa/MMTabBarView/MMTabBarView/MMTabBarView.xcodeproj"])
         .args(&["-configuration", "Release"])
         .args(&["SYMROOT=../../../../../target/MMTabBarView/"])
         .status()

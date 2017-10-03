@@ -15,7 +15,9 @@ pub struct View {
 }
 
 impl View {
-    pub fn new(id: glutin::WindowId, windows: Rc<RefCell<HashMap<glutin::WindowId, GlutinWindow>>>) -> View {
+    pub fn new(id: glutin::WindowId,
+               windows: Rc<RefCell<HashMap<glutin::WindowId, GlutinWindow>>>)
+               -> View {
         View { id, windows }
     }
 
@@ -36,7 +38,9 @@ impl ViewMethods for View {
     fn get_geometry(&self) -> DrawableGeometry {
         let windows = self.windows.borrow();
         let win = windows.get(&self.id).unwrap();
-        let (mut width, mut height) = win.glutin_window.get_inner_size().expect("Failed to get window inner size.");
+        let (mut width, mut height) = win.glutin_window
+            .get_inner_size()
+            .expect("Failed to get window inner size.");
 
         #[cfg(target_os = "windows")]
         let factor = super::utils::windows_hidpi_factor();
@@ -49,7 +53,9 @@ impl ViewMethods for View {
         DrawableGeometry {
             view_size: (width, height),
             margins: (0, 0, 0, 0),
-            position: win.glutin_window.get_position().expect("Failed to get window position."),
+            position: win.glutin_window
+                .get_position()
+                .expect("Failed to get window position."),
             hidpi_factor: self.hidpi_factor(),
         }
     }
@@ -57,24 +63,29 @@ impl ViewMethods for View {
     fn update_drawable(&self) {
         let windows = self.windows.borrow();
         let win = windows.get(&self.id).unwrap();
-        let (w, h) = win.glutin_window.get_inner_size().expect("Failed to get window inner size.");
+        let (w, h) = win.glutin_window
+            .get_inner_size()
+            .expect("Failed to get window inner size.");
         win.glutin_window.resize(w, h);
     }
 
     // FIXME: should be controlled by state
-    fn enter_fullscreen(&self) {
-    }
+    fn enter_fullscreen(&self) {}
 
     // FIXME: should be controlled by state
-    fn exit_fullscreen(&self) {
-    }
+    fn exit_fullscreen(&self) {}
 
     fn set_live_resize_callback(&self, _callback: &FnMut()) {
         // FIXME
     }
 
     fn gl(&self) -> Rc<gl::Gl> {
-        self.windows.borrow().get(&self.id).unwrap().gl.clone()
+        self.windows
+            .borrow()
+            .get(&self.id)
+            .unwrap()
+            .gl
+            .clone()
     }
 
     fn get_events(&self) -> Vec<ViewEvent> {
@@ -85,6 +96,12 @@ impl ViewMethods for View {
     }
 
     fn swap_buffers(&self) {
-        self.windows.borrow().get(&self.id).unwrap().glutin_window.swap_buffers().unwrap();
+        self.windows
+            .borrow()
+            .get(&self.id)
+            .unwrap()
+            .glutin_window
+            .swap_buffers()
+            .unwrap();
     }
 }
