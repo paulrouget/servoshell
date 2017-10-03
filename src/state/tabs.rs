@@ -247,7 +247,6 @@ impl TabsState {
             .ok_or("No foreground tab")
     }
 
-    
     pub fn alive_browsers<'a>(&self) -> Vec<&BrowserState> {
         self.0.iter().filter_map(|tab| tab.ref_browser().ok()).collect()
     }
