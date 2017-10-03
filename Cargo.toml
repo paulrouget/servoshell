@@ -8,10 +8,10 @@ build = "build.rs"
 [dependencies]
 open = "1.1.1"
 log = "0.3"
-libservo = { git = "https://github.com/servo/servo", rev = "bb998dbdf3" }
+libservo = { git = "https://github.com/servo/servo", rev = "2a5121357a" }
 glutin = "0.9"
-tinyfiledialogs = { git = "https://github.com/paulrouget/tinyfiledialogs-rs" , branch = "version_3"}
-treediff = { git = "https://github.com/paulrouget/treediff-rs", branch = "serde_bump", features = ["with-serde-json"] }
+tinyfiledialogs = "3.0"
+treediff = { version = "2.5.3", features = ["with-serde-json"] }
 serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
