@@ -20,12 +20,12 @@ impl TabState {
     }
     fn is_fg(&self) -> bool {
         self.ref_browser()
-            .map(|b| !b.background)
+            .map(|b| !b.is_background)
             .unwrap_or(false)
     }
     fn is_bg(&self) -> bool {
         self.ref_browser()
-            .map(|b| b.background)
+            .map(|b| b.is_background)
             .unwrap_or(false)
     }
     fn ref_browser(&self) -> Result<&BrowserState, &'static str> {
@@ -51,8 +51,8 @@ impl TabState {
     }
     fn foreground(&mut self) -> Result<(), &'static str> {
         match *self {
-            TabState::Alive(ref mut browser) if browser.background => {
-                browser.background = false;
+            TabState::Alive(ref mut browser) if browser.is_background => {
+                browser.is_background = false;
                 Ok(())
             }
             TabState::Alive(_) => Err("Already foreground"),
@@ -61,8 +61,8 @@ impl TabState {
     }
     fn background(&mut self) -> Result<(), &'static str> {
         match *self {
-            TabState::Alive(ref mut browser) if !browser.background => {
-                browser.background = true;
+            TabState::Alive(ref mut browser) if !browser.is_background => {
+                browser.is_background = true;
                 Ok(())
             }
             TabState::Alive(_) => Err("Already background"),
@@ -214,11 +214,11 @@ impl TabsState {
 
     pub fn append_new(&mut self, mut browser: BrowserState) -> Result<(), &'static str> {
         if self.0.len() == 0 {
-            browser.background = false;
+            browser.is_background = false;
             self.0.push(TabState::Alive(browser));
             Ok(())
-        } else if !browser.background {
-            browser.background = true;
+        } else if !browser.is_background {
+            browser.is_background = true;
             self.0.push(TabState::Alive(browser));
             self.select_last()
         } else {

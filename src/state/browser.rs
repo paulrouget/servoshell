@@ -7,7 +7,7 @@ use servo::BrowserId;
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct BrowserState {
     pub id: BrowserId,
-    pub background: bool,
+    pub is_background: bool,
     pub zoom: f32,
     pub url: Option<String>,
     pub title: Option<String>,

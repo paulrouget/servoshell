@@ -40,7 +40,7 @@ impl Window {
                     .as_ref()
                     .and_then(|t| if t.is_empty() { None } else { Some(t) })
                     .map_or("No Title", |t| t.as_str());
-                let selected = if !b.background { '>' } else { ' ' };
+                let selected = if !b.is_background { '>' } else { ' ' };
                 let loading = if b.is_loading { '*' } else { ' ' };
                 format!("{} {} {:15.15} {}|", f, selected, title, loading)
             });
@@ -87,7 +87,7 @@ impl WindowMethods for Window {
             match change {
                 ChangeType::Modified(keys) => {
                     match keys.as_slice() {
-                        &[K::tabs, K::Index(_), K::Alive, K::background] |
+                        &[K::tabs, K::Index(_), K::Alive, K::is_background] |
                         &[K::tabs, K::Index(_), K::Alive, K::is_loading] |
                         &[K::tabs, K::Index(_), K::Alive, K::title] => {
                             self.render_title(state);

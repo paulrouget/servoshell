@@ -118,7 +118,7 @@ impl Servo {
 
         BrowserState {
             id: id,
-            background: true,
+            is_background: true,
             zoom: 1.0,
             url: None,
             title: None,

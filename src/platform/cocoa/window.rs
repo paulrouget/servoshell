@@ -753,7 +753,7 @@ impl WindowMethods for Window {
                     match keys.as_slice() {
                         &[K::tabs, K::Index(i), K::Alive, ref attr] if idx == i => {
                             match *attr {
-                                K::background => {
+                                K::is_background => {
                                     self.render_throbber(current_browser_state);
                                     self.render_stop_reload_button(current_browser_state);
                                     self.render_history_buttons(current_browser_state);
@@ -806,7 +806,7 @@ impl WindowMethods for Window {
                         &[K::tabs, K::Index(_), K::user_input] => {
                             // Nothing to do
                         }
-                        &[K::tabs, K::Index(i), K::Alive, K::background] |
+                        &[K::tabs, K::Index(i), K::Alive, K::is_background] |
                         &[K::tabs, K::Index(i), K::Alive, K::can_go_forward] |
                         &[K::tabs, K::Index(i), K::Alive, K::can_go_back] |
                         &[K::tabs, K::Index(i), K::Alive, K::url] |
@@ -824,7 +824,7 @@ impl WindowMethods for Window {
                                 .tabs
                                 .find_browser_at(i)
                                 .expect("Can't find browser");
-                            if !browser.background {
+                            if !browser.is_background {
                                 // FIXME: share that with the other full-rendering block
                                 self.render_throbber(browser);
                                 self.render_stop_reload_button(browser);

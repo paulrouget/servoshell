@@ -65,7 +65,7 @@ pub enum DiffKey {
     Index(usize),
     Alive,
     Dead,
-    background,
+    is_background,
     dark_theme,
     cursor,
     tabs,
@@ -102,7 +102,7 @@ impl DiffKey {
                 match name.as_ref() {
                     "Dead" => DiffKey::Dead,
                     "Alive" => DiffKey::Alive,
-                    "background" => DiffKey::background,
+                    "is_background" => DiffKey::is_background,
                     "dark_theme" => DiffKey::dark_theme,
                     "cursor" => DiffKey::cursor,
                     "tabs" => DiffKey::tabs,

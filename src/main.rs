@@ -302,7 +302,7 @@ fn handle_win_event(servo: &Servo,
                 }
                 WindowCommand::NewTab => {
                     let mut browser = servo.new_browser("about:blank");
-                    browser.background = false;
+                    browser.is_background = false;
                     if cfg!(all(not(feature = "force-glutin"), target_os = "macos")) {
                         browser.urlbar_focused = true;
                     }
