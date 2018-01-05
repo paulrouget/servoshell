@@ -180,16 +180,16 @@ impl GlutinWindow {
 
                 let mut servo_mods = KeyModifiers::empty();
                 if modifiers.shift {
-                    servo_mods.insert(SHIFT);
+                    servo_mods.insert(KeyModifiers::SHIFT);
                 }
                 if modifiers.ctrl {
-                    servo_mods.insert(CONTROL);
+                    servo_mods.insert(KeyModifiers::CONTROL);
                 }
                 if modifiers.alt {
-                    servo_mods.insert(ALT);
+                    servo_mods.insert(KeyModifiers::ALT);
                 }
                 if modifiers.logo {
-                    servo_mods.insert(SUPER);
+                    servo_mods.insert(KeyModifiers::SUPER);
                 }
 
                 self.key_modifiers.set(servo_mods);

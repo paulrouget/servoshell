@@ -8,7 +8,7 @@ build = "build.rs"
 [dependencies]
 open = "1.1.1"
 log = "0.3"
-libservo = { git = "https://github.com/servo/servo", rev = "2a5121357a" }
+libservo = { git = "https://github.com/servo/servo", rev = "989d2fd532" }
 glutin = "0.9"
 tinyfiledialogs = "3.0"
 treediff = { version = "2.5.3", features = ["with-serde-json"] }

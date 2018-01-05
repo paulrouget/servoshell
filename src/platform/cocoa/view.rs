@@ -475,16 +475,16 @@ fn to_mods(event: id) -> KeyModifiers {
     let flags = unsafe { NSEvent::modifierFlags(event) };
     let mut result = KeyModifiers::empty();
     if flags.contains(appkit::NSShiftKeyMask) {
-        result.insert(SHIFT);
+        result.insert(KeyModifiers::SHIFT);
     }
     if flags.contains(appkit::NSControlKeyMask) {
-        result.insert(CONTROL);
+        result.insert(KeyModifiers::CONTROL);
     }
     if flags.contains(appkit::NSAlternateKeyMask) {
-        result.insert(ALT);
+        result.insert(KeyModifiers::ALT);
     }
     if flags.contains(appkit::NSCommandKeyMask) {
-        result.insert(SUPER);
+        result.insert(KeyModifiers::SUPER);
     }
     result
 }

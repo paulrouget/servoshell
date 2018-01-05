@@ -10,7 +10,7 @@ use self::servo::servo_config::resource_files::set_resources_path;
 use self::servo::compositing::windowing::{MouseWindowEvent, WindowMethods, WindowEvent};
 use self::servo::msg::constellation_msg::TraversalDirection;
 use self::servo::servo_geometry::DeviceIndependentPixel;
-use self::servo::euclid::{Point2D, ScaleFactor, Size2D, TypedPoint2D, TypedRect, TypedSize2D,
+use self::servo::euclid::{Point2D, TypedScale, Size2D, TypedPoint2D, TypedRect, TypedSize2D,
                           TypedVector2D};
 use self::servo::ipc_channel::ipc;
 use self::servo::script_traits::{LoadData, MouseButton, TouchEventType};
@@ -25,7 +25,6 @@ pub use self::servo::compositing::compositor_thread::EventLoopWaker;
 pub use self::servo::compositing::windowing::WebRenderDebugOption;
 pub use self::servo::gl;
 pub use self::servo::msg::constellation_msg::{Key, KeyModifiers, KeyState};
-pub use self::servo::msg::constellation_msg::{SHIFT, CONTROL, ALT, SUPER};
 pub use self::servo::servo_url::ServoUrl;
 pub use self::servo::style_traits::cursor::Cursor as ServoCursor;
 
@@ -196,8 +195,7 @@ impl Servo {
 
     pub fn update_geometry(&self, geometry: DrawableGeometry) {
         self.callbacks.geometry.set(geometry);
-        let event = WindowEvent::Resize(self.callbacks.framebuffer_size());
-        self.events_for_servo.borrow_mut().push(event);
+        self.events_for_servo.borrow_mut().push(WindowEvent::Resize);
     }
 
     pub fn perform_click(&self,
@@ -345,15 +343,25 @@ impl WindowMethods for ServoCallbacks {
         self.view.gl()
     }
 
-    fn hidpi_factor(&self) -> ScaleFactor<f32, DeviceIndependentPixel, DevicePixel> {
+    fn hidpi_factor(&self) -> TypedScale<f32, DeviceIndependentPixel, DevicePixel> {
         let scale_factor = self.geometry.get().hidpi_factor;
-        ScaleFactor::new(scale_factor)
+        TypedScale::new(scale_factor)
     }
 
     fn framebuffer_size(&self) -> TypedSize2D<u32, DevicePixel> {
         let scale_factor = self.geometry.get().hidpi_factor as u32;
         let (width, height) = self.geometry.get().view_size;
         TypedSize2D::new(scale_factor * width, scale_factor * height)
+    }
+
+    fn screen_size(&self, id: BrowserId) -> Size2D<u32> {
+        // FIXME
+        self.client_window(id).0
+    }
+
+    fn screen_avail_size(&self, id: BrowserId) -> Size2D<u32> {
+        // FIXME
+        self.screen_size(id)
     }
 
     fn window_rect(&self) -> TypedRect<u32, DevicePixel> {

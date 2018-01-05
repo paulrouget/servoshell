@@ -780,6 +780,9 @@ impl WindowMethods for Window {
                                 }
                                 K::zoom => self.render_zoom_buttons(current_browser_state),
                                 K::urlbar_focused => self.render_focus(current_browser_state),
+                                K::user_input => {
+                                    // Nothing to do
+                                }
                                 _ => {
                                     println!("Window::render: unexpected Modified keys: {:?}", keys)
                                 }
