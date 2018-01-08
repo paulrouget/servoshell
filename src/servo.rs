@@ -195,7 +195,9 @@ impl Servo {
 
     pub fn update_geometry(&self, geometry: DrawableGeometry) {
         self.callbacks.geometry.set(geometry);
-        self.events_for_servo.borrow_mut().push(WindowEvent::Resize);
+        self.events_for_servo
+            .borrow_mut()
+            .push(WindowEvent::Resize);
     }
 
     pub fn perform_click(&self,
